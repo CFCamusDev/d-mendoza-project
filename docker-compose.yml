@@ -65,9 +65,28 @@ services:
       timeout: 10s
       retries: 3
 
+  db-backup:
+    build:
+      context: ./backups
+      dockerfile: Dockerfile
+    container_name: db_backup_service
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=database
+    volumes:
+      - backup_data:/backups
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
 
 volumes:
   db_data:
+  backup_data:
