@@ -22,14 +22,3 @@ export interface CreateUserDTO {
   password: string;
 }
 
-/**
- * DTO para la respuesta de usuario (sin password).
- */
-export interface UserResponseDTO {
-  id: number;
-  email: string;
-  name: string | null;
-  lastLogin: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}

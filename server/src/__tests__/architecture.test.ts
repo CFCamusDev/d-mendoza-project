@@ -1,7 +1,9 @@
 import { describe, it, expect } from '@jest/globals';
-import { User, CreateUserDTO, UserResponseDTO } from '@domain/entities/User';
-import { AuditLog, CreateAuditLogDTO, AuditLogResponseDTO } from '@domain/entities/AuditLog';
+import { User, CreateUserDTO } from '@domain/entities/User';
+import { AuditLog, CreateAuditLogDTO } from '@domain/entities/AuditLog';
 import { AuditModule, AuditAction } from '@domain/services/AuditService';
+import { UserResponseDTO } from '@application/dtos/user.dto';
+import { AuditLogResponseDTO } from '@application/dtos/audit-log.dto';
 
 /**
  * Tests de arquitectura: Validación de separación de capas.

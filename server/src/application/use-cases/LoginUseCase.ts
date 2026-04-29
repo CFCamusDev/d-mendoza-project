@@ -1,22 +1,10 @@
 import bcrypt from 'bcrypt';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { IAuditService, AuditModule, AuditAction } from '@domain/services/AuditService';
-import { UserResponseDTO } from '@domain/entities/User';
+import { LoginDTO, LoginResultDTO } from '@application/dtos/auth.dto';
 
-/**
- * DTO de entrada para login.
- */
-export interface LoginDTO {
-  email: string;
-  password: string;
-}
-
-/**
- * DTO de resultado para login exitoso.
- */
-export interface LoginResultDTO {
-  user: UserResponseDTO;
-}
+// Re-export para que los consumidores existentes no necesiten cambiar su fuente de importación.
+export type { LoginDTO, LoginResultDTO } from '@application/dtos/auth.dto';
 
 /**
  * Caso de uso: Login de usuario.

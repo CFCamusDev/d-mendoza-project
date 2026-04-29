@@ -22,17 +22,6 @@ export interface CreateAuditLogDTO {
   details?: Record<string, unknown>;
 }
 
-/**
- * DTO para la respuesta de un registro de auditoría.
- */
-export interface AuditLogResponseDTO {
-  id: number;
-  action: string;
-  module: string;
-  details: Record<string, unknown> | null;
-  userId: number | null;
-  createdAt: Date;
-}
 
 /**
  * Filtros opcionales para consultar logs de auditoría.

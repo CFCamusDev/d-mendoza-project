@@ -1,5 +1,6 @@
 import { IAuditService, AuditData } from '@domain/services/AuditService';
-import { AuditLog, AuditLogFilters, AuditLogResponseDTO } from '@domain/entities/AuditLog';
+import { AuditLog, AuditLogFilters } from '@domain/entities/AuditLog';
+import { AuditLogResponseDTO } from '@application/dtos/audit-log.dto';
 
 /**
  * Caso de uso: Registrar una entrada de auditoría.
