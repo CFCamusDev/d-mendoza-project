@@ -12,10 +12,21 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
   name      String?
   password  String
+  lastLogin DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  auditLogs AuditLog[]
+}
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String   // Ejemplo: "LOGIN", "CREATE_USER"
+  module    String   // Ejemplo: "AUTH", "USERS"
+  details   Json?    // Para guardar datos de la acción
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
