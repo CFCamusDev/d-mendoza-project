@@ -1,6 +1,6 @@
-import prisma from '../database/prisma';
-import { IUserRepository } from '../../domain/repositories/IUserRepository';
-import { User, CreateUserDTO } from '../../domain/entities/User';
+import prisma from '@infrastructure/database/prisma';
+import { IUserRepository } from '@domain/repositories/IUserRepository';
+import { User, CreateUserDTO } from '@domain/entities/User';
 
 /**
  * Adaptador de infraestructura: Implementación del repositorio de usuarios con Prisma.

@@ -1,6 +1,6 @@
-import { IAuditService, AuditData } from '../../domain/services/AuditService';
-import { IAuditLogRepository } from '../../domain/repositories/IAuditLogRepository';
-import { AuditLog, AuditLogFilters } from '../../domain/entities/AuditLog';
+import { IAuditService, AuditData } from '@domain/services/AuditService';
+import { IAuditLogRepository } from '@domain/repositories/IAuditLogRepository';
+import { AuditLog, AuditLogFilters } from '@domain/entities/AuditLog';
 
 /**
  * Implementación del servicio de auditoría usando el repositorio (puerto).

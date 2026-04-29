@@ -1,10 +1,10 @@
-import prisma from '../database/prisma';
-import { IAuditLogRepository } from '../../domain/repositories/IAuditLogRepository';
+import prisma from '@infrastructure/database/prisma';
+import { IAuditLogRepository } from '@domain/repositories/IAuditLogRepository';
 import {
   AuditLog,
   CreateAuditLogDTO,
   AuditLogFilters,
-} from '../../domain/entities/AuditLog';
+} from '@domain/entities/AuditLog';
 
 /**
  * Adaptador de infraestructura: Implementación del repositorio de auditoría con Prisma.
@@ -48,7 +48,7 @@ export class PrismaAuditLogRepository implements IAuditLogRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return records.map((r) => this.toDomain(r));
+    return records.map((r: { id: number; action: string; module: string; details: unknown; userId: number | null; createdAt: Date }) => this.toDomain(r));
   }
 
   async findById(id: number): Promise<AuditLog | null> {
