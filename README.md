@@ -29,19 +29,19 @@ Plataforma omnicanal para la gestión comercial de D'Mendoza, una empresa del se
 
 ---
 
-## ⚙️ Instalación
+## ⚙️ Instalación local (sin Docker)
 
 ```bash
 # Clonar repositorio
-git clone https://github.com/tu-org/dmendoza-sistema.git
-cd dmendoza-sistema
+git clone https://github.com/tu-org/d-mendoza-sistema.git
+cd d-mendoza-sistema
 
 # Instalar dependencias
-cd backend && npm install
-cd ../frontend && npm install
+cd server && npm install
+cd ../client && npm install
 
 # Ejecutar migraciones
-cd backend && npx prisma migrate dev
+cd server && npx prisma migrate dev
 
 # Iniciar en desarrollo
 npm run dev
@@ -49,3 +49,54 @@ npm run dev
 
 ---
 
+## 🐳 Levantar con Docker
+
+### Prerequisitos
+
+- Tener [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y corriendo.
+
+### Pasos
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/tu-org/d-mendoza-sistema.git
+cd d-mendoza-sistema
+
+# 2. Copiar el archivo de variables de entorno y ajustar los valores
+cp .env.example .env
+
+# 3. Levantar todos los servicios en segundo plano
+docker compose up -d
+```
+
+> Los contenedores arrancan en orden garantizado: `database` → `server` → `client`.
+> El servidor espera a que MariaDB esté saludable antes de iniciar.
+
+### URLs de acceso
+
+| Servicio | URL                              |
+| -------- | -------------------------------- |
+| Cliente  | http://localhost:5173            |
+| Servidor | http://localhost:3000/api        |
+| Health   | http://localhost:3000/api/health |
+
+### Comandos útiles
+
+```bash
+# Ver logs en tiempo real de todos los servicios
+docker compose logs -f
+
+# Ver logs de un servicio específico
+docker compose logs -f server
+
+# Ver el estado de los contenedores
+docker compose ps
+
+# Bajar todos los contenedores
+docker compose down
+
+# Bajar y eliminar los volúmenes (resetea la base de datos)
+docker compose down -v
+```
+
+---
