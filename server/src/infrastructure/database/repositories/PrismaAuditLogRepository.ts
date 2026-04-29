@@ -18,7 +18,9 @@ export class PrismaAuditLogRepository implements IAuditLogRepository {
         action: data.action,
         module: data.module,
         userId: data.userId ?? null,
-        details: data.details ?? undefined,
+        details: data.details
+          ? JSON.parse(JSON.stringify(data.details))
+          : undefined,
       },
     });
     return this.toDomain(record);
