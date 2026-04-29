@@ -1,3 +1,4 @@
+import { describe, it, expect } from '@jest/globals';
 import { Encryption } from '../shared/utils/Encryption';
 
 describe('Encryption Utility (bcrypt)', () => {
