@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
-import { IUserRepository } from '../../domain/repositories/IUserRepository';
-import { IAuditService, AuditModule, AuditAction } from '../../domain/services/AuditService';
-import { UserResponseDTO } from '../../domain/entities/User';
+import { IUserRepository } from '@domain/repositories/IUserRepository';
+import { IAuditService, AuditModule, AuditAction } from '@domain/services/AuditService';
+import { UserResponseDTO } from '@domain/entities/User';
 
 /**
  * DTO de entrada para login.
@@ -27,7 +27,7 @@ export class LoginUseCase {
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly auditService: IAuditService,
-  ) {}
+  ) { }
 
   async execute(dto: LoginDTO): Promise<LoginResultDTO> {
     // 1. Buscar usuario por email

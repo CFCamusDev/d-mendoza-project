@@ -2,7 +2,7 @@ import {
   AuditLog,
   CreateAuditLogDTO,
   AuditLogFilters,
-} from '../entities/AuditLog';
+} from '@domain/entities/AuditLog';
 
 /**
  * Port: Repositorio de logs de auditoría (puerto del dominio).

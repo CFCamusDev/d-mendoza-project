@@ -1,4 +1,4 @@
-import { User, CreateUserDTO } from '../entities/User';
+import { User, CreateUserDTO } from '@domain/entities/User';
 
 /**
  * Port: Repositorio de usuarios (puerto del dominio).

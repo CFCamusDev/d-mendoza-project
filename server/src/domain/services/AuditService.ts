@@ -1,5 +1,5 @@
-import { CreateAuditLogDTO, AuditLog, AuditLogFilters } from '../entities/AuditLog';
-import { IAuditLogRepository } from '../repositories/IAuditLogRepository';
+import { CreateAuditLogDTO, AuditLog, AuditLogFilters } from '@domain/entities/AuditLog';
+import { IAuditLogRepository } from '@domain/repositories/IAuditLogRepository';
 
 /**
  * Datos necesarios para registrar una auditoría.
