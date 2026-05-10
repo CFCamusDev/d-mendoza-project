@@ -55,6 +55,20 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   /**
+   * RF-03: Activa el usuario y limpia los campos del PIN por seguridad.
+   */
+  async activateUser(userId: number): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isActive: true,
+        verificationPin: null,
+        pinExpiresAt: null,
+      },
+    });
+  }
+
+  /**
    * Mapea el registro de Prisma a la entidad del dominio,
    * desacoplando los tipos de Prisma del dominio.
    */
