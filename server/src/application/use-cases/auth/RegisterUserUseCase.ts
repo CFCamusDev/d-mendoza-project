@@ -5,12 +5,12 @@ import { Encryption } from '@shared/utils/Encryption';
 export class RegisterUserUseCase {
   constructor(
     private readonly userRepository: IUserRepository
-  ) {}
+  ) { }
 
   async execute(dto: RegisterUserDTO) {
     const existingUser = await this.userRepository.findByEmail(dto.email);
     if (existingUser) {
-      throw new Error('Email already registered');
+      throw new Error('Correo electrónico ya registrado');
     }
 
     const hashedPassword = await Encryption.hashPassword(dto.password);
@@ -24,7 +24,7 @@ export class RegisterUserUseCase {
       id: newUser.id,
       email: newUser.email,
       isActive: newUser.isActive,
-      message: "User created successfully. Pending verification.",
+      message: "El usuario se ha creado correctamente. A la espera de verificación.",
     };
   }
 }

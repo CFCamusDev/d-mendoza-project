@@ -27,7 +27,7 @@ export class AuthController {
         data: result,
       });
     } catch (error: any) {
-      if (error.message === 'Email already registered') {
+      if (error.message === 'Correo electrónico ya registrado') {
         return res.status(409).json({
           success: false,
           error: error.message,
