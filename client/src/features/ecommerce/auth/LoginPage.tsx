@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { LoginForm } from './components/LoginForm';
 import { useLogin } from './hooks/useLogin';
+import { useAuth } from '@/shared/context/AuthContext';
 import type { LoginFormData } from './schemas/login.schema';
 import logoVertical from '@/assets/logo-vertical.png';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
@@ -9,17 +10,30 @@ import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 export default function LoginPage() {
   useDocumentTitle('Iniciar sesión');
   const navigate = useNavigate();
-  const { login, isLoading } = useLogin();
+  const { login: loginHook, isLoading } = useLogin();
+  const auth = useAuth();
 
   const handleLogin = async (data: LoginFormData) => {
     try {
-      await login(data);
-      // T-026: persist JWT in AuthContext and redirect based on role
-      // For now, redirect to home after successful login
+      const result = await loginHook(data);
+
+      // Persist tokens and hydrate user state in AuthContext
+      auth.login(result.data.tokens);
+
       toast.success('¡Bienvenido!');
-      navigate('/');
+
+      // Role-based redirect (RBAC)
+      const role = auth.user?.role ?? result.data.user?.role;
+      if (role === 'ADMIN') {
+        navigate('/admin');
+      } else if (role === 'SELLER') {
+        navigate('/pos');
+      } else {
+        // CLIENT or unknown → e-commerce home
+        navigate('/');
+      }
     } catch {
-      // Generic error toast — intentionally no field detail revealed (security)
+      // Generic error — intentionally no field detail revealed (security)
       toast.error('Credenciales inválidas. Por favor verifica tu correo y contraseña.');
     }
   };
