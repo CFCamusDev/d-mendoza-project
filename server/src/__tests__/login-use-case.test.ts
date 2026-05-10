@@ -12,6 +12,8 @@ const mockUserRepository: jest.Mocked<IUserRepository> = {
   findByEmail: jest.fn<IUserRepository['findByEmail']>(),
   create: jest.fn<IUserRepository['create']>(),
   updateLastLogin: jest.fn<IUserRepository['updateLastLogin']>(),
+  updateVerificationPin: jest.fn<IUserRepository['updateVerificationPin']>(),
+  deleteById: jest.fn<IUserRepository['deleteById']>(),
 };
 
 const mockAuditService: jest.Mocked<IAuditService> = {

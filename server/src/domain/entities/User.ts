@@ -8,8 +8,10 @@ export interface User {
   email: string;
   name: string | null;
   password: string;
-  lastLogin: Date | null;
+  lastLogin?: Date | null;
   isActive: boolean;
+  verificationPin?: string | null;
+  pinExpiresAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

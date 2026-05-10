@@ -2,10 +2,12 @@ import { Request, Response } from 'express';
 import { RegisterUserUseCase } from '@application/use-cases/auth/RegisterUserUseCase';
 import { RegisterUserDTOSchema } from '@application/dtos/AuthDTO';
 import { PrismaUserRepository } from '@infrastructure/database/repositories/PrismaUserRepository';
+import { ResendEmailService } from '@infrastructure/services/ResendEmailService';
 
 // Initialize dependencies
 const userRepository = new PrismaUserRepository();
-const registerUserUseCase = new RegisterUserUseCase(userRepository);
+const emailService = new ResendEmailService();
+const registerUserUseCase = new RegisterUserUseCase(userRepository, emailService);
 
 export class AuthController {
   async register(req: Request, res: Response) {

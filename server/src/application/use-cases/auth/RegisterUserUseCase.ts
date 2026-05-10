@@ -1,10 +1,13 @@
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { RegisterUserDTO } from '@application/dtos/AuthDTO';
 import { Encryption } from '@shared/utils/Encryption';
+import { CodeGenerator } from '@shared/utils/CodeGenerator';
+import { IEmailService } from '@domain/services/IEmailService';
 
 export class RegisterUserUseCase {
   constructor(
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
+    private readonly emailService: IEmailService
   ) { }
 
   async execute(dto: RegisterUserDTO) {
@@ -19,6 +22,23 @@ export class RegisterUserUseCase {
       email: dto.email,
       password: hashedPassword,
     });
+
+    const pin = CodeGenerator.generatePin();
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+    try {
+      await this.userRepository.updateVerificationPin(newUser.id, pin, expiresAt);
+
+      await this.emailService.sendEmail(
+        newUser.email,
+        'Tu código de verificación - DMendoza',
+        `<p>Hola,</p><p>Tu código de verificación es: <strong>${pin}</strong></p><p>Este código expira en 15 minutos.</p>`
+      );
+    } catch (error) {
+      await this.userRepository.deleteById(newUser.id);
+      throw new Error('El registro falló porque no se pudo despachar el código de verificación. Por favor reintente.');
+    }
 
     return {
       id: newUser.id,
