@@ -13,7 +13,9 @@ const emailService = new ResendEmailService();
 const jwtService = new JwtService();
 const registerUserUseCase = new RegisterUserUseCase(userRepository, emailService);
 const verifyUserUseCase = new VerifyUserUseCase(userRepository);
+// Note: auditService will be wired once TT-001 AsyncLocalStorage middleware is integrated (HU-004)
 const loginUseCase = new LoginUseCase(userRepository, jwtService);
+
 
 export class AuthController {
   async register(req: Request, res: Response) {
@@ -104,11 +106,14 @@ export class AuthController {
       }
 
       // Execute Use Case
-      const tokens = await loginUseCase.execute(validationResult.data);
+      const result = await loginUseCase.execute(validationResult.data);
 
       return res.status(200).json({
         success: true,
-        data: tokens,
+        data: {
+          user: result.user,
+          tokens: result.tokens,
+        },
       });
     } catch (error: any) {
       // Generic credential error → 401 (prevents email enumeration)
