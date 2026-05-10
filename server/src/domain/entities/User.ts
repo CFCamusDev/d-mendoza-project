@@ -9,6 +9,7 @@ export interface User {
   name: string | null;
   password: string;
   lastLogin: Date | null;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -33,6 +33,7 @@ describe('LoginUseCase', () => {
     name: 'Test User',
     password: hashedPassword,
     lastLogin: null,
+    isActive: true,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
   };

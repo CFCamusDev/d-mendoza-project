@@ -48,6 +48,7 @@ export class PrismaUserRepository implements IUserRepository {
     name: string | null;
     password: string;
     lastLogin: Date | null;
+    isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
   }): User {
@@ -57,6 +58,7 @@ export class PrismaUserRepository implements IUserRepository {
       name: record.name,
       password: record.password,
       lastLogin: record.lastLogin,
+      isActive: record.isActive,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
