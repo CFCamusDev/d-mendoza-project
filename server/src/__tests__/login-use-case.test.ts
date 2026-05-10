@@ -12,6 +12,9 @@ const mockUserRepository: jest.Mocked<IUserRepository> = {
   findByEmail: jest.fn<IUserRepository['findByEmail']>(),
   create: jest.fn<IUserRepository['create']>(),
   updateLastLogin: jest.fn<IUserRepository['updateLastLogin']>(),
+  updateVerificationPin: jest.fn<IUserRepository['updateVerificationPin']>(),
+  deleteById: jest.fn<IUserRepository['deleteById']>(),
+  activateUser: jest.fn<IUserRepository['activateUser']>(),
 };
 
 const mockAuditService: jest.Mocked<IAuditService> = {
@@ -33,6 +36,7 @@ describe('LoginUseCase', () => {
     name: 'Test User',
     password: hashedPassword,
     lastLogin: null,
+    isActive: true,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
   };

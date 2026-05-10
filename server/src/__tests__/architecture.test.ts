@@ -18,6 +18,7 @@ describe('Separación de capas (Arquitectura Hexagonal)', () => {
         name: 'Test',
         password: 'hashed',
         lastLogin: new Date(),
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -33,6 +34,7 @@ describe('Separación de capas (Arquitectura Hexagonal)', () => {
         name: null,
         password: 'hashed',
         lastLogin: null,
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -124,6 +126,7 @@ describe('Separación de capas (Arquitectura Hexagonal)', () => {
         name: 'Name',
         password: 'hash',
         lastLogin: new Date(),
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

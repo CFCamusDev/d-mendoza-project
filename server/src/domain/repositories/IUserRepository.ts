@@ -9,4 +9,7 @@ export interface IUserRepository {
   findByEmail(email: string): Promise<User | null>;
   create(data: CreateUserDTO): Promise<User>;
   updateLastLogin(userId: number, date: Date): Promise<void>;
+  updateVerificationPin(userId: number, pin: string, expiresAt: Date): Promise<void>;
+  deleteById(userId: number): Promise<void>;
+  activateUser(userId: number): Promise<void>;
 }

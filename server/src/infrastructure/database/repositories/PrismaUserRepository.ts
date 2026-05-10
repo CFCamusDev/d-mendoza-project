@@ -38,6 +38,36 @@ export class PrismaUserRepository implements IUserRepository {
     });
   }
 
+  async updateVerificationPin(userId: number, pin: string, expiresAt: Date): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        verificationPin: pin,
+        pinExpiresAt: expiresAt,
+      },
+    });
+  }
+
+  async deleteById(userId: number): Promise<void> {
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+  }
+
+  /**
+   * RF-03: Activa el usuario y limpia los campos del PIN por seguridad.
+   */
+  async activateUser(userId: number): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isActive: true,
+        verificationPin: null,
+        pinExpiresAt: null,
+      },
+    });
+  }
+
   /**
    * Mapea el registro de Prisma a la entidad del dominio,
    * desacoplando los tipos de Prisma del dominio.
@@ -48,6 +78,9 @@ export class PrismaUserRepository implements IUserRepository {
     name: string | null;
     password: string;
     lastLogin: Date | null;
+    isActive: boolean;
+    verificationPin: string | null;
+    pinExpiresAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
   }): User {
@@ -57,6 +90,9 @@ export class PrismaUserRepository implements IUserRepository {
       name: record.name,
       password: record.password,
       lastLogin: record.lastLogin,
+      isActive: record.isActive,
+      verificationPin: record.verificationPin,
+      pinExpiresAt: record.pinExpiresAt,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
