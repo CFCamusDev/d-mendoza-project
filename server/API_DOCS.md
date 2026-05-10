@@ -6,6 +6,7 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 
 - [Autenticación](#autenticación)
   - [POST /api/v1/auth/register](#post-apiv1authregister)
+  - [POST /api/v1/auth/verify](#post-apiv1authverify)
 
 ---
 
@@ -99,3 +100,78 @@ Retornado en caso de errores inesperados en el servidor.
   "error": "Internal server error"
 }
 ```
+
+---
+
+### POST /api/v1/auth/verify
+
+Permite activar una cuenta de usuario ingresando el código PIN numérico de 6 dígitos enviado previamente por correo electrónico.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                  | Autenticación     | Rol Requerido |
+| :----- | :-------------------- | :---------------- | :------------ |
+| `POST` | `/api/v1/auth/verify` | Ninguna (Público) | Invitado      |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "email": "usuario@dominio.com",
+  "pin": "123456"
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro | Tipo     | Requerido | Reglas de Validación                                                    |
+| :-------- | :------- | :-------- | :---------------------------------------------------------------------- |
+| `email`   | `string` | Sí        | Debe coincidir con el correo registrado.                                |
+| `pin`     | `string` | Sí        | Exactamente 6 caracteres numéricos. Corresponde al OTP enviado a email. |
+
+#### 3. Respuestas (Responses)
+
+##### Exito (HTTP 200 OK)
+
+Retornado cuando el PIN es válido, no ha expirado, y la cuenta se activa exitosamente.
+
+```json
+{
+  "success": true,
+  "message": "Cuenta verificada exitosamente. Ya puedes iniciar sesión."
+}
+```
+
+##### Error de Parámetros (HTTP 400 Bad Request)
+
+Retornado si la estructura es inválida o si el PIN ingresado es incorrecto/inválido.
+
+```json
+{
+  "success": false,
+  "error": "PIN inválido o expirado"
+}
+```
+
+##### Conflicto - Ya Verificado (HTTP 409 Conflict)
+
+Retornado si el usuario ya se encuentra en estado Activo.
+
+```json
+{
+  "success": false,
+  "error": "La cuenta ya se encuentra verificada"
+}
+```
+
+##### Expirado - Token Caducado (HTTP 410 Gone)
+
+Retornado cuando el PIN superó el tiempo de vida configurado (15 minutos).
+
+```json
+{
+  "success": false,
+  "error": "El código de verificación ha expirado. Por favor, regístrese nuevamente."
+}
+```
+
