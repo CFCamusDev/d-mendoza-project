@@ -20,3 +20,10 @@ export const VerifyUserDTOSchema = z.object({
 });
 
 export type VerifyUserDTO = z.infer<typeof VerifyUserDTOSchema>;
+
+export const LoginDTOSchema = z.object({
+  email: z.string().email({ message: "Invalid email format" }),
+  password: z.string().min(1, { message: "La contraseña es requerida" }),
+});
+
+export type LoginDTO = z.infer<typeof LoginDTOSchema>;
