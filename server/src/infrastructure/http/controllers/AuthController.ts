@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { RegisterUserUseCase } from '@application/use-cases/auth/RegisterUserUseCase';
 import { VerifyUserUseCase } from '@application/use-cases/auth/VerifyUserUseCase';
 import { LoginUseCase } from '@application/use-cases/auth/LoginUseCase';
-import { RegisterUserDTOSchema, VerifyUserDTOSchema, LoginDTOSchema } from '@application/dtos/AuthDTO';
+import { ForgotPasswordUseCase } from '@application/use-cases/auth/ForgotPasswordUseCase';
+import { RegisterUserDTOSchema, VerifyUserDTOSchema, LoginDTOSchema, ForgotPasswordDTOSchema } from '@application/dtos/AuthDTO';
 import { PrismaUserRepository } from '@infrastructure/database/repositories/PrismaUserRepository';
 import { ResendEmailService } from '@infrastructure/services/ResendEmailService';
 import { JwtService } from '@infrastructure/services/JwtService';
@@ -15,7 +16,7 @@ const registerUserUseCase = new RegisterUserUseCase(userRepository, emailService
 const verifyUserUseCase = new VerifyUserUseCase(userRepository);
 // Note: auditService will be wired once TT-001 AsyncLocalStorage middleware is integrated (HU-004)
 const loginUseCase = new LoginUseCase(userRepository, jwtService);
-
+const forgotPasswordUseCase = new ForgotPasswordUseCase(userRepository, emailService, jwtService);
 
 export class AuthController {
   async register(req: Request, res: Response) {
@@ -127,6 +128,34 @@ export class AuthController {
       }
 
       console.error('[AuthController.login] Error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+      });
+    }
+  }
+
+  async forgotPassword(req: Request, res: Response) {
+    try {
+      // Validate input
+      const validationResult = ForgotPasswordDTOSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          success: false,
+          error: validationResult.error.issues,
+        });
+      }
+
+      // Execute Use Case — always resolves void (no info leaked about email existence)
+      await forgotPasswordUseCase.execute(validationResult.data);
+
+      // Always return 200 regardless of whether the email exists (prevents enumeration)
+      return res.status(200).json({
+        success: true,
+        message: 'Si el correo está registrado, recibirás un enlace de recuperación en breve.',
+      });
+    } catch (error: any) {
+      console.error('[AuthController.forgotPassword] Error:', error);
       return res.status(500).json({
         success: false,
         error: 'Internal server error',
