@@ -30,6 +30,7 @@ jest.mock('@infrastructure/services/JwtService', () => ({
 
 import app from '../app';
 import prisma from '@infrastructure/database/prisma';
+import bcrypt from 'bcrypt';
 
 const mockUser = {
   id: 42,
@@ -146,6 +147,26 @@ describe('Password Recovery Integration Flow (HU-003)', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.message).toContain('con éxito');
       expect(prisma.user.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return 400 if the new password is identical to the current password', async () => {
+      const hash = bcrypt.hashSync('OldSecurePass123!', 10);
+      const existingUserWithPass = { ...mockUser, password: hash };
+
+      mockJwtVerify.mockImplementation(() => ({
+        userId: 42,
+        email: 'exists@dmendoza.com',
+        purpose: 'password-reset',
+      }));
+      (prisma.user.findUnique as jest.MockedFunction<any>).mockResolvedValue(existingUserWithPass);
+
+      const res = await request(app)
+        .post('/api/v1/auth/reset-password')
+        .send({ token: 'valid.token.here', newPassword: 'OldSecurePass123!' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error).toContain('no puede ser igual a la actual');
     });
   });
 });

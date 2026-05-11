@@ -25,7 +25,13 @@ export class ResetPasswordUseCase {
       throw new Error('Usuario no encontrado');
     }
 
-    // 3. Hash new password (BCrypt)
+    // 3. Security Rule: verify new password is not identical to current one
+    const isSamePassword = await bcrypt.compare(dto.newPassword, user.password);
+    if (isSamePassword) {
+      throw new Error('La nueva contraseña no puede ser igual a la actual');
+    }
+
+    // 4. Hash new password (BCrypt)
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(dto.newPassword, saltRounds);
 

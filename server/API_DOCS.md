@@ -353,7 +353,7 @@ Permite establecer una nueva contraseña en la cuenta del usuario validando prev
 | Parámetro     | Tipo     | Requerido | Reglas de Validación                                                                  |
 | :------------ | :------- | :-------- | :------------------------------------------------------------------------------------ |
 | `token`       | `string` | Sí        | El token JWT enviado al correo. No debe estar vacío ni expirado.                      |
-| `newPassword` | `string` | Sí        | Mínimo 8 caracteres. Debe contener al menos una letra mayúscula y al menos un número. |
+| `newPassword` | `string` | Sí        | Mínimo 8 caracteres. Debe contener al menos una letra mayúscula y al menos un número. No puede ser igual a la contraseña actual. |
 
 #### 3. Respuestas (Responses)
 
