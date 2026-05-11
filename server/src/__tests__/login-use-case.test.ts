@@ -1,7 +1,8 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { LoginUseCase, LoginDTO } from '@application/use-cases/LoginUseCase';
+import { LoginUseCase } from '@application/use-cases/auth/LoginUseCase';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { IAuditService, AuditAction, AuditModule } from '@domain/services/AuditService';
+import { JwtService } from '@infrastructure/services/JwtService';
 import { User } from '@domain/entities/User';
 import bcrypt from 'bcrypt';
 
@@ -23,9 +24,17 @@ const mockAuditService: jest.Mocked<IAuditService> = {
   getById: jest.fn<IAuditService['getById']>(),
 };
 
+// JwtService mock — avoids needing real JWT_SECRET env var in unit tests
+const mockJwtService = {
+  generateTokens: jest.fn().mockReturnValue({
+    accessToken: 'mock.access.token',
+    refreshToken: 'mock.refresh.token',
+  }),
+} as unknown as JwtService;
+
 // ---- Test Suite ----
 
-describe('LoginUseCase', () => {
+describe('LoginUseCase (HU-094)', () => {
   let loginUseCase: LoginUseCase;
 
   const hashedPassword = bcrypt.hashSync('Password123!', 10);
@@ -43,33 +52,38 @@ describe('LoginUseCase', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    loginUseCase = new LoginUseCase(mockUserRepository, mockAuditService);
+    loginUseCase = new LoginUseCase(mockUserRepository, mockJwtService, mockAuditService);
   });
 
-  it('debería autenticar al usuario con credenciales válidas', async () => {
+  // ---- Success path ----
+
+  it('should authenticate user and return tokens + user data on valid credentials', async () => {
     mockUserRepository.findByEmail.mockResolvedValue(fakeUser);
     mockUserRepository.updateLastLogin.mockResolvedValue();
     mockAuditService.record.mockResolvedValue();
 
-    const dto: LoginDTO = { email: 'test@dmendoza.com', password: 'Password123!' };
-    const result = await loginUseCase.execute(dto);
+    const result = await loginUseCase.execute({
+      email: 'test@dmendoza.com',
+      password: 'Password123!',
+    });
 
     expect(result.user.id).toBe(1);
     expect(result.user.email).toBe('test@dmendoza.com');
     expect(result.user.name).toBe('Test User');
-    // RF-17: lastLogin debe estar actualizado
     expect(result.user.lastLogin).toBeInstanceOf(Date);
-    // No debe contener password en la respuesta
+    // Must NOT expose the password in the response
     expect((result.user as any).password).toBeUndefined();
+    // Tokens must be present
+    expect(result.tokens.accessToken).toBe('mock.access.token');
+    expect(result.tokens.refreshToken).toBe('mock.refresh.token');
   });
 
-  it('RF-17: debería actualizar lastLogin en cada login exitoso', async () => {
+  it('RF-17: should update lastLogin on every successful login', async () => {
     mockUserRepository.findByEmail.mockResolvedValue(fakeUser);
     mockUserRepository.updateLastLogin.mockResolvedValue();
     mockAuditService.record.mockResolvedValue();
 
-    const dto: LoginDTO = { email: 'test@dmendoza.com', password: 'Password123!' };
-    await loginUseCase.execute(dto);
+    await loginUseCase.execute({ email: 'test@dmendoza.com', password: 'Password123!' });
 
     expect(mockUserRepository.updateLastLogin).toHaveBeenCalledTimes(1);
     expect(mockUserRepository.updateLastLogin).toHaveBeenCalledWith(
@@ -78,13 +92,12 @@ describe('LoginUseCase', () => {
     );
   });
 
-  it('RF-84: debería registrar un log de auditoría en cada login exitoso', async () => {
+  it('RF-84: should record an audit log entry on every successful login', async () => {
     mockUserRepository.findByEmail.mockResolvedValue(fakeUser);
     mockUserRepository.updateLastLogin.mockResolvedValue();
     mockAuditService.record.mockResolvedValue();
 
-    const dto: LoginDTO = { email: 'test@dmendoza.com', password: 'Password123!' };
-    await loginUseCase.execute(dto);
+    await loginUseCase.execute({ email: 'test@dmendoza.com', password: 'Password123!' });
 
     expect(mockAuditService.record).toHaveBeenCalledTimes(1);
     expect(mockAuditService.record).toHaveBeenCalledWith(
@@ -97,32 +110,52 @@ describe('LoginUseCase', () => {
     );
   });
 
-  it('debería lanzar error con email inexistente', async () => {
+  // ---- Error paths (HTTP 401) ----
+
+  it('should throw generic error for non-existent email (prevents enumeration)', async () => {
     mockUserRepository.findByEmail.mockResolvedValue(null);
 
-    const dto: LoginDTO = { email: 'noexiste@dmendoza.com', password: 'Password123!' };
+    await expect(
+      loginUseCase.execute({ email: 'noexiste@dmendoza.com', password: 'Password123!' }),
+    ).rejects.toThrow('Credenciales inválidas');
 
-    await expect(loginUseCase.execute(dto)).rejects.toThrow('Credenciales inválidas');
     expect(mockUserRepository.updateLastLogin).not.toHaveBeenCalled();
     expect(mockAuditService.record).not.toHaveBeenCalled();
   });
 
-  it('debería lanzar error con contraseña incorrecta', async () => {
+  it('should throw generic error for wrong password (prevents enumeration)', async () => {
     mockUserRepository.findByEmail.mockResolvedValue(fakeUser);
 
-    const dto: LoginDTO = { email: 'test@dmendoza.com', password: 'WrongPassword!' };
+    await expect(
+      loginUseCase.execute({ email: 'test@dmendoza.com', password: 'WrongPassword!' }),
+    ).rejects.toThrow('Credenciales inválidas');
 
-    await expect(loginUseCase.execute(dto)).rejects.toThrow('Credenciales inválidas');
     expect(mockUserRepository.updateLastLogin).not.toHaveBeenCalled();
     expect(mockAuditService.record).not.toHaveBeenCalled();
   });
 
-  it('no debería registrar auditoría ni actualizar lastLogin si el login falla', async () => {
+  // ---- Error path (HTTP 403) ----
+
+  it('should throw inactive account error for unverified users', async () => {
+    const inactiveUser: User = { ...fakeUser, isActive: false };
+    mockUserRepository.findByEmail.mockResolvedValue(inactiveUser);
+
+    await expect(
+      loginUseCase.execute({ email: 'test@dmendoza.com', password: 'Password123!' }),
+    ).rejects.toThrow('Cuenta inactiva o no verificada');
+
+    expect(mockUserRepository.updateLastLogin).not.toHaveBeenCalled();
+    expect(mockAuditService.record).not.toHaveBeenCalled();
+  });
+
+  // ---- Audit isolation ----
+
+  it('should not record audit or update lastLogin if login fails', async () => {
     mockUserRepository.findByEmail.mockResolvedValue(null);
 
-    const dto: LoginDTO = { email: 'noexiste@dmendoza.com', password: 'x' };
-
-    await expect(loginUseCase.execute(dto)).rejects.toThrow();
+    await expect(
+      loginUseCase.execute({ email: 'noexiste@dmendoza.com', password: 'x' }),
+    ).rejects.toThrow();
 
     expect(mockUserRepository.updateLastLogin).not.toHaveBeenCalled();
     expect(mockAuditService.record).not.toHaveBeenCalled();

@@ -7,6 +7,7 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Autenticación](#autenticación)
   - [POST /api/v1/auth/register](#post-apiv1authregister)
   - [POST /api/v1/auth/verify](#post-apiv1authverify)
+  - [POST /api/v1/auth/login](#post-apiv1authlogin)
 
 ---
 
@@ -172,6 +173,99 @@ Retornado cuando el PIN superó el tiempo de vida configurado (15 minutos).
 {
   "success": false,
   "error": "El código de verificación ha expirado. Por favor, regístrese nuevamente."
+}
+```
+
+---
+
+### POST /api/v1/auth/login
+
+Autentica a un usuario mediante correo electrónico y contraseña. Retorna los datos básicos del usuario junto a una dupla de tokens JWT (`accessToken` de corta duración y `refreshToken` de larga duración) para el manejo de sesiones y control de acceso RBAC.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                 | Autenticación     | Rol Requerido |
+| :----- | :------------------- | :---------------- | :------------ |
+| `POST` | `/api/v1/auth/login` | Ninguna (Público) | Invitado      |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "email": "usuario@dominio.com",
+  "password": "Password123!"
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro  | Tipo     | Requerido | Reglas de Validación                                       |
+| :--------- | :------- | :-------- | :--------------------------------------------------------- |
+| `email`    | `string` | Sí        | Formato de correo electrónico válido.                      |
+| `password` | `string` | Sí        | Cadena no vacía. Debe coincidir con el hash registrado.    |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+Retornado cuando las credenciales son correctas y el usuario está activo. Se retornan tanto los datos de perfil seguros como los tokens de acceso.
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "email": "usuario@dominio.com",
+      "name": "Nombre Usuario",
+      "lastLogin": "2026-05-10T16:10:00.000Z",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-05-10T16:10:00.000Z"
+    },
+    "tokens": {
+      "accessToken": "eyJhbGciOi...",
+      "refreshToken": "eyJhbGciOi..."
+    }
+  }
+}
+```
+
+##### Mala Petición - Validación (HTTP 400 Bad Request)
+
+Retornado si no se envía un payload válido (ej. email con formato incorrecto).
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "code": "invalid_string",
+      "message": "Invalid email format",
+      "path": ["email"]
+    }
+  ]
+}
+```
+
+##### No Autorizado - Credenciales Inválidas (HTTP 401 Unauthorized)
+
+Retornado de forma genérica si el correo no existe o la contraseña es incorrecta. **Importante por seguridad:** La respuesta no revela cuál de los dos campos falló para prevenir ataques de enumeración de cuentas.
+
+```json
+{
+  "success": false,
+  "error": "Credenciales inválidas"
+}
+```
+
+##### Prohibido - Cuenta Inactiva (HTTP 403 Forbidden)
+
+Retornado cuando las credenciales son técnicamente correctas, pero la cuenta aún no ha sido verificada o ha sido inhabilitada.
+
+```json
+{
+  "success": false,
+  "error": "Cuenta inactiva o no verificada"
 }
 ```
 

@@ -1,0 +1,70 @@
+import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { LoginForm } from './components/LoginForm';
+import { useLogin } from './hooks/useLogin';
+import { useAuth } from '@/shared/context/AuthContext';
+import type { LoginFormData } from './schemas/login.schema';
+import logoVertical from '@/assets/logo-vertical.png';
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
+
+export default function LoginPage() {
+  useDocumentTitle('Iniciar sesión');
+  const navigate = useNavigate();
+  const { login: loginHook, isLoading } = useLogin();
+  const auth = useAuth();
+
+  const handleLogin = async (data: LoginFormData) => {
+    try {
+      const result = await loginHook(data);
+
+      // Persist tokens and hydrate user state in AuthContext
+      auth.login(result.data.tokens);
+
+      toast.success('¡Bienvenido!');
+
+      // Role-based redirect (RBAC)
+      const role = auth.user?.role ?? result.data.user?.role;
+      if (role === 'ADMIN') {
+        navigate('/admin');
+      } else if (role === 'SELLER') {
+        navigate('/pos');
+      } else {
+        // CLIENT or unknown → e-commerce home
+        navigate('/');
+      }
+    } catch {
+      // Generic error — intentionally no field detail revealed (security)
+      toast.error('Credenciales inválidas. Por favor verifica tu correo y contraseña.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-brand-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
+        <img
+          src={logoVertical}
+          alt="Logo"
+          className="h-32 w-auto object-contain mb-4"
+        />
+        <h2 className="mt-2 text-center text-3xl font-extrabold text-brand-accent">
+          Inicia sesión
+        </h2>
+        <p className="mt-2 text-center text-sm text-brand-text">
+          ¿No tienes cuenta?{' '}
+          <Link
+            to="/register"
+            className="font-medium text-brand-text hover:text-brand-accent underline transition-colors"
+          >
+            Regístrate aquí
+          </Link>
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+        </div>
+      </div>
+    </div>
+  );
+}
