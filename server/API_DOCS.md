@@ -8,6 +8,7 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/auth/register](#post-apiv1authregister)
   - [POST /api/v1/auth/verify](#post-apiv1authverify)
   - [POST /api/v1/auth/login](#post-apiv1authlogin)
+  - [POST /api/v1/auth/forgot-password](#post-apiv1authforgotpassword)
 
 ---
 
@@ -199,10 +200,10 @@ Autentica a un usuario mediante correo electrónico y contraseña. Retorna los d
 
 **Detalle de Campos:**
 
-| Parámetro  | Tipo     | Requerido | Reglas de Validación                                       |
-| :--------- | :------- | :-------- | :--------------------------------------------------------- |
-| `email`    | `string` | Sí        | Formato de correo electrónico válido.                      |
-| `password` | `string` | Sí        | Cadena no vacía. Debe coincidir con el hash registrado.    |
+| Parámetro  | Tipo     | Requerido | Reglas de Validación                                    |
+| :--------- | :------- | :-------- | :------------------------------------------------------ |
+| `email`    | `string` | Sí        | Formato de correo electrónico válido.                   |
+| `password` | `string` | Sí        | Cadena no vacía. Debe coincidir con el hash registrado. |
 
 #### 3. Respuestas (Responses)
 
@@ -240,7 +241,7 @@ Retornado si no se envía un payload válido (ej. email con formato incorrecto).
   "error": [
     {
       "code": "invalid_string",
-      "message": "Invalid email format",
+      "message": "Formato de correo electrónico no válido",
       "path": ["email"]
     }
   ]
@@ -269,3 +270,58 @@ Retornado cuando las credenciales son técnicamente correctas, pero la cuenta a�
 }
 ```
 
+---
+
+### POST /api/v1/auth/forgot-password
+
+Solicita el envío de un correo electrónico con un enlace para restablecer la contraseña olvidada. Genera un token temporal de seguridad firmado con JWT.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                          | Autenticación     | Rol Requerido |
+| :----- | :---------------------------- | :---------------- | :------------ |
+| `POST` | `/api/v1/auth/forgot-password` | Ninguna (Público) | Invitado      |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "email": "usuario@dominio.com"
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro | Tipo     | Requerido | Reglas de Validación                    |
+| :-------- | :------- | :-------- | :-------------------------------------- |
+| `email`   | `string` | Sí        | Formato de correo electrónico válido.   |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+Retornado siempre que el formato del correo sea correcto, incluso si el usuario no existe (para evitar enumeración de cuentas y phishing).
+
+```json
+{
+  "success": true,
+  "message": "Si el correo está registrado, recibirás un enlace de recuperación en breve."
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Retornado si el valor de entrada no cumple con el formato de correo esperado por Zod.
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "code": "invalid_string",
+      "message": "Invalid email format",
+      "path": ["email"]
+    }
+  ]
+}
+```
