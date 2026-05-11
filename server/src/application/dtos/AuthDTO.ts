@@ -33,3 +33,14 @@ export const ForgotPasswordDTOSchema = z.object({
 });
 
 export type ForgotPasswordDTO = z.infer<typeof ForgotPasswordDTOSchema>;
+
+export const ResetPasswordDTOSchema = z.object({
+  token: z.string().min(1, { message: "El token es requerido" }),
+  newPassword: z
+    .string()
+    .min(8, { message: "La contraseña debe tener al menos 8 caracteres" })
+    .regex(/[A-Z]/, { message: "La contraseña debe contener al menos una letra mayúscula" })
+    .regex(/[0-9]/, { message: "La contraseña debe contener al menos un número" }),
+});
+
+export type ResetPasswordDTO = z.infer<typeof ResetPasswordDTOSchema>;

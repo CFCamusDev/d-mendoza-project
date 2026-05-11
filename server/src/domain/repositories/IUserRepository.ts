@@ -12,4 +12,5 @@ export interface IUserRepository {
   updateVerificationPin(userId: number, pin: string, expiresAt: Date): Promise<void>;
   deleteById(userId: number): Promise<void>;
   activateUser(userId: number): Promise<void>;
+  updatePassword(userId: number, passwordHash: string): Promise<void>;
 }
