@@ -9,6 +9,7 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/auth/verify](#post-apiv1authverify)
   - [POST /api/v1/auth/login](#post-apiv1authlogin)
   - [POST /api/v1/auth/forgot-password](#post-apiv1authforgotpassword)
+  - [POST /api/v1/auth/reset-password](#post-apiv1authresetpassword)
 
 ---
 
@@ -278,8 +279,8 @@ Solicita el envío de un correo electrónico con un enlace para restablecer la c
 
 #### 1. Especificación del Endpoint
 
-| Método | Ruta                          | Autenticación     | Rol Requerido |
-| :----- | :---------------------------- | :---------------- | :------------ |
+| Método | Ruta                           | Autenticación     | Rol Requerido |
+| :----- | :----------------------------- | :---------------- | :------------ |
 | `POST` | `/api/v1/auth/forgot-password` | Ninguna (Público) | Invitado      |
 
 #### 2. Cuerpo de la Petición (Request Body)
@@ -292,9 +293,9 @@ Solicita el envío de un correo electrónico con un enlace para restablecer la c
 
 **Detalle de Campos:**
 
-| Parámetro | Tipo     | Requerido | Reglas de Validación                    |
-| :-------- | :------- | :-------- | :-------------------------------------- |
-| `email`   | `string` | Sí        | Formato de correo electrónico válido.   |
+| Parámetro | Tipo     | Requerido | Reglas de Validación                  |
+| :-------- | :------- | :-------- | :------------------------------------ |
+| `email`   | `string` | Sí        | Formato de correo electrónico válido. |
 
 #### 3. Respuestas (Responses)
 
@@ -323,5 +324,97 @@ Retornado si el valor de entrada no cumple con el formato de correo esperado por
       "path": ["email"]
     }
   ]
+}
+```
+
+---
+
+### POST /api/v1/auth/reset-password
+
+Permite establecer una nueva contraseña en la cuenta del usuario validando previamente el token JWT temporal recibido por correo electrónico. Hashea y persiste las nuevas credenciales en la base de datos.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                          | Autenticación     | Rol Requerido |
+| :----- | :---------------------------- | :---------------- | :------------ |
+| `POST` | `/api/v1/auth/reset-password` | Ninguna (Público) | Invitado      |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI...",
+  "newPassword": "MiNuevaPassword2026!"
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro     | Tipo     | Requerido | Reglas de Validación                                                                  |
+| :------------ | :------- | :-------- | :------------------------------------------------------------------------------------ |
+| `token`       | `string` | Sí        | El token JWT enviado al correo. No debe estar vacío ni expirado.                      |
+| `newPassword` | `string` | Sí        | Mínimo 8 caracteres. Debe contener al menos una letra mayúscula y al menos un número. |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+Retornado si el token es válido y la nueva contraseña ha sido guardada exitosamente. El usuario ya puede iniciar sesión.
+
+```json
+{
+  "success": true,
+  "message": "La contraseña ha sido restablecida con éxito."
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Retornado si el token está vacío o si la contraseña no cumple con los requisitos mínimos de seguridad de Zod.
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "code": "too_small",
+      "minimum": 8,
+      "message": "La contraseña debe tener al menos 8 caracteres",
+      "path": ["newPassword"]
+    }
+  ]
+}
+```
+
+##### No Autorizado / Expirado (HTTP 401 Unauthorized)
+
+Retornado cuando el token JWT es inválido, ha sido manipulado, o ha expirado su ventana de vida de 15 minutos.
+
+**Ejemplo Expirado:**
+
+```json
+{
+  "success": false,
+  "error": "El enlace de recuperación ha expirado. Por favor, solicita uno nuevo."
+}
+```
+
+**Ejemplo Inválido:**
+
+```json
+{
+  "success": false,
+  "error": "El token de recuperación no es válido o ya fue utilizado."
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+
+Retornado si el token es estructuralmente válido pero el identificador del usuario no existe en la base de datos (usuario eliminado recientemente).
+
+```json
+{
+  "success": false,
+  "error": "Usuario no encontrado"
 }
 ```
