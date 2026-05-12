@@ -10,6 +10,9 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/auth/login](#post-apiv1authlogin)
   - [POST /api/v1/auth/forgot-password](#post-apiv1authforgotpassword)
   - [POST /api/v1/auth/reset-password](#post-apiv1authresetpassword)
+- [Control de Acceso por Roles (RBAC)](#control-de-acceso-por-roles-rbac)
+  - [POST /api/v1/roles](#post-apiv1roles)
+  - [PUT /api/v1/users/:id/role](#put-apiv1usersidrole)
 
 ---
 
@@ -21,7 +24,7 @@ Permite registrar una nueva cuenta de usuario en la plataforma. Por defecto, el 
 
 #### 1. Especificación del Endpoint
 
-| Método | Ruta                    | Autenticación     | Rol Requerido |
+| Método | Ruta                     | Autenticación     | Rol Requerido |
 | :----- | :---------------------- | :---------------- | :------------ |
 | `POST` | `/api/v1/auth/register` | Ninguna (Público) | Invitado      |
 
@@ -127,9 +130,9 @@ Permite activar una cuenta de usuario ingresando el código PIN numérico de 6 d
 
 **Detalle de Campos:**
 
-| Parámetro | Tipo     | Requerido | Reglas de Validación                                                    |
-| :-------- | :------- | :-------- | :---------------------------------------------------------------------- |
-| `email`   | `string` | Sí        | Debe coincidir con el correo registrado.                                |
+| Parámetro | Tipo     | Requerido | Reglas de Validación                                                     |
+| :-------- | :------- | :-------- | :----------------------------------------------------------------------- |
+| `email`   | `string` | Sí        | Debe coincidir con el correo registrado.                                 |
 | `pin`     | `string` | Sí        | Exactamente 6 caracteres numéricos. Corresponde al OTP enviado a email. |
 
 #### 3. Respuestas (Responses)
@@ -350,9 +353,9 @@ Permite establecer una nueva contraseña en la cuenta del usuario validando prev
 
 **Detalle de Campos:**
 
-| Parámetro     | Tipo     | Requerido | Reglas de Validación                                                                  |
-| :------------ | :------- | :-------- | :------------------------------------------------------------------------------------ |
-| `token`       | `string` | Sí        | El token JWT enviado al correo. No debe estar vacío ni expirado.                      |
+| Parámetro     | Tipo     | Requerido | Reglas de Validación                                                                                                  |
+| :------------ | :------- | :-------- | :-------------------------------------------------------------------------------------------------------------------- |
+| `token`       | `string` | Sí        | El token JWT enviado al correo. No debe estar vacío ni expirado.                                                      |
 | `newPassword` | `string` | Sí        | Mínimo 8 caracteres. Debe contener al menos una letra mayúscula y al menos un número. No puede ser igual a la contraseña actual. |
 
 #### 3. Respuestas (Responses)
@@ -416,5 +419,138 @@ Retornado si el token es estructuralmente válido pero el identificador del usua
 {
   "success": false,
   "error": "Usuario no encontrado"
+}
+```
+
+---
+
+## Control de Acceso por Roles (RBAC)
+
+Este módulo administrativo gestiona el catálogo global de roles y la vinculación dinámica con las identidades de usuario, aplicando controles de seguridad estrictos de tipo privilegio mínimo.
+
+### POST /api/v1/roles
+
+Permite registrar una nueva definición de Rol en el catálogo central del sistema. Útil para escalar perfiles administrativos como Vendedores, Supervisores o Gestores.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta            | Autenticación       | Permiso Requerido |
+| :----- | :-------------- | :------------------ | :---------------- |
+| `POST` | `/api/v1/roles` | JWT `Bearer Token` | `roles:manage`    |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "name": "SELLER",
+  "description": "Acceso al panel de inventarios y ventas"
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro     | Tipo     | Requerido | Reglas de Validación                                                                             |
+| :------------ | :------- | :-------- | :----------------------------------------------------------------------------------------------- |
+| `name`        | `string` | Sí        | Mínimo 3 caracteres, Máximo 50. Se transformará automáticamente a mayúsculas para normalización. |
+| `description` | `string` | No        | Máximo 255 caracteres. Opcional.                                                                 |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 201 Created)
+
+Retornado cuando el Rol fue validado, es único y fue correctamente persistido.
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 2,
+    "name": "SELLER",
+    "description": "Acceso al panel de inventarios y ventas",
+    "createdAt": "2026-05-12T16:50:00.000Z",
+    "updatedAt": "2026-05-12T16:50:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Falla sintáctica del payload de entrada detectada por Zod.
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "message": "El nombre del rol debe tener al menos 3 caracteres",
+      "path": ["name"]
+    }
+  ]
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+* **HTTP 401 Unauthorized**: Si falta el Token, es inválido o ha expirado.
+* **HTTP 403 Forbidden**: Si el usuario está inactivo o carece del permiso administrativo `roles:manage`.
+
+##### Conflicto (HTTP 409 Conflict)
+
+Retornado si se intenta crear un nombre de rol que ya se encuentra ocupado.
+
+```json
+{
+  "success": false,
+  "error": "El rol 'SELLER' ya existe en el sistema"
+}
+```
+
+---
+
+### PUT /api/v1/users/:id/role
+
+Permite asignar un rol existente del catálogo a un usuario específico del sistema mediante su identificador numérico.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                         | Autenticación       | Permiso Requerido |
+| :----- | :--------------------------- | :------------------ | :---------------- |
+| `PUT`  | `/api/v1/users/:id/role` | JWT `Bearer Token` | `roles:manage`    |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "roleName": "SELLER"
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro  | Tipo     | Requerido | Reglas de Validación                                                |
+| :--------- | :------- | :-------- | :------------------------------------------------------------------ |
+| `roleName` | `string` | Sí        | Nombre exacto del rol que se desea vincular a la cuenta de usuario. |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+La vinculación relacional se ha completado satisfactoriamente en la base de datos.
+
+```json
+{
+  "success": true,
+  "message": "Rol 'SELLER' asignado exitosamente al usuario."
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+
+Emitido cuando el `id` de usuario en la URL no pertenece a ningún registro activo, o el `roleName` especificado no existe en el catálogo de Roles.
+
+```json
+{
+  "success": false,
+  "error": "El rol 'SELLER' no está definido en el sistema"
 }
 ```
