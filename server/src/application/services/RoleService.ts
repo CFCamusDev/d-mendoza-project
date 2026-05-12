@@ -1,5 +1,6 @@
 import { IRoleRepository } from '@domain/repositories/IRoleRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
+import { Role, CreateRoleDTO } from '@domain/entities/Role';
 
 /**
  * Application Service: Gestiona la lógica de negocio del control de acceso (HU-004).
@@ -10,6 +11,20 @@ export class RoleService {
     private readonly roleRepository: IRoleRepository,
     private readonly userRepository: IUserRepository
   ) {}
+
+  /**
+   * Crea un nuevo rol en el sistema validando la unicidad de su nombre.
+   */
+  async createRole(dto: CreateRoleDTO): Promise<Role> {
+    // 1. Validar si el nombre del rol ya está tomado
+    const existingRole = await this.roleRepository.findByName(dto.name);
+    if (existingRole) {
+      throw new Error(`El rol '${dto.name}' ya existe en el sistema`);
+    }
+
+    // 2. Proceder con la persistencia
+    return await this.roleRepository.create(dto);
+  }
 
   /**
    * Asigna un rol a un usuario validando existencias previas.

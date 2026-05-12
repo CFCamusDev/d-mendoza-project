@@ -22,6 +22,16 @@ export class PrismaRoleRepository implements IRoleRepository {
     return record as Role | null;
   }
 
+  async create(data: { name: string; description?: string | null }): Promise<Role> {
+    const record = await prisma.role.create({
+      data: {
+        name: data.name,
+        description: data.description ?? null,
+      },
+    });
+    return record as Role;
+  }
+
   /**
    * Utiliza la operación 'connect' de Prisma para gestionar relaciones many-to-many
    * sin sobreescribir o resetear otros roles que ya posea el usuario.

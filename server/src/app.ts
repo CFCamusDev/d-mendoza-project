@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import authRoutes from '@infrastructure/http/routes/auth.routes';
+import rbacRoutes from '@infrastructure/http/routes/role.routes';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 
 // Rutas base (se expandirá con la arquitectura hexagonal)
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1', rbacRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });
