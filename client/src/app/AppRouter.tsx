@@ -3,6 +3,8 @@ import RegisterPage from '../features/ecommerce/auth/RegisterPage';
 import VerifyPage from '../features/ecommerce/auth/VerifyPage';
 import LoginPage from '../features/ecommerce/auth/LoginPage';
 import HomePage from '../features/ecommerce/HomePage';
+import UnauthorizedPage from '../features/admin/UnauthorizedPage';
+import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 
 export const AppRouter = () => {
   return (
@@ -10,14 +12,31 @@ export const AppRouter = () => {
       {/* Main Entry Point */}
       <Route path="/" element={<HomePage />} />
 
+      {/* Public / Unprotected Routes */}
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
       {/* Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify" element={<VerifyPage />} />
 
-      {/* Other Roles Placeholders */}
-      <Route path="/admin" element={<HomePage />} />
-      <Route path="/pos" element={<HomePage />} />
+      {/* Restricted Routes (Protected by RBAC) */}
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <HomePage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/pos" 
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
+            <HomePage />
+          </ProtectedRoute>
+        } 
+      />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
