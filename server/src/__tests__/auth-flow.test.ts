@@ -10,12 +10,14 @@ import { User } from '@domain/entities/User';
 const mockUserRepository: jest.Mocked<IUserRepository> = {
   findById: jest.fn<IUserRepository['findById']>(),
   findByEmail: jest.fn<IUserRepository['findByEmail']>(),
+  findByGoogleId: jest.fn<IUserRepository['findByGoogleId']>(),
   create: jest.fn<IUserRepository['create']>(),
   updateLastLogin: jest.fn<IUserRepository['updateLastLogin']>(),
   updateVerificationPin: jest.fn<IUserRepository['updateVerificationPin']>(),
   deleteById: jest.fn<IUserRepository['deleteById']>(),
   activateUser: jest.fn<IUserRepository['activateUser']>(),
   updatePassword: jest.fn<IUserRepository['updatePassword']>(),
+  updateGoogleId: jest.fn<IUserRepository['updateGoogleId']>(),
 };
 
 const mockEmailService: jest.Mocked<IEmailService> = {
@@ -28,6 +30,7 @@ const buildUser = (overrides: Partial<User> = {}): User => ({
   email: 'test@dmendoza.com',
   name: 'Test User',
   password: '$2b$12$hashedpassword',
+  authProvider: 'local',
   lastLogin: null,
   isActive: false,
   verificationPin: '123456',
