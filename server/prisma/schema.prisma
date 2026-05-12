@@ -16,6 +16,9 @@ model User {
   email     String     @unique
   name      String?
   password  String
+  googleId      String?    @unique
+  avatarUrl     String?
+  authProvider  String     @default("local") // "local" | "google"
   lastLogin       DateTime?
   isActive        Boolean    @default(false)
   verificationPin String?

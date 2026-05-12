@@ -2,17 +2,20 @@ import { Resend } from 'resend';
 import { IEmailService } from '@domain/services/IEmailService';
 
 export class ResendEmailService implements IEmailService {
-  private resend: Resend;
+  private resend: Resend | null;
   private readonly defaultFrom = 'DMendoza <onboarding@resend.dev>'; // Cambiar a noreply@techinnovats.com cuando esté validado en Resend
 
   constructor() {
-    const apiKey = process.env.RESEND_API_KEY || '';
-    this.resend = new Resend(apiKey);
+    const apiKey = process.env.RESEND_API_KEY;
+    if (apiKey && apiKey !== 're_1234567890_placeholder') {
+      this.resend = new Resend(apiKey);
+    } else {
+      this.resend = null;
+    }
   }
 
   async sendEmail(to: string, subject: string, html: string): Promise<void> {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey || apiKey === 're_1234567890_placeholder') {
+    if (!this.resend) {
       console.log('--- SIMULACIÓN DE ENVÍO DE EMAIL ---');
       console.log(`To: ${to}`);
       console.log(`Subject: ${subject}`);

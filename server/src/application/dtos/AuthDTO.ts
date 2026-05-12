@@ -44,3 +44,14 @@ export const ResetPasswordDTOSchema = z.object({
 });
 
 export type ResetPasswordDTO = z.infer<typeof ResetPasswordDTOSchema>;
+
+/**
+ * DTO para el perfil recibido desde Google OAuth 2.0 (HU-001 / T-033).
+ * Se construye a partir del profile de Passport, no del request body.
+ */
+export interface GoogleProfileDTO {
+  googleId: string;
+  email: string;
+  name: string;
+  avatarUrl?: string;
+}

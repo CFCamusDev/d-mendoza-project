@@ -42,6 +42,11 @@ export class LoginUseCase {
       throw new Error('Credenciales inválidas');
     }
 
+    // Guard: user registered via Google OAuth — has a random password they don't know
+    if (user.authProvider === 'google') {
+      throw new Error('Esta cuenta fue registrada con Google. Usa "Continuar con Google" para iniciar sesión.');
+    }
+
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
     if (!isPasswordValid) {
       throw new Error('Credenciales inválidas');

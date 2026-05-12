@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import passport from 'passport';
 import { AuthController } from '@infrastructure/http/controllers/AuthController';
 
 const router = Router();
@@ -18,5 +19,21 @@ router.post('/forgot-password', authController.forgotPassword);
 
 // Reset password endpoint (HU-003 / T-028)
 router.post('/reset-password', authController.resetPassword);
+
+// Google OAuth 2.0 — Initiate flow (HU-001 / T-033)
+router.get(
+  '/google',
+  passport.authenticate('google', { scope: ['profile', 'email'], session: false }),
+);
+
+// Google OAuth 2.0 — Callback (HU-001 / T-033)
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
+  authController.googleCallback,
+);
+
+// Session extraction from cookie (HU-001 / T-036)
+router.get('/me', authController.me);
 
 export default router;
