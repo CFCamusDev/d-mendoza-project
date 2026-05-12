@@ -1,6 +1,8 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { useEffect } from 'react';
 import { LoginForm } from './components/LoginForm';
+import { GoogleLoginButton } from './components/GoogleLoginButton';
 import { useLogin } from './hooks/useLogin';
 import { useAuth } from '@/shared/context/AuthContext';
 import type { LoginFormData } from './schemas/login.schema';
@@ -10,8 +12,16 @@ import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 export default function LoginPage() {
   useDocumentTitle('Iniciar sesión');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login: loginHook, isLoading } = useLogin();
   const auth = useAuth();
+
+  // Show error toast if redirected from failed OAuth (HU-001)
+  useEffect(() => {
+    if (searchParams.get('error') === 'oauth_failed') {
+      toast.error('Error al iniciar sesión con Google. Inténtalo nuevamente.');
+    }
+  }, [searchParams]);
 
   const handleLogin = async (data: LoginFormData) => {
     try {
@@ -32,9 +42,14 @@ export default function LoginPage() {
         // CLIENT or unknown → e-commerce home
         navigate('/');
       }
-    } catch {
-      // Generic error — intentionally no field detail revealed (security)
-      toast.error('Credenciales inválidas. Por favor verifica tu correo y contraseña.');
+    } catch (err: any) {
+      // Show specific message for Google-only accounts
+      if (err.message?.includes('registrada con Google')) {
+        toast.error(err.message);
+      } else {
+        // Generic error — intentionally no field detail revealed (security)
+        toast.error('Credenciales inválidas. Por favor verifica tu correo y contraseña.');
+      }
     }
   };
 
@@ -63,6 +78,18 @@ export default function LoginPage() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+
+          {/* OAuth Separator (HU-001 / T-035) */}
+          <div className="mt-6 flex items-center">
+            <div className="flex-1 border-t border-gray-300" />
+            <span className="px-4 text-sm text-gray-500">o</span>
+            <div className="flex-1 border-t border-gray-300" />
+          </div>
+
+          {/* Google OAuth Button (HU-001 / T-035) */}
+          <div className="mt-6">
+            <GoogleLoginButton />
+          </div>
         </div>
       </div>
     </div>
