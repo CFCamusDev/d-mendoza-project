@@ -13,4 +13,10 @@ router.post('/verify', authController.verify);
 // Login endpoint (HU-094 / T-022)
 router.post('/login', authController.login);
 
+// Forgot password endpoint (HU-003 / T-027)
+router.post('/forgot-password', authController.forgotPassword);
+
+// Reset password endpoint (HU-003 / T-028)
+router.post('/reset-password', authController.resetPassword);
+
 export default router;

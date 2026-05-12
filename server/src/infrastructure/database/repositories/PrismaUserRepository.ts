@@ -68,6 +68,13 @@ export class PrismaUserRepository implements IUserRepository {
     });
   }
 
+  async updatePassword(userId: number, passwordHash: string): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: passwordHash },
+    });
+  }
+
   /**
    * Mapea el registro de Prisma a la entidad del dominio,
    * desacoplando los tipos de Prisma del dominio.
