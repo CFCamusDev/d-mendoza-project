@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import RegisterPage from '../features/ecommerce/auth/RegisterPage';
 import VerifyPage from '../features/ecommerce/auth/VerifyPage';
 import LoginPage from '../features/ecommerce/auth/LoginPage';
+import ForgotPasswordPage from '../features/ecommerce/auth/ForgotPasswordPage';
+import ResetPasswordPage from '../features/ecommerce/auth/ResetPasswordPage';
 import HomePage from '../features/ecommerce/HomePage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
@@ -19,6 +21,8 @@ export const AppRouter = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify" element={<VerifyPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Restricted Routes (Protected by RBAC) */}
       <Route 

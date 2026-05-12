@@ -64,4 +64,35 @@ export class JwtService {
   verifyRefreshToken(token: string): { userId: number } {
     return jwt.verify(token, this.refreshSecret) as { userId: number };
   }
+
+  /**
+   * HU-003: Generates a short-lived password reset token (15 min).
+   * Payload includes userId and email for server-side validation.
+   * Signed with JWT_SECRET to ensure it cannot be forged.
+   */
+  generatePasswordResetToken(userId: number, email: string): string {
+    return jwt.sign(
+      { userId, email, purpose: 'password-reset' },
+      this.accessSecret,
+      { expiresIn: '15m' },
+    );
+  }
+
+  /**
+   * HU-003: Verifies a password reset token.
+   * Returns the decoded payload or throws if expired / invalid.
+   */
+  verifyPasswordResetToken(token: string): { userId: number; email: string; purpose: string } {
+    const payload = jwt.verify(token, this.accessSecret) as {
+      userId: number;
+      email: string;
+      purpose: string;
+    };
+
+    if (payload.purpose !== 'password-reset') {
+      throw new Error('Token inválido');
+    }
+
+    return payload;
+  }
 }
