@@ -1,5 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Setup environment loader dynamically bridging to workspace root configuration
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const prisma = new PrismaClient();
 
@@ -68,11 +73,16 @@ async function main() {
   // ------------------------------------------------------------------
   // 3. Seed Bootstrapping Admin User
   // ------------------------------------------------------------------
-  const adminEmail = 'admin@dmendoza.com';
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  const rawPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!adminEmail || !rawPassword) {
+    throw new Error('Missing required environment variables for seed (adminEmail or rawPassword).');
+  }
+
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
 
   if (!existingAdmin) {
-    const hashedPassword = await bcrypt.hash('AdminPass123!', 12);
+    const hashedPassword = await bcrypt.hash(rawPassword, 12);
     await prisma.user.create({
       data: {
         email: adminEmail,
