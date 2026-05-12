@@ -3,7 +3,7 @@ import { IRoleRepository } from '@domain/repositories/IRoleRepository';
 import { Role } from '@domain/entities/Role';
 
 /**
- * Adapter de Infraestructura: Repositorio concreto para manejo de Roles usando Prisma.
+ * Infrastructure Adapter: Concrete repository implementing persistent Role handling via Prisma client.
  */
 export class PrismaRoleRepository implements IRoleRepository {
   async findByName(name: string): Promise<Role | null> {
@@ -33,8 +33,8 @@ export class PrismaRoleRepository implements IRoleRepository {
   }
 
   /**
-   * Utiliza la operación 'connect' de Prisma para gestionar relaciones many-to-many
-   * sin sobreescribir o resetear otros roles que ya posea el usuario.
+   * Leverages native Prisma 'connect' atomic operation managing granular many-to-many relational bridges
+   * without overwriting or clobbering pre-existing active user role affiliations.
    */
   async assignRoleToUser(userId: number, roleId: number): Promise<void> {
     await prisma.user.update({

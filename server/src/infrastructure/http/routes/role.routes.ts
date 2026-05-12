@@ -5,7 +5,7 @@ import { requirePermission } from '@infrastructure/http/middlewares/auth.middlew
 const router = Router();
 const roleController = new RoleController();
 
-// PROTECCIÓN GLOBAL RBAC: Todo este set de rutas exige permiso administrativo (roles:manage)
+// GLOBAL RBAC PROTECTION: Enforce universal administrative access requirement (roles:manage) across routing table
 const secureRbac = requirePermission('roles:manage');
 
 /**
