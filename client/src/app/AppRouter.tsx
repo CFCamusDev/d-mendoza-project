@@ -4,6 +4,7 @@ import VerifyPage from '../features/ecommerce/auth/VerifyPage';
 import LoginPage from '../features/ecommerce/auth/LoginPage';
 import ForgotPasswordPage from '../features/ecommerce/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../features/ecommerce/auth/ResetPasswordPage';
+import GoogleAuthSuccessPage from '../features/ecommerce/auth/GoogleAuthSuccessPage';
 import HomePage from '../features/ecommerce/HomePage';
 
 export const AppRouter = () => {
@@ -18,6 +19,9 @@ export const AppRouter = () => {
       <Route path="/verify" element={<VerifyPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+      {/* Google OAuth Success Redirect (HU-001 / T-036) */}
+      <Route path="/auth/google/success" element={<GoogleAuthSuccessPage />} />
 
       {/* Other Roles Placeholders */}
       <Route path="/admin" element={<HomePage />} />
