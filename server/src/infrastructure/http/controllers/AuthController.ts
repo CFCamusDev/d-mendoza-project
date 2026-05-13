@@ -12,10 +12,8 @@ import {
   LoginDTOSchema,
   ForgotPasswordDTOSchema,
   ResetPasswordDTOSchema,
-  RefreshTokenDTOSchema,
   GoogleProfileDTO,
 } from '@application/dtos/AuthDTO';
-import { RefreshTokenUseCase } from '@application/use-cases/auth/RefreshTokenUseCase';
 import { PrismaUserRepository } from '@infrastructure/database/repositories/PrismaUserRepository';
 import { ResendEmailService } from '@infrastructure/services/ResendEmailService';
 import { JwtService } from '@infrastructure/services/JwtService';
@@ -31,7 +29,6 @@ const loginUseCase = new LoginUseCase(userRepository, jwtService);
 const forgotPasswordUseCase = new ForgotPasswordUseCase(userRepository, emailService, jwtService);
 const resetPasswordUseCase = new ResetPasswordUseCase(userRepository, jwtService);
 const googleLoginUseCase = new GoogleLoginUseCase(userRepository, jwtService);
-const refreshTokenUseCase = new RefreshTokenUseCase(userRepository, jwtService);
 
 export class AuthController {
   async register(req: Request, res: Response) {
@@ -236,51 +233,6 @@ export class AuthController {
         success: false,
         error: 'Internal server error',
       });
-    }
-  }
-
-  /**
-   * RSK-001 / T-043: Sliding-window token refresh.
-   * Accepts a valid refresh token and returns a new access + refresh pair,
-   * resetting the 7-day sliding window on every use.
-   */
-  async refresh(req: Request, res: Response) {
-    try {
-      const validationResult = RefreshTokenDTOSchema.safeParse(req.body);
-      if (!validationResult.success) {
-        return res.status(400).json({
-          success: false,
-          error: validationResult.error.issues,
-        });
-      }
-
-      const tokens = await refreshTokenUseCase.execute(validationResult.data.refreshToken);
-
-      return res.status(200).json({
-        success: true,
-        data: { tokens },
-      });
-    } catch (error: any) {
-      if (error.name === 'TokenExpiredError') {
-        return res.status(401).json({
-          success: false,
-          error: 'Sesión expirada: el refresh token ya no es válido',
-        });
-      }
-
-      if (error.name === 'JsonWebTokenError') {
-        return res.status(401).json({
-          success: false,
-          error: 'Refresh token inválido',
-        });
-      }
-
-      if (error.message === 'Cuenta inactiva' || error.message === 'Usuario no encontrado') {
-        return res.status(403).json({ success: false, error: error.message });
-      }
-
-      console.error('[AuthController.refresh] Error:', error);
-      return res.status(500).json({ success: false, error: 'Internal server error' });
     }
   }
 

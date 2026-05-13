@@ -32,15 +32,6 @@ async function main() {
     },
   });
 
-  const permissionUsersWrite = await prisma.permission.upsert({
-    where: { name: 'users:write' },
-    update: {},
-    create: {
-      name: 'users:write',
-      description: 'Capacidad para activar/desactivar y modificar cuentas de usuario.',
-    },
-  });
-
   console.log('✅ Master permissions registered.');
 
   // ------------------------------------------------------------------
@@ -53,7 +44,6 @@ async function main() {
         connect: [
           { id: permissionRolesManage.id },
           { id: permissionUsersRead.id },
-          { id: permissionUsersWrite.id },
         ],
       },
     },
@@ -64,7 +54,6 @@ async function main() {
         connect: [
           { id: permissionRolesManage.id },
           { id: permissionUsersRead.id },
-          { id: permissionUsersWrite.id },
         ],
       },
     },
