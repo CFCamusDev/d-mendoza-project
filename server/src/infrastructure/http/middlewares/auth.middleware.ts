@@ -1,0 +1,113 @@
+import { Request, Response, NextFunction } from 'express';
+import { JwtService } from '@infrastructure/services/JwtService';
+import prisma from '@infrastructure/database/prisma';
+
+const jwtService = new JwtService();
+
+// Extension to Express.Request interface ensuring seamless access to verified user contextual meta.
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: number;
+        email: string;
+        role: string;
+      };
+    }
+  }
+}
+
+/**
+ * Factory function producing a reusable access-control middleware (HU-004 / T-039).
+ * First validates JWT authentication integrity, and then cascades evaluation checking
+ * dynamic User -> Role -> Permission associations directly against Prisma persistence.
+ *
+ * @param requiredPermission String uniquely identifying the required capability (e.g., "users:write")
+ */
+export const requirePermission = (requiredPermission: string) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // 1. Extract Authorization Header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          error: 'Acceso no autorizado: Token faltante o con formato incorrecto',
+        });
+      }
+
+      const token = authHeader.split(' ')[1];
+
+      // 2. Verify JWT (throws internal errors like TokenExpiredError or JsonWebTokenError if failing)
+      const payload = jwtService.verifyAccessToken(token);
+
+      // Attach user stub to request context so controllers downstream can identify executing principal
+      req.user = {
+        id: payload.userId,
+        email: payload.email,
+        role: payload.role,
+      };
+
+      // 3. Fetch deep relational tree: User -> Roles -> Permissions
+      const dbUser = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        include: {
+          roles: {
+            include: {
+              permissions: true,
+            },
+          },
+        },
+      });
+
+      if (!dbUser) {
+        return res.status(401).json({
+          success: false,
+          error: 'Usuario no encontrado o sesión revocada',
+        });
+      }
+
+      if (!dbUser.isActive) {
+        return res.status(403).json({
+          success: false,
+          error: 'Acceso denegado: La cuenta se encuentra inactiva',
+        });
+      }
+
+      // 4. Iterate aggregated permission matrices to solve RBAC challenge
+      let hasRight = false;
+      for (const role of dbUser.roles) {
+        const matchingPermission = role.permissions.some(
+          (permission) => permission.name === requiredPermission,
+        );
+        if (matchingPermission) {
+          hasRight = true;
+          break;
+        }
+      }
+
+      if (!hasRight) {
+        return res.status(403).json({
+          success: false,
+          error: `Acceso denegado: Se requiere el permiso '${requiredPermission}'`,
+        });
+      }
+
+      // Explicit allowed state achieved.
+      next();
+    } catch (error: any) {
+      if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          error: 'Sesión expirada: Por favor, inicie sesión nuevamente',
+        });
+      }
+
+      // General JWT manipulation or signature failures
+      return res.status(401).json({
+        success: false,
+        error: 'Acceso denegado: Token de autenticación inválido',
+      });
+    }
+  };
+};
