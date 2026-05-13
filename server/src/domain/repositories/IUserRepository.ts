@@ -15,7 +15,5 @@ export interface IUserRepository {
   activateUser(userId: number): Promise<void>;
   updatePassword(userId: number, passwordHash: string): Promise<void>;
   updateGoogleId(userId: number, googleId: string, avatarUrl?: string): Promise<void>;
-  /** HU-009 / T-049: Enable or disable a user account (admin operation). */
-  updateStatus(userId: number, isActive: boolean): Promise<void>;
 }
 

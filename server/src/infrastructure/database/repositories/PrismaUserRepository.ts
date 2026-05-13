@@ -87,16 +87,6 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   /**
-   * HU-009 / T-049: Toggles the isActive flag for admin-driven status management.
-   * The isActive field (Boolean, default false) was introduced in migration
-   * 20260510093523_add_user_is_active. This method exposes it as a writable
-   * operation for the admin status endpoint (T-050).
-   */
-  async updateStatus(userId: number, isActive: boolean): Promise<void> {
-    await prisma.user.update({ where: { id: userId }, data: { isActive } });
-  }
-
-  /**
    * HU-001: Vincula un Google ID a un usuario existente (email match).
    */
   async updateGoogleId(userId: number, googleId: string, avatarUrl?: string): Promise<void> {
