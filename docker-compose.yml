@@ -8,6 +8,7 @@ services:
       MARIADB_DATABASE: ${DB_DATABASE}
       MARIADB_USER: ${DB_USER}
       MARIADB_PASSWORD: ${DB_PASSWORD}
+      
     volumes:
       - db_data:/var/lib/mysql
     networks:

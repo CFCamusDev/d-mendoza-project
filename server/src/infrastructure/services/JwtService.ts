@@ -25,6 +25,13 @@ export class JwtService {
     const refreshSecret = process.env.JWT_REFRESH_SECRET;
 
     if (!accessSecret || !refreshSecret) {
+      if (process.env.NODE_ENV === 'test') {
+        // Provide dummy secrets for tests to avoid crashing the app on boot
+        this.accessSecret = 'test_access_secret';
+        this.refreshSecret = 'test_refresh_secret';
+        return;
+      }
+
       throw new Error(
         'JWT_SECRET and JWT_REFRESH_SECRET must be defined in environment variables',
       );

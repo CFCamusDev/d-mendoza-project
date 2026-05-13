@@ -17,12 +17,23 @@ export class PrismaUserRepository implements IUserRepository {
     return record ? this.toDomain(record) : null;
   }
 
+  /**
+   * HU-001: Busca un usuario por su Google ID (OAuth).
+   */
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    const record = await prisma.user.findUnique({ where: { googleId } });
+    return record ? this.toDomain(record) : null;
+  }
+
   async create(data: CreateUserDTO): Promise<User> {
     const record = await prisma.user.create({
       data: {
         email: data.email,
         name: data.name ?? null,
         password: data.password,
+        googleId: data.googleId ?? null,
+        avatarUrl: data.avatarUrl ?? null,
+        authProvider: data.authProvider ?? 'local',
       },
     });
     return this.toDomain(record);
@@ -76,6 +87,20 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   /**
+   * HU-001: Vincula un Google ID a un usuario existente (email match).
+   */
+  async updateGoogleId(userId: number, googleId: string, avatarUrl?: string): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        googleId,
+        avatarUrl: avatarUrl ?? undefined,
+        authProvider: 'google',
+      },
+    });
+  }
+
+  /**
    * Mapea el registro de Prisma a la entidad del dominio,
    * desacoplando los tipos de Prisma del dominio.
    */
@@ -84,6 +109,9 @@ export class PrismaUserRepository implements IUserRepository {
     email: string;
     name: string | null;
     password: string;
+    googleId: string | null;
+    avatarUrl: string | null;
+    authProvider: string;
     lastLogin: Date | null;
     isActive: boolean;
     verificationPin: string | null;
@@ -96,6 +124,9 @@ export class PrismaUserRepository implements IUserRepository {
       email: record.email,
       name: record.name,
       password: record.password,
+      googleId: record.googleId,
+      avatarUrl: record.avatarUrl,
+      authProvider: record.authProvider,
       lastLogin: record.lastLogin,
       isActive: record.isActive,
       verificationPin: record.verificationPin,

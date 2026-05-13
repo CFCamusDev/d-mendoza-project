@@ -15,6 +15,9 @@ export interface AuthUser {
   id: string;
   email: string;
   role: UserRole;
+  name?: string;
+  avatarUrl?: string;
+  authProvider?: 'local' | 'google';
 }
 
 // Token pair returned on successful login

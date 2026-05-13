@@ -1,10 +1,19 @@
 import { Request, Response } from 'express';
+import { Profile } from 'passport-google-oauth20';
 import { RegisterUserUseCase } from '@application/use-cases/auth/RegisterUserUseCase';
 import { VerifyUserUseCase } from '@application/use-cases/auth/VerifyUserUseCase';
 import { LoginUseCase } from '@application/use-cases/auth/LoginUseCase';
 import { ForgotPasswordUseCase } from '@application/use-cases/auth/ForgotPasswordUseCase';
 import { ResetPasswordUseCase } from '@application/use-cases/auth/ResetPasswordUseCase';
-import { RegisterUserDTOSchema, VerifyUserDTOSchema, LoginDTOSchema, ForgotPasswordDTOSchema, ResetPasswordDTOSchema } from '@application/dtos/AuthDTO';
+import { GoogleLoginUseCase } from '@application/use-cases/auth/GoogleLoginUseCase';
+import {
+  RegisterUserDTOSchema,
+  VerifyUserDTOSchema,
+  LoginDTOSchema,
+  ForgotPasswordDTOSchema,
+  ResetPasswordDTOSchema,
+  GoogleProfileDTO,
+} from '@application/dtos/AuthDTO';
 import { PrismaUserRepository } from '@infrastructure/database/repositories/PrismaUserRepository';
 import { ResendEmailService } from '@infrastructure/services/ResendEmailService';
 import { JwtService } from '@infrastructure/services/JwtService';
@@ -19,6 +28,7 @@ const verifyUserUseCase = new VerifyUserUseCase(userRepository);
 const loginUseCase = new LoginUseCase(userRepository, jwtService);
 const forgotPasswordUseCase = new ForgotPasswordUseCase(userRepository, emailService, jwtService);
 const resetPasswordUseCase = new ResetPasswordUseCase(userRepository, jwtService);
+const googleLoginUseCase = new GoogleLoginUseCase(userRepository, jwtService);
 
 export class AuthController {
   async register(req: Request, res: Response) {
@@ -129,6 +139,11 @@ export class AuthController {
         return res.status(403).json({ success: false, error: error.message });
       }
 
+      // OAuth-only account trying email/password login → 403
+      if (error.message.includes('registrada con Google')) {
+        return res.status(403).json({ success: false, error: error.message });
+      }
+
       console.error('[AuthController.login] Error:', error);
       return res.status(500).json({
         success: false,
@@ -217,6 +232,100 @@ export class AuthController {
       return res.status(500).json({
         success: false,
         error: 'Internal server error',
+      });
+    }
+  }
+
+  /**
+   * HU-001 / T-033: Google OAuth callback handler.
+   * Receives the Google profile from Passport, executes GoogleLoginUseCase,
+   * sets JWT in httpOnly cookies, and redirects to frontend.
+   */
+  async googleCallback(req: Request, res: Response) {
+    try {
+      const profile = req.user as Profile;
+
+      const googleProfile: GoogleProfileDTO = {
+        googleId: profile.id,
+        email: profile.emails?.[0]?.value ?? '',
+        name: profile.displayName,
+        avatarUrl: profile.photos?.[0]?.value,
+      };
+
+      const result = await googleLoginUseCase.execute(googleProfile);
+
+      // Set JWT as httpOnly secure cookie
+      res.cookie('auth_token', result.tokens.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 15 * 60 * 1000, // 15 minutes
+        path: '/',
+      });
+
+      res.cookie('refresh_token', result.tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/',
+      });
+
+      // Redirect to frontend success page
+      return res.redirect(`${process.env.CORS_ORIGIN}/auth/google/success`);
+    } catch (error: any) {
+      console.error('[AuthController.googleCallback] Error:', error);
+      return res.redirect(`${process.env.CORS_ORIGIN}/login?error=oauth_failed`);
+    }
+  }
+
+  /**
+   * HU-001 / T-036: Session extraction from httpOnly cookie.
+   * Reads the auth cookie, verifies the JWT, and returns the session data.
+   * Clears the cookies after extraction (one-time use for frontend hydration).
+   */
+  async me(req: Request, res: Response) {
+    try {
+      const accessToken = req.cookies?.auth_token;
+      const refreshToken = req.cookies?.refresh_token;
+
+      if (!accessToken) {
+        return res.status(401).json({
+          success: false,
+          error: 'No hay sesión activa',
+        });
+      }
+
+      // Verify the access token
+      const payload = jwtService.verifyAccessToken(accessToken);
+
+      // Clear the cookies after extraction (one-time transfer to localStorage)
+      res.clearCookie('auth_token', { path: '/' });
+      res.clearCookie('refresh_token', { path: '/' });
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          user: {
+            id: payload.userId,
+            email: payload.email,
+            role: payload.role,
+          },
+          tokens: {
+            accessToken,
+            refreshToken: refreshToken || '',
+          },
+        },
+      });
+    } catch (error: any) {
+      // Clear invalid cookies
+      res.clearCookie('auth_token', { path: '/' });
+      res.clearCookie('refresh_token', { path: '/' });
+
+      console.error('[AuthController.me] Error:', error);
+      return res.status(401).json({
+        success: false,
+        error: 'Sesión inválida o expirada',
       });
     }
   }

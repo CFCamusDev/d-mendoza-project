@@ -12,10 +12,13 @@ datasource db {
 }
 
 model User {
-  id              Int        @id @default(autoincrement())
-  email           String     @unique
-  name            String?
-  password        String
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  name      String?
+  password  String
+  googleId      String?    @unique
+  avatarUrl     String?
+  authProvider  String     @default("local") // "local" | "google"
   lastLogin       DateTime?
   isActive        Boolean    @default(false)
   verificationPin String?
