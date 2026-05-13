@@ -14,9 +14,6 @@ router.post('/verify', authController.verify);
 // Login endpoint (HU-094 / T-022)
 router.post('/login', authController.login);
 
-// Token refresh with sliding window (RSK-001 / T-043)
-router.post('/refresh', authController.refresh.bind(authController));
-
 // Forgot password endpoint (HU-003 / T-027)
 router.post('/forgot-password', authController.forgotPassword);
 

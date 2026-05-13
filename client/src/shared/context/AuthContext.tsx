@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import type { AuthContextType, AuthUser, AuthTokens, JwtPayload } from '../types/auth.types';
-import { setupAxiosInterceptors } from '../api/axiosInstance';
 
 const STORAGE_ACCESS_KEY = 'auth_access_token';
 const STORAGE_REFRESH_KEY = 'auth_refresh_token';
@@ -61,16 +60,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   // Clear everything and reset state
-  const logout = useCallback(() => {
+  const logout = () => {
     localStorage.removeItem(STORAGE_ACCESS_KEY);
     localStorage.removeItem(STORAGE_REFRESH_KEY);
     setUser(null);
-  }, []);
-
-  // RSK-001 / T-044: Wire Axios interceptors once so the logout callback is stable
-  useEffect(() => {
-    setupAxiosInterceptors(logout);
-  }, [logout]);
+  };
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated: user !== null, login, logout }}>
