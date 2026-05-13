@@ -20,42 +20,16 @@ export default function GoogleAuthSuccessPage() {
       {isLoading && (
         <div className="flex flex-col items-center gap-4">
           {/* Spinner */}
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              border: '4px solid #e5e7eb',
-              borderTop: '4px solid #4285F4',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-            }}
-          />
+          <div className="w-12 h-12 border-4 border-gray-200 border-t-[#4285F4] rounded-full animate-spin" />
           <p className="text-brand-text text-lg font-medium">
             Iniciando sesión con Google...
           </p>
-          <style>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}</style>
         </div>
       )}
 
       {error && (
         <div className="flex flex-col items-center gap-4 text-center px-4">
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              backgroundColor: '#fee2e2',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '24px',
-            }}
-          >
+          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-2xl text-red-600">
             ✕
           </div>
           <p className="text-red-600 text-lg font-medium">{error}</p>

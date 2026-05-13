@@ -21,46 +21,8 @@ export const GoogleLoginButton = () => {
       id="google-login-button"
       type="button"
       onClick={handleGoogleLogin}
-      className="google-oauth-btn"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '12px',
-        width: '100%',
-        padding: '10px 16px',
-        backgroundColor: '#ffffff',
-        border: '1px solid #dadce0',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        fontSize: '14px',
-        fontFamily: "'Roboto', 'Arial', sans-serif",
-        fontWeight: 500,
-        color: '#3c4043',
-        transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
-        letterSpacing: '0.25px',
-        height: '44px',
-      }}
-      onMouseEnter={(e) => {
-        const target = e.currentTarget;
-        target.style.backgroundColor = '#f7f8f8';
-        target.style.boxShadow = '0 1px 3px rgba(60, 64, 67, 0.3), 0 1px 2px rgba(60, 64, 67, 0.15)';
-      }}
-      onMouseLeave={(e) => {
-        const target = e.currentTarget;
-        target.style.backgroundColor = '#ffffff';
-        target.style.boxShadow = 'none';
-      }}
-      onFocus={(e) => {
-        const target = e.currentTarget;
-        target.style.backgroundColor = '#f7f8f8';
-        target.style.boxShadow = '0 1px 3px rgba(60, 64, 67, 0.3), 0 1px 2px rgba(60, 64, 67, 0.15)';
-      }}
-      onBlur={(e) => {
-        const target = e.currentTarget;
-        target.style.backgroundColor = '#ffffff';
-        target.style.boxShadow = 'none';
-      }}
+      className="flex items-center justify-center gap-3 w-full px-4 py-[10px] bg-white border border-gray-300 rounded-lg cursor-pointer text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm focus:bg-gray-50 focus:shadow-sm focus:outline-none h-11 tracking-wide"
+      style={{ fontFamily: "'Roboto', 'Arial', sans-serif" }}
     >
       {/* Google "G" Logo — Official SVG */}
       <svg
