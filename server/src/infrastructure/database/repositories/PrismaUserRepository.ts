@@ -86,6 +86,11 @@ export class PrismaUserRepository implements IUserRepository {
     });
   }
 
+  /** HU-009 / T-049 */
+  async updateStatus(userId: number, isActive: boolean): Promise<void> {
+    await prisma.user.update({ where: { id: userId }, data: { isActive } });
+  }
+
   /**
    * HU-001: Vincula un Google ID a un usuario existente (email match).
    */
