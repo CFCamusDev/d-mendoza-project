@@ -91,6 +91,7 @@ const createMockRepository = (overrides: Partial<IUserRepository> = {}): IUserRe
   activateUser: jest.fn<IUserRepository['activateUser']>().mockResolvedValue(undefined),
   updatePassword: jest.fn<IUserRepository['updatePassword']>().mockResolvedValue(undefined),
   updateGoogleId: jest.fn<IUserRepository['updateGoogleId']>().mockResolvedValue(undefined),
+  updateStatus: jest.fn<IUserRepository['updateStatus']>().mockResolvedValue(undefined),
   ...overrides,
 });
 
