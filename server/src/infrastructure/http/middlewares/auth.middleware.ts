@@ -4,19 +4,6 @@ import prisma from '@infrastructure/database/prisma';
 
 const jwtService = new JwtService();
 
-// Extension to Express.Request interface ensuring seamless access to verified user contextual meta.
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: number;
-        email: string;
-        role: string;
-      };
-    }
-  }
-}
-
 /**
  * Factory function producing a reusable access-control middleware (HU-004 / T-039).
  * First validates JWT authentication integrity, and then cascades evaluation checking
@@ -41,9 +28,9 @@ export const requirePermission = (requiredPermission: string) => {
       // 2. Verify JWT (throws internal errors like TokenExpiredError or JsonWebTokenError if failing)
       const payload = jwtService.verifyAccessToken(token);
 
-      // Attach user stub to request context so controllers downstream can identify executing principal
-      req.user = {
-        id: payload.userId,
+      // Attach security principal context using the standardized architecture property
+      req.auth = {
+        userId: payload.userId,
         email: payload.email,
         role: payload.role,
       };
