@@ -27,6 +27,31 @@ model User {
   updatedAt       DateTime   @updatedAt
   auditLogs       AuditLog[]
   roles           Role[] // RBAC many-to-many relationship (HU-004)
+  employee        Employee?
+}
+
+model Employee {
+  id        Int      @id @default(autoincrement())
+  name      String
+  dni       String   @unique
+  isActive  Boolean  @default(true)
+  userId    Int?     @unique
+  user      User?    @relation(fields: [userId], references: [id])
+  branchId  Int
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Branch {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  address   String?
+  phone     String?
+  isActive  Boolean    @default(true)
+  employees Employee[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Role {
