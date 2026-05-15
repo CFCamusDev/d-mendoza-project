@@ -34,6 +34,7 @@ export class PrismaUserRepository implements IUserRepository {
         googleId: data.googleId ?? null,
         avatarUrl: data.avatarUrl ?? null,
         authProvider: data.authProvider ?? 'local',
+        isActive: data.isActive ?? false,
       },
     });
     return this.toDomain(record);

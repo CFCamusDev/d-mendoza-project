@@ -8,7 +8,9 @@ import rbacRoutes from '@infrastructure/http/routes/role.routes';
 import userRoutes from '@infrastructure/http/routes/user.routes';
 import employeeRoutes from '@infrastructure/http/routes/employee.routes';
 import branchRoutes from '@infrastructure/http/routes/branch.routes';
+import profileRoutes from '@infrastructure/http/routes/profile.routes';
 import { globalErrorHandler } from '@infrastructure/http/middlewares/error.middleware';
+import clientRoutes from '@infrastructure/http/routes/client.routes';
 
 const app = express();
 
@@ -36,6 +38,8 @@ app.use('/api/v1', rbacRoutes);
 app.use('/api/v1', userRoutes);
 app.use('/api/v1', employeeRoutes);
 app.use('/api/v1', branchRoutes);
+app.use('/api/v1', profileRoutes);
+app.use('/api/v1', clientRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });
