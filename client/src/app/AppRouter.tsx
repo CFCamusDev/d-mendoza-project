@@ -8,6 +8,7 @@ import GoogleAuthSuccessPage from '../features/ecommerce/auth/GoogleAuthSuccessP
 import HomePage from '../features/ecommerce/HomePage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
 import EmployeesPage from '../features/admin/EmployeesPage';
+import ClientLinkPage from '../features/admin/ClientLinkPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 
 export const AppRouter = () => {
@@ -43,6 +44,14 @@ export const AppRouter = () => {
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <EmployeesPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/clients/link" 
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ClientLinkPage />
           </ProtectedRoute>
         } 
       />
