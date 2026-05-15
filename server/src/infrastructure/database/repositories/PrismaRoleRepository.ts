@@ -32,6 +32,13 @@ export class PrismaRoleRepository implements IRoleRepository {
     return record as Role;
   }
 
+  async findAll(): Promise<Role[]> {
+    const records = await prisma.role.findMany({
+      include: { permissions: true },
+    });
+    return records as Role[];
+  }
+
   /**
    * Leverages native Prisma 'connect' atomic operation managing granular many-to-many relational bridges
    * without overwriting or clobbering pre-existing active user role affiliations.

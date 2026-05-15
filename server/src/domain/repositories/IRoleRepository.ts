@@ -6,7 +6,8 @@ import { Role } from '@domain/entities/Role';
 export interface IRoleRepository {
   findByName(roleName: string): Promise<Role | null>;
   findById(roleId: number): Promise<Role | null>;
-  create(role: { name: string; description?: string | null }): Promise<Role>;
+  create(data: { name: string; description?: string | null }): Promise<Role>;
+  findAll(): Promise<Role[]>;
   assignRoleToUser(userId: number, roleId: number): Promise<void>;
   revokeRoleFromUser(userId: number, roleId: number): Promise<void>;
 }

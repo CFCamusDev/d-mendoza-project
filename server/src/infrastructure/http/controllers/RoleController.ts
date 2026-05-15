@@ -84,4 +84,23 @@ export class RoleController {
       });
     }
   }
+
+  /**
+   * GET /api/v1/roles
+   */
+  async getRoles(_req: Request, res: Response) {
+    try {
+      const roles = await roleRepository.findAll();
+      return res.status(200).json({
+        success: true,
+        data: roles,
+      });
+    } catch (error: any) {
+      console.error('[RoleController.getRoles] Error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+      });
+    }
+  }
 }

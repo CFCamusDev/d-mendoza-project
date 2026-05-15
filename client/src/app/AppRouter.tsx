@@ -7,6 +7,7 @@ import ResetPasswordPage from '../features/ecommerce/auth/ResetPasswordPage';
 import GoogleAuthSuccessPage from '../features/ecommerce/auth/GoogleAuthSuccessPage';
 import HomePage from '../features/ecommerce/HomePage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
+import EmployeesPage from '../features/admin/EmployeesPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 
 export const AppRouter = () => {
@@ -34,6 +35,14 @@ export const AppRouter = () => {
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <HomePage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/employees" 
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <EmployeesPage />
           </ProtectedRoute>
         } 
       />
