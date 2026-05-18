@@ -39,14 +39,20 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    env_file:
-      - .env
     environment:
+      - NODE_ENV=${NODE_ENV}
+      - SERVER_PORT=${SERVER_PORT:-3000}
+      - CORS_ORIGIN=${CORS_ORIGIN}
       - DATABASE_URL=mysql://${DB_USER}:${DB_PASSWORD}@database:3306/${DB_DATABASE}
       - BCRYPT_SALT_ROUNDS=${BCRYPT_SALT_ROUNDS:-12}
       - RESEND_API_KEY=${RESEND_API_KEY}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - SEED_ADMIN_EMAIL=${SEED_ADMIN_EMAIL}
+      - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
     ports:
       - "${SERVER_PORT:-3000}:${SERVER_PORT:-3000}"
     networks:
@@ -72,8 +78,6 @@ services:
         - VITE_API_URL=${VITE_API_URL}
     container_name: client_service
     restart: unless-stopped
-    env_file:
-      - .env
     ports:
       - "${CLIENT_PORT:-5173}:80"
     networks:
@@ -93,10 +97,11 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    env_file:
-      - .env
     environment:
       - DB_HOST=database
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE}
     volumes:
       - backup_data:/backups
     networks:
