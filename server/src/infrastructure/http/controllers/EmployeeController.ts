@@ -52,11 +52,23 @@ export class EmployeeController {
         return res.status(400).json({ success: false, error: 'El DNI ya está registrado' });
       }
 
+      // Si se selecciona un rol pero no se proporciona userId, informamos el error lógico
+      if (roleId && !employeeData.userId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'No se puede asignar un rol a un empleado que no tiene una cuenta de usuario vinculada.' 
+        });
+      }
+
       const employee = await employeeRepository.create(employeeData);
 
-      // Si hay userId y roleId, vinculamos el rol
-      if (employee.userId && roleId) {
-        await roleRepository.assignRoleToUser(employee.userId, roleId);
+      // Sincronización de roles (Solo si tiene userId)
+      if (employee.userId) {
+        if (roleId) {
+          await roleRepository.assignRoleToUser(employee.userId, roleId);
+        } else {
+          await roleRepository.clearUserRoles(employee.userId);
+        }
       }
 
       return res.status(201).json({ success: true, data: employee });
@@ -76,9 +88,13 @@ export class EmployeeController {
       const { roleId, ...updateData } = validation.data;
       const employee = await employeeRepository.update(id, updateData);
 
-      // Si hay userId y roleId, vinculamos el rol
-      if (employee.userId && roleId) {
-        await roleRepository.assignRoleToUser(employee.userId, roleId);
+      // Sincronización de roles (Solo si tiene userId vinculado)
+      if (employee.userId) {
+        if (roleId) {
+          await roleRepository.assignRoleToUser(employee.userId, roleId);
+        } else {
+          await roleRepository.clearUserRoles(employee.userId);
+        }
       }
 
       return res.status(200).json({ success: true, data: employee });
