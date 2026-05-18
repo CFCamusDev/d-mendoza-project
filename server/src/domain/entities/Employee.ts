@@ -14,9 +14,11 @@ export interface CreateEmployeeDTO {
   dni: string;
   branchId: number;
   userId?: number | null;
+  roleId?: number | null;
 }
 
 export interface UpdateEmployeeDTO {
   name?: string;
   branchId?: number;
+  roleId?: number | null;
 }
