@@ -65,7 +65,7 @@ export const requirePermission = (requiredPermission: string) => {
       let hasRight = false;
       for (const role of dbUser.roles) {
         const matchingPermission = role.permissions.some(
-          (permission) => permission.name === requiredPermission,
+          (permission: any) => permission.name === requiredPermission
         );
         if (matchingPermission) {
           hasRight = true;

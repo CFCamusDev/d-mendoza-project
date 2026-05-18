@@ -6,6 +6,9 @@ import { configurePassport } from '@infrastructure/auth/passport.config';
 import authRoutes from '@infrastructure/http/routes/auth.routes';
 import rbacRoutes from '@infrastructure/http/routes/role.routes';
 import userRoutes from '@infrastructure/http/routes/user.routes';
+import employeeRoutes from '@infrastructure/http/routes/employee.routes';
+import branchRoutes from '@infrastructure/http/routes/branch.routes';
+import { globalErrorHandler } from '@infrastructure/http/middlewares/error.middleware';
 
 const app = express();
 
@@ -31,8 +34,13 @@ app.get('/api/health', (_req: Request, res: Response) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1', rbacRoutes);
 app.use('/api/v1', userRoutes);
+app.use('/api/v1', employeeRoutes);
+app.use('/api/v1', branchRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });
+
+// Error Handling (Must be after routes)
+app.use(globalErrorHandler);
 
 export default app;

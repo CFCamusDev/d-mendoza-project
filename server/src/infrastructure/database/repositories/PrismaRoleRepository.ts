@@ -32,16 +32,37 @@ export class PrismaRoleRepository implements IRoleRepository {
     return record as Role;
   }
 
+  async findAll(): Promise<Role[]> {
+    const records = await prisma.role.findMany({
+      include: { permissions: true },
+    });
+    return records as Role[];
+  }
+
   /**
-   * Leverages native Prisma 'connect' atomic operation managing granular many-to-many relational bridges
-   * without overwriting or clobbering pre-existing active user role affiliations.
+   * Reemplaza todos los roles del usuario por el nuevo rol especificado (Operation: SET)
+   * Esto evita la acumulación involuntaria de roles (HU-049 Fix).
    */
   async assignRoleToUser(userId: number, roleId: number): Promise<void> {
     await prisma.user.update({
       where: { id: userId },
       data: {
         roles: {
-          connect: { id: roleId },
+          set: [{ id: roleId }],
+        },
+      },
+    });
+  }
+
+  /**
+   * Remueve todos los roles asignados a un usuario (HU-049 Fix: Sin rol asignado).
+   */
+  async clearUserRoles(userId: number): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        roles: {
+          set: [],
         },
       },
     });

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { PrismaUserRepository } from '@infrastructure/database/repositories/PrismaUserRepository';
 import prisma from '@infrastructure/database/prisma';
@@ -16,7 +16,7 @@ export class UserController {
    * (enforced by requirePermission middleware in the route definition).
    * Registers the action in AuditLog for traceability.
    */
-  async updateStatus(req: Request, res: Response) {
+  async updateStatus(req: Request, res: Response, next: NextFunction) {
     // requirePermission sets req.user as { id, email, role } — cast to access it
     const adminUser = req.user as { id: number; email: string; role: string } | undefined;
 
@@ -68,8 +68,7 @@ export class UserController {
         data: { userId: targetId, isActive },
       });
     } catch (error: any) {
-      console.error('[UserController.updateStatus] Error:', error);
-      return res.status(500).json({ success: false, error: 'Internal server error' });
+      next(error);
     }
   }
 }
