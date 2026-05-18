@@ -8,19 +8,22 @@ RUN apt-get update -o Acquire::ForceIPv4=true && apt-get install -y -o Acquire::
     openssl python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
+# Instalar pnpm globalmente alineado con la versión del host
+RUN npm install -g pnpm@10.8.0
 
-# Instalar TODAS las dependencias (aumentando reintentos para redes inestables)
-RUN npm config set fetch-retries 5 && npm config set fetch-retry-mintimeout 20000 && npm ci --ignore-scripts
+COPY package.json pnpm-lock.yaml .npmrc ./
+
+# Instalar TODAS las dependencias usando pnpm (congelando versiones del lockfile)
+RUN pnpm config set fetch-retries 5 && pnpm config set fetch-retry-mintimeout 20000 && pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
 
-# Generar cliente de Prisma con variable dummy para evitar errores de validación
+# Generar cliente de Prisma
 ENV DATABASE_URL="mysql://dummy:dummy@localhost:3306/dummy"
-RUN npx prisma generate
+RUN pnpm prisma generate
 
 # Transpilar TypeScript a JavaScript
-RUN npm run build
+RUN pnpm run build
 
 # Stage 2: Production
 FROM node:20-slim AS production
@@ -31,16 +34,19 @@ RUN apt-get update -o Acquire::ForceIPv4=true && apt-get install -y -o Acquire::
     openssl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
+# Instalar pnpm globalmente para producción
+RUN npm install -g pnpm@10.8.0
 
-# Instalar SOLO dependencias de producción
-RUN npm config set fetch-retries 5 && npm config set fetch-retry-mintimeout 20000 && npm ci --omit=dev --ignore-scripts
+COPY package.json pnpm-lock.yaml .npmrc ./
+
+# Instalar SOLO dependencias de producción congeladas
+RUN pnpm config set fetch-retries 5 && pnpm config set fetch-retry-mintimeout 20000 && pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Copiar archivos necesarios desde el stage builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# Copiar el cliente Prisma generado (es crucial porque npm ci lo limpia)
+# Copiar el cliente Prisma generado (es crucial porque pnpm install --prod lo limpia)
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
