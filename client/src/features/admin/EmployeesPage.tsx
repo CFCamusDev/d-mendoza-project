@@ -2,15 +2,12 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
 import { 
-  UserPlus, 
   Search, 
   Loader2, 
   Edit2, 
-  Trash2, 
   CheckCircle, 
   XCircle,
   Plus,
-  Filter,
   Building2
 } from 'lucide-react';
 
@@ -106,14 +103,16 @@ export const EmployeesPage: React.FC = () => {
       if (editingEmployee) {
         await axiosInstance.put(`/v1/employees/${editingEmployee.id}`, {
           name: formData.name,
-          branchId: parseInt(formData.branchId)
+          branchId: parseInt(formData.branchId),
+          roleId: formData.roleId ? parseInt(formData.roleId) : null
         });
         toast.success('Empleado actualizado');
       } else {
         await axiosInstance.post('/v1/employees', {
           name: formData.name,
           dni: formData.dni,
-          branchId: parseInt(formData.branchId)
+          branchId: parseInt(formData.branchId),
+          roleId: formData.roleId ? parseInt(formData.roleId) : null
         });
         toast.success('Empleado creado');
       }
