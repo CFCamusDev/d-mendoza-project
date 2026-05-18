@@ -4,15 +4,13 @@ import prisma from '@infrastructure/database/prisma';
 
 const jwtService = new JwtService();
 
-// Extension to Express.Request interface ensuring seamless access to verified user contextual meta.
+// Extension to Express.User interface ensuring seamless access to verified user contextual meta.
 declare global {
   namespace Express {
-    interface Request {
-      user?: {
-        id: number;
-        email: string;
-        role: string;
-      };
+    interface User {
+      id: number | string;
+      email?: string;
+      role?: string;
     }
   }
 }

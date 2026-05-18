@@ -243,7 +243,7 @@ export class AuthController {
    */
   async googleCallback(req: Request, res: Response) {
     try {
-      const profile = req.user as Profile;
+      const profile = req.user as unknown as Profile;
 
       const googleProfile: GoogleProfileDTO = {
         googleId: profile.id,
