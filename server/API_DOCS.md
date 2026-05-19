@@ -13,6 +13,8 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Control de Acceso por Roles (RBAC)](#control-de-acceso-por-roles-rbac)
   - [POST /api/v1/roles](#post-apiv1roles)
   - [PUT /api/v1/users/:id/role](#put-apiv1usersidrole)
+- [Perfil de Cliente](#perfil-de-cliente)
+  - [PATCH /api/v1/profile](#patch-apiv1profile)
 
 ---
 
@@ -552,5 +554,97 @@ Emitido cuando el `id` de usuario en la URL no pertenece a ningún registro acti
 {
   "success": false,
   "error": "El rol 'SELLER' no está definido en el sistema"
+}
+```
+
+---
+
+## Perfil de Cliente
+
+Este módulo permite al cliente autenticado autogestionar su información personal, incluyendo la carga segura de su foto de perfil.
+
+### PATCH /api/v1/profile
+
+Actualiza la información de perfil del usuario autenticado (nombre, apellido, teléfono) y permite cargar una nueva imagen para su avatar. Soporta peticiones `multipart/form-data`.
+
+#### 1. Especificación del Endpoint
+
+| Método  | Ruta              | Autenticación       | Rol Requerido |
+| :------ | :---------------- | :------------------ | :------------ |
+| `PATCH` | `/api/v1/profile` | JWT `Bearer Token`  | Cliente       |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+Se espera una petición de tipo `multipart/form-data` con los siguientes campos opcionales:
+
+**Detalle de Campos:**
+
+| Campo      | Tipo     | Requerido | Reglas de Validación                                                                               |
+| :--------- | :------- | :-------- | :------------------------------------------------------------------------------------------------- |
+| `name`     | `string` | No        | Mínimo 2 caracteres, máximo 50. Nombre del cliente.                                                |
+| `lastName` | `string` | No        | Mínimo 2 caracteres, máximo 50. Apellido del cliente.                                              |
+| `phone`    | `string` | No        | Formato internacional E.164 obligatorio (debe coincidir con la expresión regular `^\+[1-9]\d{1,14}$`). |
+| `avatar`   | `file`   | No        | Archivo de imagen de tipo JPEG, PNG o WEBP. Tamaño máximo permitido: 5MB.                          |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+Retornado cuando los campos son válidos, la imagen ha sido subida exitosamente al almacenamiento de Cloudinary y la información se ha actualizado de forma segura en la base de datos.
+
+```json
+{
+  "success": true,
+  "message": "Perfil actualizado correctamente",
+  "data": {
+    "id": 1,
+    "email": "cliente@dominio.com",
+    "name": "Juan",
+    "lastName": "Pérez",
+    "phone": "+51999888777",
+    "avatarUrl": "https://res.cloudinary.com/dugbrgwn8/image/upload/v123456789/profiles/juan_perez_123456789.png",
+    "authProvider": "local",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-05-19T02:20:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Retornado cuando el payload no cumple con las validaciones de Zod (ej. número de teléfono con formato inválido, nombres muy cortos) o si el archivo subido excede el límite de tamaño de 5MB o formato inadecuado.
+
+**Ejemplo de Teléfono Inválido:**
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "phone",
+      "message": "El número de teléfono debe estar en formato internacional E.164 (ej: +51999888777)"
+    }
+  ]
+}
+```
+
+**Ejemplo de Tipo de Archivo Inválido:**
+
+```json
+{
+  "success": false,
+  "error": "Formato de archivo inválido. Solo se admiten imágenes."
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+* **HTTP 401 Unauthorized**: Si falta el Token en los headers o si es inválido.
+* **HTTP 403 Forbidden**: Si el usuario está inactivo.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Token de autenticación inválido"
 }
 ```
