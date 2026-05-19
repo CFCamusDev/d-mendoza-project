@@ -98,3 +98,60 @@ export const requirePermission = (requiredPermission: string) => {
     }
   };
 };
+
+/**
+ * Generic authentication middleware.
+ * Verifies JWT token integrity and attaches req.auth context without checking permission rules.
+ */
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: 'Acceso no autorizado: Token faltante o con formato incorrecto',
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const payload = jwtService.verifyAccessToken(token);
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: payload.userId },
+    });
+
+    if (!dbUser) {
+      return res.status(401).json({
+        success: false,
+        error: 'Usuario no encontrado o sesión revocada',
+      });
+    }
+
+    if (!dbUser.isActive) {
+      return res.status(403).json({
+        success: false,
+        error: 'Acceso denegado: La cuenta se encuentra inactiva',
+      });
+    }
+
+    req.auth = {
+      userId: payload.userId,
+      email: payload.email,
+      role: payload.role,
+    };
+
+    next();
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        error: 'Sesión expirada: Por favor, inicie sesión nuevamente',
+      });
+    }
+
+    return res.status(401).json({
+      success: false,
+      error: 'Acceso denegado: Token de autenticación inválido',
+    });
+  }
+};

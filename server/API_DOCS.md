@@ -13,6 +13,9 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Control de Acceso por Roles (RBAC)](#control-de-acceso-por-roles-rbac)
   - [POST /api/v1/roles](#post-apiv1roles)
   - [PUT /api/v1/users/:id/role](#put-apiv1usersidrole)
+- [Perfil de Cliente](#perfil-de-cliente)
+  - [GET /api/v1/profile](#get-apiv1profile)
+  - [PATCH /api/v1/profile](#patch-apiv1profile)
 
 ---
 
@@ -24,7 +27,7 @@ Permite registrar una nueva cuenta de usuario en la plataforma. Por defecto, el 
 
 #### 1. Especificación del Endpoint
 
-| Método | Ruta                     | Autenticación     | Rol Requerido |
+| Método | Ruta                    | Autenticación     | Rol Requerido |
 | :----- | :---------------------- | :---------------- | :------------ |
 | `POST` | `/api/v1/auth/register` | Ninguna (Público) | Invitado      |
 
@@ -130,9 +133,9 @@ Permite activar una cuenta de usuario ingresando el código PIN numérico de 6 d
 
 **Detalle de Campos:**
 
-| Parámetro | Tipo     | Requerido | Reglas de Validación                                                     |
-| :-------- | :------- | :-------- | :----------------------------------------------------------------------- |
-| `email`   | `string` | Sí        | Debe coincidir con el correo registrado.                                 |
+| Parámetro | Tipo     | Requerido | Reglas de Validación                                                    |
+| :-------- | :------- | :-------- | :---------------------------------------------------------------------- |
+| `email`   | `string` | Sí        | Debe coincidir con el correo registrado.                                |
 | `pin`     | `string` | Sí        | Exactamente 6 caracteres numéricos. Corresponde al OTP enviado a email. |
 
 #### 3. Respuestas (Responses)
@@ -353,9 +356,9 @@ Permite establecer una nueva contraseña en la cuenta del usuario validando prev
 
 **Detalle de Campos:**
 
-| Parámetro     | Tipo     | Requerido | Reglas de Validación                                                                                                  |
-| :------------ | :------- | :-------- | :-------------------------------------------------------------------------------------------------------------------- |
-| `token`       | `string` | Sí        | El token JWT enviado al correo. No debe estar vacío ni expirado.                                                      |
+| Parámetro     | Tipo     | Requerido | Reglas de Validación                                                                                                             |
+| :------------ | :------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| `token`       | `string` | Sí        | El token JWT enviado al correo. No debe estar vacío ni expirado.                                                                 |
 | `newPassword` | `string` | Sí        | Mínimo 8 caracteres. Debe contener al menos una letra mayúscula y al menos un número. No puede ser igual a la contraseña actual. |
 
 #### 3. Respuestas (Responses)
@@ -434,8 +437,8 @@ Permite registrar una nueva definición de Rol en el catálogo central del siste
 
 #### 1. Especificación del Endpoint
 
-| Método | Ruta            | Autenticación       | Permiso Requerido |
-| :----- | :-------------- | :------------------ | :---------------- |
+| Método | Ruta            | Autenticación      | Permiso Requerido |
+| :----- | :-------------- | :----------------- | :---------------- |
 | `POST` | `/api/v1/roles` | JWT `Bearer Token` | `roles:manage`    |
 
 #### 2. Cuerpo de la Petición (Request Body)
@@ -491,8 +494,8 @@ Falla sintáctica del payload de entrada detectada por Zod.
 
 ##### Acceso Denegado (HTTP 401 / 403)
 
-* **HTTP 401 Unauthorized**: Si falta el Token, es inválido o ha expirado.
-* **HTTP 403 Forbidden**: Si el usuario está inactivo o carece del permiso administrativo `roles:manage`.
+- **HTTP 401 Unauthorized**: Si falta el Token, es inválido o ha expirado.
+- **HTTP 403 Forbidden**: Si el usuario está inactivo o carece del permiso administrativo `roles:manage`.
 
 ##### Conflicto (HTTP 409 Conflict)
 
@@ -513,8 +516,8 @@ Permite asignar un rol existente del catálogo a un usuario específico del sist
 
 #### 1. Especificación del Endpoint
 
-| Método | Ruta                         | Autenticación       | Permiso Requerido |
-| :----- | :--------------------------- | :------------------ | :---------------- |
+| Método | Ruta                     | Autenticación      | Permiso Requerido |
+| :----- | :----------------------- | :----------------- | :---------------- |
 | `PUT`  | `/api/v1/users/:id/role` | JWT `Bearer Token` | `roles:manage`    |
 
 #### 2. Cuerpo de la Petición (Request Body)
@@ -552,5 +555,148 @@ Emitido cuando el `id` de usuario en la URL no pertenece a ningún registro acti
 {
   "success": false,
   "error": "El rol 'SELLER' no está definido en el sistema"
+}
+```
+
+---
+
+## Perfil de Cliente
+
+Este módulo permite al cliente autenticado autogestionar su información personal, incluyendo la carga segura de su foto de perfil y la obtención de los datos de su perfil actual.
+
+### GET /api/v1/profile
+
+Recupera la información detallada del perfil del usuario autenticado (nombre, apellido, teléfono, email, avatar).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta              | Autenticación      | Rol Requerido         |
+| :----- | :---------------- | :----------------- | :-------------------- |
+| `GET`  | `/api/v1/profile` | JWT `Bearer Token` | Cualquier Autenticado |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+No requiere cuerpo de petición.
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+Retorna la información actual del usuario en la base de datos (excluyendo la contraseña y PINs sensibles).
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "cliente@dominio.com",
+    "name": "Juan",
+    "lastName": "Pérez",
+    "phone": "+51999888777",
+    "avatarUrl": "https://res.cloudinary.com/dugbrgwn8/image/upload/v123456789/profiles/juan_perez_123456789.png",
+    "authProvider": "local",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-05-19T02:20:00.000Z"
+  }
+}
+```
+
+##### Acceso Denegado / No Encontrado (HTTP 401 / 404)
+
+- **HTTP 401 Unauthorized**: Si falta el Token en los headers o si es inválido.
+- **HTTP 404 Not Found**: Si el identificador de usuario en el token de autenticación no pertenece a ningún usuario registrado.
+
+```json
+{
+  "success": false,
+  "error": "Acceso no autorizado: Contexto de seguridad faltante"
+}
+```
+
+---
+
+### PATCH /api/v1/profile
+
+Actualiza la información de perfil del usuario autenticado (nombre, apellido, teléfono) y permite cargar una nueva imagen para su avatar. Soporta peticiones `multipart/form-data`.
+
+#### 1. Especificación del Endpoint
+
+| Método  | Ruta              | Autenticación      | Rol Requerido |
+| :------ | :---------------- | :----------------- | :------------ |
+| `PATCH` | `/api/v1/profile` | JWT `Bearer Token` | Cliente       |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+Se espera una petición de tipo `multipart/form-data` con los siguientes campos opcionales:
+
+**Detalle de Campos:**
+
+| Campo      | Tipo     | Requerido | Reglas de Validación                                                                                   |
+| :--------- | :------- | :-------- | :----------------------------------------------------------------------------------------------------- |
+| `name`     | `string` | No        | Mínimo 2 caracteres, máximo 50. Nombre del cliente.                                                    |
+| `lastName` | `string` | No        | Mínimo 2 caracteres, máximo 50. Apellido del cliente.                                                  |
+| `phone`    | `string` | No        | Formato internacional E.164 obligatorio (debe coincidir con la expresión regular `^\+[1-9]\d{1,14}$`). |
+| `avatar`   | `file`   | No        | Archivo de imagen de tipo JPEG, PNG o WEBP. Tamaño máximo permitido: 5MB.                              |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+Retornado cuando los campos son válidos, la imagen ha sido subida exitosamente al almacenamiento de Cloudinary y la información se ha actualizado de forma segura en la base de datos.
+
+```json
+{
+  "success": true,
+  "message": "Perfil actualizado correctamente",
+  "data": {
+    "id": 1,
+    "email": "cliente@dominio.com",
+    "name": "Juan",
+    "lastName": "Pérez",
+    "phone": "+51999888777",
+    "avatarUrl": "https://res.cloudinary.com/dugbrgwn8/image/upload/v123456789/profiles/juan_perez_123456789.png",
+    "authProvider": "local",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-05-19T02:20:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Retornado cuando el payload no cumple con las validaciones de Zod (ej. número de teléfono con formato inválido, nombres muy cortos) o si el archivo subido excede el límite de tamaño de 5MB o formato inadecuado.
+
+**Ejemplo de Teléfono Inválido:**
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "phone",
+      "message": "El número de teléfono debe estar en formato internacional E.164 (ej: +51999888777)"
+    }
+  ]
+}
+```
+
+**Ejemplo de Tipo de Archivo Inválido:**
+
+```json
+{
+  "success": false,
+  "error": "Formato de archivo inválido. Solo se admiten imágenes."
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+- **HTTP 401 Unauthorized**: Si falta el Token en los headers o si es inválido.
+- **HTTP 403 Forbidden**: Si el usuario está inactivo.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Token de autenticación inválido"
 }
 ```

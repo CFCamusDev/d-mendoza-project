@@ -72,11 +72,25 @@ export class GoogleLoginUseCase {
     const now = new Date();
     await this.userRepository.updateLastLogin(user.id, now);
 
-    // Step 5: Generate system JWT tokens
+    // Step 5: Generate system JWT tokens (dynamically resolving role according to RBAC HU-004)
+    let userRole = 'CLIENT';
+    if (user.roles && user.roles.length > 0) {
+      const primaryRole = user.roles[0];
+      if (primaryRole === 'SUPERADMIN') {
+        userRole = 'ADMIN';
+      } else if (primaryRole === 'SELLER') {
+        userRole = 'SELLER';
+      } else if (primaryRole === 'CLIENT') {
+        userRole = 'CLIENT';
+      } else {
+        userRole = primaryRole;
+      }
+    }
+
     const tokens = this.jwtService.generateTokens({
       userId: user.id,
       email: user.email,
-      role: 'customer', // Hardcoded until RBAC module (HU-004)
+      role: userRole,
     });
 
     // Step 6: Return user data (without password) + tokens

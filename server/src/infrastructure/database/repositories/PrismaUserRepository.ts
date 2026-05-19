@@ -8,12 +8,18 @@ import { User, CreateUserDTO } from '@domain/entities/User';
  */
 export class PrismaUserRepository implements IUserRepository {
   async findById(id: number): Promise<User | null> {
-    const record = await prisma.user.findUnique({ where: { id } });
+    const record = await prisma.user.findUnique({
+      where: { id },
+      include: { roles: true },
+    });
     return record ? this.toDomain(record) : null;
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const record = await prisma.user.findUnique({ where: { email } });
+    const record = await prisma.user.findUnique({
+      where: { email },
+      include: { roles: true },
+    });
     return record ? this.toDomain(record) : null;
   }
 
@@ -21,7 +27,10 @@ export class PrismaUserRepository implements IUserRepository {
    * HU-001: Busca un usuario por su Google ID (OAuth).
    */
   async findByGoogleId(googleId: string): Promise<User | null> {
-    const record = await prisma.user.findUnique({ where: { googleId } });
+    const record = await prisma.user.findUnique({
+      where: { googleId },
+      include: { roles: true },
+    });
     return record ? this.toDomain(record) : null;
   }
 
@@ -34,7 +43,11 @@ export class PrismaUserRepository implements IUserRepository {
         googleId: data.googleId ?? null,
         avatarUrl: data.avatarUrl ?? null,
         authProvider: data.authProvider ?? 'local',
+        roles: {
+          connect: { name: 'CLIENT' },
+        },
       },
+      include: { roles: true },
     });
     return this.toDomain(record);
   }
@@ -114,24 +127,29 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   /**
+   * HU-005: Actualiza los datos de perfil de un usuario cliente.
+   */
+  async updateProfile(
+    userId: number,
+    data: Partial<Pick<User, 'name' | 'lastName' | 'phone' | 'avatarUrl'>>
+  ): Promise<User> {
+    const record = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: data.name !== undefined ? data.name : undefined,
+        lastName: data.lastName !== undefined ? data.lastName : undefined,
+        phone: data.phone !== undefined ? data.phone : undefined,
+        avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : undefined,
+      },
+    });
+    return this.toDomain(record);
+  }
+
+  /**
    * Mapea el registro de Prisma a la entidad del dominio,
    * desacoplando los tipos de Prisma del dominio.
    */
-  private toDomain(record: {
-    id: number;
-    email: string;
-    name: string | null;
-    password: string;
-    googleId: string | null;
-    avatarUrl: string | null;
-    authProvider: string;
-    lastLogin: Date | null;
-    isActive: boolean;
-    verificationPin: string | null;
-    pinExpiresAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }): User {
+  private toDomain(record: any): User {
     return {
       id: record.id,
       email: record.email,
@@ -139,11 +157,14 @@ export class PrismaUserRepository implements IUserRepository {
       password: record.password,
       googleId: record.googleId,
       avatarUrl: record.avatarUrl,
+      lastName: record.lastName,
+      phone: record.phone,
       authProvider: record.authProvider,
       lastLogin: record.lastLogin,
       isActive: record.isActive,
       verificationPin: record.verificationPin,
       pinExpiresAt: record.pinExpiresAt,
+      roles: record.roles ? record.roles.map((r: any) => r.name) : undefined,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
