@@ -114,6 +114,25 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   /**
+   * HU-005: Actualiza los datos de perfil de un usuario cliente.
+   */
+  async updateProfile(
+    userId: number,
+    data: Partial<Pick<User, 'name' | 'lastName' | 'phone' | 'avatarUrl'>>
+  ): Promise<User> {
+    const record = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: data.name !== undefined ? data.name : undefined,
+        lastName: data.lastName !== undefined ? data.lastName : undefined,
+        phone: data.phone !== undefined ? data.phone : undefined,
+        avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : undefined,
+      },
+    });
+    return this.toDomain(record);
+  }
+
+  /**
    * Mapea el registro de Prisma a la entidad del dominio,
    * desacoplando los tipos de Prisma del dominio.
    */
@@ -124,6 +143,8 @@ export class PrismaUserRepository implements IUserRepository {
     password: string;
     googleId: string | null;
     avatarUrl: string | null;
+    lastName: string | null;
+    phone: string | null;
     authProvider: string;
     lastLogin: Date | null;
     isActive: boolean;
@@ -139,6 +160,8 @@ export class PrismaUserRepository implements IUserRepository {
       password: record.password,
       googleId: record.googleId,
       avatarUrl: record.avatarUrl,
+      lastName: record.lastName,
+      phone: record.phone,
       authProvider: record.authProvider,
       lastLogin: record.lastLogin,
       isActive: record.isActive,

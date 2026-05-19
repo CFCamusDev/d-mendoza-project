@@ -92,6 +92,20 @@ const createMockRepository = (overrides: Partial<IUserRepository> = {}): IUserRe
   updatePassword: jest.fn<IUserRepository['updatePassword']>().mockResolvedValue(undefined),
   updateGoogleId: jest.fn<IUserRepository['updateGoogleId']>().mockResolvedValue(undefined),
   updateStatus: jest.fn<IUserRepository['updateStatus']>().mockResolvedValue(undefined),
+  updateProfile: jest.fn<IUserRepository['updateProfile']>().mockImplementation(async (userId) => ({
+    id: userId,
+    email: 'mock@domain.com',
+    name: 'Mock',
+    lastName: 'User',
+    phone: '+51999999999',
+    password: '',
+    googleId: null,
+    avatarUrl: null,
+    authProvider: 'local',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  })),
   ...overrides,
 });
 

@@ -11,6 +11,8 @@ export interface User {
   password: string;
   googleId?: string | null;
   avatarUrl?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
   authProvider: string; // "local" | "google"
   lastLogin?: Date | null;
   isActive: boolean;
