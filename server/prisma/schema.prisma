@@ -18,6 +18,8 @@ model User {
   password  String
   googleId      String?    @unique
   avatarUrl     String?
+  lastName      String?
+  phone         String?
   authProvider  String     @default("local") // "local" | "google"
   lastLogin       DateTime?
   isActive        Boolean    @default(false)
