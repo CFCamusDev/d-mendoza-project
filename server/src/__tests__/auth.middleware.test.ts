@@ -180,8 +180,8 @@ describe('requirePermission Middleware (T-041 Unit Test)', () => {
     expect(res.status).not.toHaveBeenCalled();
     
     // Also ensure the principal metadata correctly mounted onto Req object
-    expect((req as any).user).toEqual({
-      id: 1,
+    expect((req as any).auth).toEqual({
+      userId: 1,
       email: 'godmode@mail.com',
       role: 'SUPERADMIN',
     });

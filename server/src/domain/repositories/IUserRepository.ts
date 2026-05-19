@@ -17,5 +17,10 @@ export interface IUserRepository {
   updateGoogleId(userId: number, googleId: string, avatarUrl?: string): Promise<void>;
   /** HU-009 / T-049: Enable or disable a user account (admin operation). */
   updateStatus(userId: number, isActive: boolean): Promise<void>;
+  /** HU-005: Update client's profile information. */
+  updateProfile(
+    userId: number,
+    data: Partial<Pick<User, 'name' | 'lastName' | 'phone' | 'avatarUrl'>>
+  ): Promise<User>;
 }
 

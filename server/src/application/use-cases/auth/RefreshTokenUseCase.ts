@@ -30,11 +30,25 @@ export class RefreshTokenUseCase {
       throw new Error('Cuenta inactiva');
     }
 
-    // 3. Generate fresh pair — sliding window resets the 7-day TTL each use
+    // Generate fresh pair — sliding window resets the 7-day TTL each use (dynamically resolving role according to RBAC HU-004)
+    let userRole = 'CLIENT';
+    if (user.roles && user.roles.length > 0) {
+      const primaryRole = user.roles[0];
+      if (primaryRole === 'SUPERADMIN') {
+        userRole = 'ADMIN';
+      } else if (primaryRole === 'SELLER') {
+        userRole = 'SELLER';
+      } else if (primaryRole === 'CLIENT') {
+        userRole = 'CLIENT';
+      } else {
+        userRole = primaryRole;
+      }
+    }
+
     return this.jwtService.generateTokens({
       userId: user.id,
       email: user.email,
-      role: 'customer',
+      role: userRole,
     });
   }
 }

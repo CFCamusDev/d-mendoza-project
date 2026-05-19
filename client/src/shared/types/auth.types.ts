@@ -30,6 +30,7 @@ export interface AuthTokens {
 export interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
+  isHydrating: boolean;
   login: (tokens: AuthTokens) => void;
   logout: () => void;
 }
