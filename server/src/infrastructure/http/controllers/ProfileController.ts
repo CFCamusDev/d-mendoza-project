@@ -30,6 +30,47 @@ const UpdateProfileSchema = z.object({
 
 export class ProfileController {
   /**
+   * HU-005: GET /api/v1/profile
+   * Retrieves the authenticated client's profile details.
+   */
+  async get(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.auth?.userId;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Acceso no autorizado: Contexto de seguridad faltante',
+        });
+      }
+
+      const user = await userRepository.findById(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Usuario no encontrado',
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          lastName: user.lastName ?? null,
+          phone: user.phone ?? null,
+          avatarUrl: user.avatarUrl ?? null,
+          authProvider: user.authProvider,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        },
+      });
+    } catch (error: any) {
+      next(error);
+    }
+  }
+
+  /**
    * HU-005: PATCH /api/v1/profile
    * Updates client profile data (name, lastName, phone, and optional avatar image).
    */

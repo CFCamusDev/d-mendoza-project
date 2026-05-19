@@ -23,6 +23,16 @@ const upload = multer({
 });
 
 /**
+ * HU-005: GET /profile
+ * Retrieves customer profile details.
+ */
+router.get(
+  '/profile',
+  requireAuth,
+  profileController.get.bind(profileController)
+);
+
+/**
  * HU-005: PATCH /profile
  * Updates customer profile details and profile picture (avatar).
  */
