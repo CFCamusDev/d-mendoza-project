@@ -18,6 +18,7 @@ export interface User {
   isActive: boolean;
   verificationPin?: string | null;
   pinExpiresAt?: Date | null;
+  roles?: string[];
   createdAt: Date;
   updatedAt: Date;
 }

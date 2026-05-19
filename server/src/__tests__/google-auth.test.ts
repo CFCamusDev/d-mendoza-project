@@ -183,7 +183,7 @@ describe('GoogleLoginUseCase (HU-001 / T-034)', () => {
     expect(mockJwt.generateTokens).toHaveBeenCalledWith({
       userId: expect.any(Number),
       email: mockGoogleProfile.email,
-      role: 'customer',
+      role: 'CLIENT',
     });
 
     expect(result.tokens.accessToken).toBe('mock-access-token-jwt');

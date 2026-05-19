@@ -8,12 +8,18 @@ import { User, CreateUserDTO } from '@domain/entities/User';
  */
 export class PrismaUserRepository implements IUserRepository {
   async findById(id: number): Promise<User | null> {
-    const record = await prisma.user.findUnique({ where: { id } });
+    const record = await prisma.user.findUnique({
+      where: { id },
+      include: { roles: true },
+    });
     return record ? this.toDomain(record) : null;
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const record = await prisma.user.findUnique({ where: { email } });
+    const record = await prisma.user.findUnique({
+      where: { email },
+      include: { roles: true },
+    });
     return record ? this.toDomain(record) : null;
   }
 
@@ -21,7 +27,10 @@ export class PrismaUserRepository implements IUserRepository {
    * HU-001: Busca un usuario por su Google ID (OAuth).
    */
   async findByGoogleId(googleId: string): Promise<User | null> {
-    const record = await prisma.user.findUnique({ where: { googleId } });
+    const record = await prisma.user.findUnique({
+      where: { googleId },
+      include: { roles: true },
+    });
     return record ? this.toDomain(record) : null;
   }
 
@@ -34,7 +43,11 @@ export class PrismaUserRepository implements IUserRepository {
         googleId: data.googleId ?? null,
         avatarUrl: data.avatarUrl ?? null,
         authProvider: data.authProvider ?? 'local',
+        roles: {
+          connect: { name: 'CLIENT' },
+        },
       },
+      include: { roles: true },
     });
     return this.toDomain(record);
   }
@@ -136,23 +149,7 @@ export class PrismaUserRepository implements IUserRepository {
    * Mapea el registro de Prisma a la entidad del dominio,
    * desacoplando los tipos de Prisma del dominio.
    */
-  private toDomain(record: {
-    id: number;
-    email: string;
-    name: string | null;
-    password: string;
-    googleId: string | null;
-    avatarUrl: string | null;
-    lastName: string | null;
-    phone: string | null;
-    authProvider: string;
-    lastLogin: Date | null;
-    isActive: boolean;
-    verificationPin: string | null;
-    pinExpiresAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }): User {
+  private toDomain(record: any): User {
     return {
       id: record.id,
       email: record.email,
@@ -167,6 +164,7 @@ export class PrismaUserRepository implements IUserRepository {
       isActive: record.isActive,
       verificationPin: record.verificationPin,
       pinExpiresAt: record.pinExpiresAt,
+      roles: record.roles ? record.roles.map((r: any) => r.name) : undefined,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
