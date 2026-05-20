@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import prisma from '@infrastructure/database/prisma';
-import { DEFAULT_BRAND_CONFIG } from '@domain/entities/BrandConfig';
+import { PrismaBrandConfigRepository } from '@infrastructure/database/repositories/PrismaBrandConfigRepository';
+import { PrismaAuditLogRepository } from '@infrastructure/database/repositories/PrismaAuditLogRepository';
+import { GetBrandConfigUseCase } from '@application/use-cases/brand/GetBrandConfigUseCase';
+import { UpdateBrandConfigUseCase } from '@application/use-cases/brand/UpdateBrandConfigUseCase';
 
 const BrandConfigSchema = z.object({
   brandName: z.string(),
@@ -10,6 +12,11 @@ const BrandConfigSchema = z.object({
   socialLinksJson: z.any().optional().nullable(),
 });
 
+const brandConfigRepository = new PrismaBrandConfigRepository();
+const auditLogRepository = new PrismaAuditLogRepository();
+const getBrandConfigUseCase = new GetBrandConfigUseCase(brandConfigRepository);
+const updateBrandConfigUseCase = new UpdateBrandConfigUseCase(brandConfigRepository, auditLogRepository);
+
 export class BrandController {
   /**
    * GET /api/v1/config/brand
@@ -17,15 +24,7 @@ export class BrandController {
    */
   async getBrandConfig(_req: Request, res: Response) {
     try {
-      let config = await prisma.brandConfig.findUnique({
-        where: { id: 1 },
-      });
-
-      // Si no existe, devolvemos los valores por defecto desde el dominio
-      if (!config) {
-        config = DEFAULT_BRAND_CONFIG;
-      }
-
+      const config = await getBrandConfigUseCase.execute();
       return res.status(200).json({ success: true, data: config });
     } catch (error: any) {
       console.error('[BrandController.getBrandConfig] Error:', error);
@@ -44,35 +43,10 @@ export class BrandController {
         return res.status(400).json({ success: false, error: validation.error.issues });
       }
 
-      const { brandName, logoUrl, primaryColor, socialLinksJson } = validation.data;
+      // Solución C-04 / C-02: Leer desde req.auth en lugar de req.user para la auditoría
+      const adminUserId = req.auth?.userId ?? null;
 
-      const config = await prisma.brandConfig.upsert({
-        where: { id: 1 },
-        update: {
-          brandName,
-          logoUrl,
-          primaryColor,
-          socialLinksJson: socialLinksJson || {},
-        },
-        create: {
-          id: 1,
-          brandName,
-          logoUrl,
-          primaryColor,
-          socialLinksJson: socialLinksJson || {},
-        },
-      });
-
-      // Audit log
-      const adminUser = req.user as { id: number; email: string; role: string } | undefined;
-      await prisma.auditLog.create({
-        data: {
-          action: 'UPDATE_BRAND_CONFIG',
-          module: 'SYSTEM_CONFIG',
-          details: { config },
-          userId: adminUser?.id ?? null,
-        },
-      });
+      const config = await updateBrandConfigUseCase.execute(validation.data, adminUserId);
 
       return res.status(200).json({ success: true, data: config });
     } catch (error: any) {
@@ -81,3 +55,4 @@ export class BrandController {
     }
   }
 }
+
