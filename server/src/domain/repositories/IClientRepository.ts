@@ -5,5 +5,5 @@ export interface IClientRepository {
   findByEmail(email: string): Promise<Client | null>;
   findAllWithoutUser(): Promise<Client[]>;
   create(data: CreateClientDTO): Promise<Client>;
-  linkUser(clientId: number, userId: number): Promise<void>;
+  linkUser(clientId: number, userId: number, tx?: any): Promise<void>;
 }

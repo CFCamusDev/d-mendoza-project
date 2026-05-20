@@ -51,7 +51,7 @@ export const AppRouter = () => {
       <Route 
         path="/admin/clients/link" 
         element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
+          <ProtectedRoute allowedPermissions={['users:write']}>
             <ClientLinkPage />
           </ProtectedRoute>
         } 

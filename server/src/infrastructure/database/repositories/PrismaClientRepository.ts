@@ -32,8 +32,9 @@ export class PrismaClientRepository implements IClientRepository {
     return this.toDomain(record);
   }
 
-  async linkUser(clientId: number, userId: number): Promise<void> {
-    await prisma.client.update({
+  async linkUser(clientId: number, userId: number, tx?: any): Promise<void> {
+    const client = tx || prisma;
+    await client.client.update({
       where: { id: clientId },
       data: { userId },
     });

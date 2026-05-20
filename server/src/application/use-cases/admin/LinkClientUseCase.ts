@@ -2,6 +2,7 @@ import { IClientRepository } from '@domain/repositories/IClientRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { IRoleRepository } from '@domain/repositories/IRoleRepository';
 import { IEmailService } from '@domain/services/IEmailService';
+import { ITransactionManager } from '@domain/repositories/ITransactionManager';
 import { Encryption } from '@shared/utils/Encryption';
 import crypto from 'crypto';
 
@@ -10,7 +11,8 @@ export class LinkClientUseCase {
     private readonly clientRepository: IClientRepository,
     private readonly userRepository: IUserRepository,
     private readonly roleRepository: IRoleRepository,
-    private readonly emailService: IEmailService
+    private readonly emailService: IEmailService,
+    private readonly transactionManager: ITransactionManager
   ) {}
 
   async execute(clientId: number): Promise<{ success: boolean; message: string }> {
@@ -26,8 +28,10 @@ export class LinkClientUseCase {
     // Verificar si el email ya existe en User (por si acaso no está vinculado pero existe)
     const existingUser = await this.userRepository.findByEmail(client.email);
     if (existingUser) {
-      // Si el usuario existe pero no está vinculado al cliente, lo vinculamos
-      await this.clientRepository.linkUser(client.id, existingUser.id);
+      // Si el usuario existe pero no está vinculado al cliente, lo vinculamos en una transacción
+      await this.transactionManager.run(async (tx) => {
+        await this.clientRepository.linkUser(client.id, existingUser.id, tx);
+      });
       return { success: true, message: 'Cliente vinculado a cuenta existente' };
     }
 
@@ -35,24 +39,26 @@ export class LinkClientUseCase {
     const tempPassword = crypto.randomBytes(8).toString('hex');
     const hashedPassword = await Encryption.hashPassword(tempPassword);
 
-    const newUser = await this.userRepository.create({
-      email: client.email,
-      name: client.name,
-      password: hashedPassword,
-      isActive: true, // Activamos la cuenta directamente
-      authProvider: 'local'
+    await this.transactionManager.run(async (tx) => {
+      const newUser = await this.userRepository.create({
+        email: client.email,
+        name: client.name,
+        password: hashedPassword,
+        isActive: true, // Activamos la cuenta directamente
+        authProvider: 'local'
+      }, tx);
+
+      // Asignar rol CLIENT
+      const clientRole = await this.roleRepository.findByName('CLIENT');
+      if (clientRole) {
+        await this.roleRepository.assignRoleToUser(newUser.id, clientRole.id, tx);
+      }
+
+      // Vincular cliente con usuario
+      await this.clientRepository.linkUser(client.id, newUser.id, tx);
     });
 
-    // Asignar rol CLIENT
-    const clientRole = await this.roleRepository.findByName('CLIENT');
-    if (clientRole) {
-      await this.roleRepository.assignRoleToUser(newUser.id, clientRole.id);
-    }
-
-    // Vincular cliente con usuario
-    await this.clientRepository.linkUser(client.id, newUser.id);
-
-    // Enviar credenciales vía Email
+    // Enviar credenciales vía Email (fuera de la transacción de BD)
     await this.emailService.sendEmail(
       client.email,
       'Bienvenido a D\'Mendoza - Tus credenciales de acceso',

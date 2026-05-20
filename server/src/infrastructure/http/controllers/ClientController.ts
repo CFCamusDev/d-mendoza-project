@@ -4,6 +4,7 @@ import { PrismaClientRepository } from '@infrastructure/database/repositories/Pr
 import { PrismaUserRepository } from '@infrastructure/database/repositories/PrismaUserRepository';
 import { PrismaRoleRepository } from '@infrastructure/database/repositories/PrismaRoleRepository';
 import { ResendEmailService } from '@infrastructure/services/ResendEmailService';
+import { PrismaTransactionManager } from '@infrastructure/database/PrismaTransactionManager';
 import { LinkClientUseCase } from '@application/use-cases/admin/LinkClientUseCase';
 import { BulkLinkClientsUseCase } from '@application/use-cases/admin/BulkLinkClientsUseCase';
 
@@ -11,12 +12,14 @@ const clientRepository = new PrismaClientRepository();
 const userRepository = new PrismaUserRepository();
 const roleRepository = new PrismaRoleRepository();
 const emailService = new ResendEmailService();
+const transactionManager = new PrismaTransactionManager();
 
 const linkClientUseCase = new LinkClientUseCase(
   clientRepository,
   userRepository,
   roleRepository,
-  emailService
+  emailService,
+  transactionManager
 );
 const bulkLinkClientsUseCase = new BulkLinkClientsUseCase(linkClientUseCase);
 
