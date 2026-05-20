@@ -34,8 +34,9 @@ export class PrismaUserRepository implements IUserRepository {
     return record ? this.toDomain(record) : null;
   }
 
-  async create(data: CreateUserDTO): Promise<User> {
-    const record = await prisma.user.create({
+  async create(data: CreateUserDTO, tx?: any): Promise<User> {
+    const client = tx || prisma;
+    const record = await client.user.create({
       data: {
         email: data.email,
         name: data.name ?? null,
@@ -43,6 +44,7 @@ export class PrismaUserRepository implements IUserRepository {
         googleId: data.googleId ?? null,
         avatarUrl: data.avatarUrl ?? null,
         authProvider: data.authProvider ?? 'local',
+        isActive: data.isActive ?? false,
         roles: {
           connect: { name: 'CLIENT' },
         },
