@@ -13,8 +13,11 @@ import type { Branch } from './hooks/useBranches';
 import { BranchesTable } from './components/BranchesTable';
 import { BranchModal } from './components/BranchModal';
 import type { BranchFormData } from './schemas/branch.schema';
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 
 export const BranchesPage: React.FC = () => {
+  useDocumentTitle('Sucursales y Almacenes');
+
   const {
     branches,
     loading,
