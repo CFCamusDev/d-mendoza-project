@@ -2,15 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
 import { UserPlus, Users, Search, Loader2 } from 'lucide-react';
-
-interface Client {
-  id: number;
-  email: string;
-  name: string;
-  phone?: string;
-  documentId?: string;
-  userId?: number | null;
-}
+import type { Client } from './types/client';
+import ConfirmModal from './components/ConfirmModal';
 
 interface BulkReport {
   linked: number;
@@ -25,6 +18,19 @@ export const ClientLinkPage: React.FC = () => {
   const [bulkLinking, setBulkLinking] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  // Custom Confirmation Modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     fetchUnlinkedClients();
@@ -42,9 +48,8 @@ export const ClientLinkPage: React.FC = () => {
     }
   };
 
-  const handleLink = async (id: number) => {
-    if (!confirm('¿Estás seguro de vincular este cliente y enviar credenciales?')) return;
-    
+  const executeLink = async (id: number) => {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
     setLinkingId(id);
     try {
       await axiosInstance.post(`/v1/admin/clients/${id}/link`);
@@ -57,14 +62,18 @@ export const ClientLinkPage: React.FC = () => {
     }
   };
 
-  const handleBulkLink = async () => {
-    if (selectedIds.length === 0) {
-      toast.error('Selecciona al menos un cliente');
-      return;
-    }
+  const handleLink = (id: number) => {
+    const clientName = clients.find(c => c.id === id)?.name || 'este cliente';
+    setConfirmModal({
+      isOpen: true,
+      title: 'Vincular Cliente',
+      message: `¿Estás seguro de vincular a ${clientName} y enviar sus credenciales de acceso por correo electrónico?`,
+      onConfirm: () => executeLink(id),
+    });
+  };
 
-    if (!confirm(`¿Estás seguro de vincular ${selectedIds.length} clientes?`)) return;
-
+  const executeBulkLink = async () => {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
     setBulkLinking(true);
     try {
       const { data } = await axiosInstance.post('/v1/admin/clients/bulk-link', { ids: selectedIds });
@@ -82,6 +91,20 @@ export const ClientLinkPage: React.FC = () => {
     } finally {
       setBulkLinking(false);
     }
+  };
+
+  const handleBulkLink = () => {
+    if (selectedIds.length === 0) {
+      toast.error('Selecciona al menos un cliente');
+      return;
+    }
+
+    setConfirmModal({
+      isOpen: true,
+      title: 'Vinculación Masiva',
+      message: `¿Estás seguro de vincular a los ${selectedIds.length} clientes seleccionados y enviar sus credenciales de acceso?`,
+      onConfirm: executeBulkLink,
+    });
   };
 
   const toggleSelection = (id: number) => {
@@ -108,15 +131,15 @@ export const ClientLinkPage: React.FC = () => {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Vinculación de Clientes POS</h1>
-          <p className="text-slate-500 mt-1">Gestiona la creación de cuentas e-commerce para clientes físicos.</p>
+          <h1 className="text-3xl font-bold text-brand-accent">Vinculación de Clientes POS</h1>
+          <p className="text-brand-text mt-1">Gestiona la creación de cuentas e-commerce para clientes físicos.</p>
         </div>
         
         <div className="flex gap-2">
           <button
             onClick={handleBulkLink}
             disabled={bulkLinking || selectedIds.length === 0}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 bg-brand-accent hover:bg-brand-text text-white px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow cursor-pointer font-medium"
           >
             {bulkLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
             Vincular Seleccionados ({selectedIds.length})
@@ -124,13 +147,13 @@ export const ClientLinkPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
-          <Search className="w-5 h-5 text-slate-400" />
+      <div className="bg-white rounded-xl shadow-sm border border-brand-primary/20 overflow-hidden">
+        <div className="p-4 border-b border-brand-primary/20 bg-brand-bg flex items-center gap-3">
+          <Search className="w-5 h-5 text-brand-text/50" />
           <input
             type="text"
             placeholder="Buscar por nombre, email o DNI..."
-            className="bg-transparent border-none focus:ring-0 w-full text-slate-700"
+            className="bg-transparent border-none focus:ring-0 w-full text-brand-text placeholder-brand-text/40 outline-none"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -139,13 +162,13 @@ export const ClientLinkPage: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 text-slate-500 uppercase text-xs font-semibold tracking-wider border-b border-slate-200">
+              <tr className="bg-brand-bg text-brand-text/75 uppercase text-xs font-semibold tracking-wider border-b border-brand-primary/20">
                 <th className="px-6 py-4 w-10">
                   <input 
                     type="checkbox" 
                     checked={selectedIds.length > 0 && selectedIds.length === filteredClients.length}
                     onChange={toggleAll}
-                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    className="rounded border-brand-primary text-brand-accent focus:ring-brand-accent w-4 h-4"
                   />
                 </th>
                 <th className="px-6 py-4">Cliente</th>
@@ -153,44 +176,44 @@ export const ClientLinkPage: React.FC = () => {
                 <th className="px-6 py-4 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-brand-primary/10">
               {loading ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-500" />
-                    <p className="mt-2 text-slate-500">Cargando clientes...</p>
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-brand-accent" />
+                    <p className="mt-2 text-brand-text">Cargando clientes...</p>
                   </td>
                 </tr>
               ) : filteredClients.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={4} className="px-6 py-12 text-center text-brand-text/80">
                     No se encontraron clientes sin cuenta activa.
                   </td>
                 </tr>
               ) : (
                 filteredClients.map((client) => (
-                  <tr key={client.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={client.id} className="hover:bg-brand-bg/50 transition-colors">
                     <td className="px-6 py-4">
                       <input 
                         type="checkbox" 
                         checked={selectedIds.includes(client.id)}
                         onChange={() => toggleSelection(client.id)}
-                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        className="rounded border-brand-primary text-brand-accent focus:ring-brand-accent w-4 h-4"
                       />
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">{client.name}</div>
-                      <div className="text-sm text-slate-500">{client.documentId || 'Sin DNI'}</div>
+                      <div className="font-semibold text-brand-accent">{client.name}</div>
+                      <div className="text-xs text-brand-text">{client.documentId || 'Sin DNI'}</div>
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      <div className="text-slate-700">{client.email}</div>
-                      <div className="text-slate-500">{client.phone || '-'}</div>
+                      <div className="text-brand-accent/95">{client.email}</div>
+                      <div className="text-brand-text">{client.phone || '-'}</div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleLink(client.id)}
                         disabled={linkingId === client.id}
-                        className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 text-brand-accent hover:text-brand-text font-semibold disabled:opacity-50 transition-colors duration-200 cursor-pointer text-sm"
                       >
                         {linkingId === client.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -207,6 +230,16 @@ export const ClientLinkPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        isLoading={linkingId !== null || bulkLinking}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };
