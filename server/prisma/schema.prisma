@@ -30,6 +30,19 @@ model User {
   auditLogs       AuditLog[]
   roles           Role[] // RBAC many-to-many relationship (HU-004)
   employee        Employee?
+  client          Client?
+}
+
+model Client {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  name       String
+  phone      String?
+  documentId String?  @unique // DNI/RUC
+  userId     Int?     @unique
+  user       User?    @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Employee {

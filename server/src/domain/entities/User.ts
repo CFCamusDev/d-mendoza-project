@@ -33,5 +33,6 @@ export interface CreateUserDTO {
   googleId?: string;
   avatarUrl?: string;
   authProvider?: string;
+  isActive?: boolean;
 }
 
