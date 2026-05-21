@@ -3,12 +3,19 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/context/AuthContext';
 import type { UserRole } from '@/shared/types/auth.types';
 
+export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+  ADMIN: ['users:write', 'users:read', 'roles:manage'],
+  SELLER: ['users:read'],
+  CLIENT: [],
+};
+
 interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles?: UserRole[];
+  allowedPermissions?: string[];
 }
 
-export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, allowedRoles, allowedPermissions }: ProtectedRouteProps) => {
   const { isAuthenticated, user, isHydrating } = useAuth();
   const location = useLocation();
 
@@ -36,6 +43,17 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // 4. Validation pipeline clear - render child resource
+  // 4. Validate specific permission vector (PBAC)
+  if (allowedPermissions && user) {
+    const userPermissions = ROLE_PERMISSIONS[user.role] || [];
+    const hasAllPermissions = allowedPermissions.every((permission) =>
+      userPermissions.includes(permission)
+    );
+    if (!hasAllPermissions) {
+      return <Navigate to="/unauthorized" replace />;
+    }
+  }
+
+  // 5. Validation pipeline clear - render child resource
   return <>{children}</>;
 };
