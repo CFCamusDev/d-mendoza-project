@@ -9,6 +9,7 @@ import HomePage from '../features/ecommerce/HomePage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
 import EmployeesPage from '../features/admin/EmployeesPage';
 import ClientLinkPage from '../features/admin/ClientLinkPage';
+import ProductsAdminPage from '../features/admin/ProductsAdminPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
 
@@ -53,6 +54,14 @@ export const AppRouter = () => {
         element={
           <ProtectedRoute allowedPermissions={['users:write']}>
             <ClientLinkPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/products" 
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProductsAdminPage />
           </ProtectedRoute>
         } 
       />
