@@ -41,6 +41,25 @@ async function main() {
     },
   });
 
+  // HU-014: Permisos para gestión de productos y variantes SKU
+  const permissionProductsRead = await prisma.permission.upsert({
+    where: { name: 'products:read' },
+    update: {},
+    create: {
+      name: 'products:read',
+      description: 'Capacidad para listar y visualizar productos y sus variantes SKU.',
+    },
+  });
+
+  const permissionProductsWrite = await prisma.permission.upsert({
+    where: { name: 'products:write' },
+    update: {},
+    create: {
+      name: 'products:write',
+      description: 'Capacidad para crear, editar y gestionar productos y variantes SKU.',
+    },
+  });
+
   console.log('✅ Master permissions registered.');
 
   // ------------------------------------------------------------------
@@ -54,6 +73,8 @@ async function main() {
           { id: permissionRolesManage.id },
           { id: permissionUsersRead.id },
           { id: permissionUsersWrite.id },
+          { id: permissionProductsRead.id },   // HU-014
+          { id: permissionProductsWrite.id },  // HU-014
         ],
       },
     },
@@ -65,6 +86,8 @@ async function main() {
           { id: permissionRolesManage.id },
           { id: permissionUsersRead.id },
           { id: permissionUsersWrite.id },
+          { id: permissionProductsRead.id },   // HU-014
+          { id: permissionProductsWrite.id },  // HU-014
         ],
       },
     },

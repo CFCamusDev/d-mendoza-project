@@ -16,6 +16,10 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Perfil de Cliente](#perfil-de-cliente)
   - [GET /api/v1/profile](#get-apiv1profile)
   - [PATCH /api/v1/profile](#patch-apiv1profile)
+- [Gestión de Variantes SKU de Productos](#gestión-de-variantes-sku-de-productos)
+  - [GET /api/v1/products/:id/variants](#get-apiv1productsidvariants)
+  - [POST /api/v1/products/:id/variants](#post-apiv1productsidvariants)
+  - [PUT /api/v1/variants/:id](#put-apiv1variantsid)
 
 ---
 
@@ -700,3 +704,135 @@ Retornado cuando el payload no cumple con las validaciones de Zod (ej. número d
   "error": "Acceso denegado: Token de autenticación inválido"
 }
 ```
+
+---
+
+## Gestión de Variantes SKU de Productos
+
+Este módulo permite gestionar variantes de producto de forma granular, incluyendo generación masiva basada en atributos e integraciones para edición inline de precios y SKUs.
+
+### GET /api/v1/products/:id/variants
+
+Lista todas las variantes asociadas a un producto.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/products/:id/variants` | JWT `Bearer Token` | `products:read` |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "productId": 1,
+      "sku": "CAM-M-NEGRO",
+      "price": 99.90,
+      "attributesJson": {
+        "talla": "M",
+        "color": "NEGRO"
+      },
+      "isActive": true
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/v1/products/:id/variants
+
+Genera masivamente combinaciones cartesianas de atributos y crea las variantes con SKU auto-generado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/products/:id/variants` | JWT `Bearer Token` | `products:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "attributes": {
+    "talla": ["S", "M"],
+    "color": ["NEGRO", "BLANCO"]
+  },
+  "basePrice": 99.90
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "productId": 1,
+      "sku": "CAM-S-NEGRO",
+      "price": 99.90,
+      "attributesJson": {
+        "talla": "S",
+        "color": "NEGRO"
+      },
+      "isActive": true
+    }
+  ]
+}
+```
+
+##### Conflicto (HTTP 409 Conflict)
+Retornado si una de las variantes calculadas posee un SKU que ya está registrado.
+
+---
+
+### PUT /api/v1/variants/:id
+
+Edita individualmente el precio y/o el SKU de una variante. Valida unicidad de SKU antes de guardar.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `PUT` | `/api/v1/variants/:id` | JWT `Bearer Token` | `products:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "sku": "CAM-M-ROJO",
+  "price": 105.00
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "productId": 1,
+    "sku": "CAM-M-ROJO",
+    "price": 105.00,
+    "attributesJson": {
+      "talla": "M",
+      "color": "NEGRO"
+    },
+    "isActive": true
+  }
+}
+```
+
