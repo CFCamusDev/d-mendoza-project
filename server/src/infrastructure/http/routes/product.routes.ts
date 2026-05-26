@@ -1,13 +1,28 @@
 import { Router } from 'express';
 import { ProductVariantController } from '@infrastructure/http/controllers/ProductVariantController';
+import { ProductController } from '@infrastructure/http/controllers/ProductController';
 import { requirePermission } from '@infrastructure/http/middlewares/auth.middleware';
 
 const router = Router();
 const productVariantController = new ProductVariantController();
+const productController = new ProductController();
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Rutas de Productos y Variantes — HU-014
+// Rutas de Productos y Variantes — HU-014 / HU-015
 // ─────────────────────────────────────────────────────────────────────────────
+
+// GET /api/v1/ecommerce/products — Listar productos activos (Público de e-commerce)
+router.get(
+  '/ecommerce/products',
+  productController.getActiveProducts.bind(productController)
+);
+
+// PATCH /api/v1/products/:id/status — Inactivación / activación lógica de un producto (Admin)
+router.patch(
+  '/products/:id/status',
+  requirePermission('products:write'),
+  productController.toggleStatus.bind(productController)
+);
 
 // GET /api/v1/products/:id/variants — Listar variantes de un producto
 router.get(
