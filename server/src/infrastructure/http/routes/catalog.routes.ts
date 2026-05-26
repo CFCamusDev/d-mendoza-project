@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { CategoryController } from '@infrastructure/http/controllers/CategoryController';
-import { BrandController } from '@infrastructure/http/controllers/BrandController';
+import { ProductBrandController } from '@infrastructure/http/controllers/ProductBrandController';
 import { requirePermission } from '@infrastructure/http/middlewares/auth.middleware';
 
 const router = Router();
 const categories = new CategoryController();
-const brands = new BrandController();
+const brands = new ProductBrandController();
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 router.get('/categories', requirePermission('products:read'), categories.getAll.bind(categories));
