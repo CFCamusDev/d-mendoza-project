@@ -8,11 +8,8 @@ import GoogleAuthSuccessPage from '../features/ecommerce/auth/GoogleAuthSuccessP
 import HomePage from '../features/ecommerce/HomePage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
 import EmployeesPage from '../features/admin/EmployeesPage';
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
 import BranchesPage from '../features/admin/branches/BranchesPage';
-=======
 import BrandingPage from '../features/admin/BrandingPage';
->>>>>>> develop
 import ClientLinkPage from '../features/admin/ClientLinkPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
@@ -61,8 +58,6 @@ export const AppRouter = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/pos"
       <Route 
         path="/admin/clients/link" 
         element={
