@@ -137,3 +137,26 @@ model Brand {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ─── HU-012 ───────────────────────────────────────────────────────────────────
+
+model Attribute {
+  id        Int              @id @default(autoincrement())
+  name      String           @unique
+  isActive  Boolean          @default(true)
+  values    AttributeValue[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model AttributeValue {
+  id          Int       @id @default(autoincrement())
+  value       String
+  isActive    Boolean   @default(true)
+  attributeId Int
+  attribute   Attribute @relation(fields: [attributeId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([attributeId, value])
+}
