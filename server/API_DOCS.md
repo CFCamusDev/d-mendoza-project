@@ -16,6 +16,9 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Perfil de Cliente](#perfil-de-cliente)
   - [GET /api/v1/profile](#get-apiv1profile)
   - [PATCH /api/v1/profile](#patch-apiv1profile)
+- [Identidad Visual y Branding](#identidad-visual-y-branding)
+  - [GET /api/v1/config/brand](#get-apiv1configbrand)
+  - [PUT /api/v1/config/brand](#put-apiv1configbrand)
 
 ---
 
@@ -698,5 +701,121 @@ Retornado cuando el payload no cumple con las validaciones de Zod (ej. número d
 {
   "success": false,
   "error": "Acceso denegado: Token de autenticación inválido"
+}
+```
+
+---
+
+## Identidad Visual y Branding
+
+### GET /api/v1/config/brand
+
+Obtiene la configuración actual de la identidad visual y branding del sistema (público para personalización dinámica en el frontend e-commerce).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                    | Autenticación     | Rol Requerido |
+| :----- | :---------------------- | :---------------- | :------------ |
+| `GET`  | `/api/v1/config/brand` | Ninguna (Público) | Invitado      |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+Retorna la configuración actual. Si no se ha configurado ninguna, retorna los valores por defecto del sistema.
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "brandName": "D'Mendoza",
+    "logoUrl": null,
+    "primaryColor": "#4F46E5",
+    "socialLinksJson": {},
+    "updatedAt": "2026-05-20T16:53:28.000Z"
+  }
+}
+```
+
+---
+
+### PUT /api/v1/config/brand
+
+Actualiza la configuración de identidad visual y branding del sistema de forma global. Solo accesible para administradores. Registra la modificación en los logs de auditoría para su trazabilidad.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                    | Autenticación      | Rol Requerido         |
+| :----- | :---------------------- | :----------------- | :-------------------- |
+| `PUT`  | `/api/v1/config/brand` | JWT `Bearer Token` | Admin (`roles:manage`)|
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "brandName": "D'Mendoza Premium",
+  "logoUrl": "https://ejemplo.com/logo.png",
+  "primaryColor": "#FF5733",
+  "socialLinksJson": {
+    "facebook": "https://facebook.com/dmendoza",
+    "instagram": "https://instagram.com/dmendoza"
+  }
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro         | Tipo     | Requerido | Reglas de Validación                                 |
+| :---------------- | :------- | :-------- | :--------------------------------------------------- |
+| `brandName`       | `string` | Sí        | Nombre comercial visible del sistema.                |
+| `logoUrl`         | `string` | No        | URL absoluta del logotipo de la marca.               |
+| `primaryColor`    | `string` | Sí        | Código de color hexadecimal (ej. `#FF5733`).          |
+| `socialLinksJson` | `object` | No        | Objeto JSON con urls de las redes sociales del comercio.|
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "brandName": "D'Mendoza Premium",
+    "logoUrl": "https://ejemplo.com/logo.png",
+    "primaryColor": "#FF5733",
+    "socialLinksJson": {
+      "facebook": "https://facebook.com/dmendoza",
+      "instagram": "https://instagram.com/dmendoza"
+    },
+    "updatedAt": "2026-05-20T16:54:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Retornado si los campos enviados no cumplen con los tipos o validaciones de Zod.
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "code": "invalid_type",
+      "expected": "string",
+      "received": "undefined",
+      "path": ["brandName"],
+      "message": "Required"
+    }
+  ]
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+- **HTTP 401 Unauthorized**: Si falta el Token en los headers o si es inválido.
+- **HTTP 403 Forbidden**: Si el usuario autenticado no posee los permisos requeridos (`roles:manage`).
 }
 ```
