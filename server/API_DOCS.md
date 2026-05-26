@@ -20,6 +20,9 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [GET /api/v1/products/:id/variants](#get-apiv1productsidvariants)
   - [POST /api/v1/products/:id/variants](#post-apiv1productsidvariants)
   - [PUT /api/v1/variants/:id](#put-apiv1variantsid)
+- [Inactivación Lógica de Productos](#inactivación-lógica-de-productos)
+  - [GET /api/v1/ecommerce/products](#get-apiv1ecommerceproducts)
+  - [PATCH /api/v1/products/:id/status](#patch-apiv1productsidstatus)
 
 ---
 
@@ -835,4 +838,93 @@ Edita individualmente el precio y/o el SKU de una variante. Valida unicidad de S
   }
 }
 ```
+
+---
+
+## Inactivación Lógica de Productos
+
+Este módulo expone las operaciones para inhabilitar o habilitar lógicamente productos y asegurar que las búsquedas del catálogo público del e-commerce únicamente presenten productos marcados como activos (`isActive: true`).
+
+### GET /api/v1/ecommerce/products
+
+Obtiene la lista de todos los productos del catálogo marcados como activos, junto con sus variantes correspondientes.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/ecommerce/products` | Ninguna (Público) | Invitado / Cliente |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "code": "CAM",
+      "name": "Camisa Formal",
+      "description": "Camisa premium",
+      "isActive": true,
+      "variants": [
+        {
+          "id": 1,
+          "productId": 1,
+          "sku": "CAM-M-NEGRO",
+          "price": 99.90,
+          "attributesJson": {
+            "talla": "M",
+            "color": "NEGRO"
+          },
+          "isActive": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### PATCH /api/v1/products/:id/status
+
+Permite inhabilitar o habilitar un producto del catálogo de forma lógica.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `PATCH` | `/api/v1/products/:id/status` | JWT `Bearer Token` | `products:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "isActive": false
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "code": "CAM",
+    "name": "Camisa Formal",
+    "description": "Camisa premium",
+    "isActive": false
+  }
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+Retornado si el `id` provisto no existe en el catálogo.
+
 
