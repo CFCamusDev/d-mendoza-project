@@ -40,6 +40,23 @@ export class PrismaProductRepository implements IProductRepository {
     return this.toDomain(record);
   }
 
+  async findAllActive(): Promise<Product[]> {
+    const records = await prisma.product.findMany({
+      where: { isActive: true },
+      include: { variants: true },
+    });
+    return records.map((r: any) => this.toDomain(r));
+  }
+
+  async updateStatus(id: number, isActive: boolean): Promise<Product> {
+    const record = await prisma.product.update({
+      where: { id },
+      data: { isActive },
+      include: { variants: true },
+    });
+    return this.toDomain(record);
+  }
+
   private toDomain(record: any): Product {
     return {
       id: record.id,

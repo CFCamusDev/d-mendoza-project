@@ -14,11 +14,13 @@ export interface UpdateVariantDTO {
   isActive?: boolean;
 }
 
-// Repositorio de productos: solo lo necesario para HU-014
+// Repositorio de productos: solo lo necesario para HU-014 / HU-015
 export interface IProductRepository {
   findById(id: number): Promise<Product | null>;
   findByCode(code: string): Promise<Product | null>;
   create(data: { code: string; name: string; description?: string }): Promise<Product>;
+  findAllActive(): Promise<Product[]>;
+  updateStatus(id: number, isActive: boolean): Promise<Product>;
 }
 
 // Repositorio de variantes
