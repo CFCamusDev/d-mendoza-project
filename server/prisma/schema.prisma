@@ -106,3 +106,12 @@ model AuditLog {
   user      User?    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }
+
+model BrandConfig {
+  id              Int      @id @default(1)
+  brandName       String   @default("D'Mendoza")
+  logoUrl         String?
+  primaryColor    String   @default("#4F46E5") // Indigo 600
+  socialLinksJson Json?    // { facebook: string, instagram: string, ... }
+  updatedAt       DateTime @updatedAt
+}
