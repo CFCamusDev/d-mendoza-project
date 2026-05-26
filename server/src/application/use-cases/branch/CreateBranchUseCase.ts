@@ -1,4 +1,5 @@
 import { IBranchRepository } from '@domain/repositories/IBranchRepository';
+import { Branch } from '@domain/entities/Branch';
 import { CreateBranchRequestDTO, BranchResponseDTO } from '../../dtos/BranchDTOs';
 
 export class CreateBranchUseCase {
@@ -14,7 +15,7 @@ export class CreateBranchUseCase {
     return this.mapToDTO(branch);
   }
 
-  private mapToDTO(branch: any): BranchResponseDTO {
+  private mapToDTO(branch: Branch): BranchResponseDTO {
     return {
       id: branch.id,
       name: branch.name,
