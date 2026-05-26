@@ -13,6 +13,7 @@ import { globalErrorHandler } from '@infrastructure/http/middlewares/error.middl
 import clientRoutes from '@infrastructure/http/routes/client.routes';
 import catalogRoutes from '@infrastructure/http/routes/catalog.routes';
 import attributeRoutes from '@infrastructure/http/routes/attribute.routes';
+import productRoutes from '@infrastructure/http/routes/product.routes';
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/v1', profileRoutes);
 app.use('/api/v1', clientRoutes);
 app.use('/api/v1', catalogRoutes);
 app.use('/api/v1', attributeRoutes);
+app.use('/api/v1', productRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });
