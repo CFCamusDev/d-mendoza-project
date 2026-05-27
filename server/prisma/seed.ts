@@ -47,7 +47,7 @@ async function main() {
   // 2. Standard System Roles Aggregation
   // ------------------------------------------------------------------
   const adminRole = await prisma.role.upsert({
-    where: { name: 'SUPERADMIN' },
+    where: { name: 'ADMIN' },
     update: {
       permissions: {
         connect: [
@@ -58,7 +58,7 @@ async function main() {
       },
     },
     create: {
-      name: 'SUPERADMIN',
+      name: 'ADMIN',
       description: 'Acceso total irrestricto a toda la plataforma.',
       permissions: {
         connect: [
