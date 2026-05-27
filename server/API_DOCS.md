@@ -24,6 +24,7 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Identidad Visual y Branding](#identidad-visual-y-branding)
   - [GET /api/v1/config/brand](#get-apiv1configbrand)
   - [PUT /api/v1/config/brand](#put-apiv1configbrand)
+>>>>>>> develop
 
 ---
 
@@ -811,6 +812,7 @@ Obtiene la configuración actual de la identidad visual y branding del sistema (
 ##### Éxito (HTTP 200 OK)
 
 Retorna la configuración actual. Si no se ha configurado ninguna, retorna los valores por defecto del sistema.
+>>>>>>> develop
 
 ```json
 {
@@ -879,11 +881,15 @@ Actualiza la configuración de identidad visual y branding del sistema de forma 
 | Método | Ruta                    | Autenticación      | Rol Requerido         |
 | :----- | :---------------------- | :----------------- | :-------------------- |
 | `PUT`  | `/api/v1/config/brand` | JWT `Bearer Token` | Admin (`roles:manage`)|
+>>>>>>> develop
 
 #### 2. Cuerpo de la Petición (Request Body)
 
 ```json
 {
+  "name": "Sucursal Norte Refactor",
+  "address": null,
+  "phone": "987654321"
   "name": "Sucursal Norte Refactor",
   "address": null,
   "phone": "987654321"
@@ -894,6 +900,7 @@ Actualiza la configuración de identidad visual y branding del sistema de forma 
     "facebook": "https://facebook.com/dmendoza",
     "instagram": "https://instagram.com/dmendoza"
   }
+>>>>>>> develop
 }
 ```
 
@@ -910,6 +917,7 @@ Actualiza la configuración de identidad visual y branding del sistema de forma 
 | `logoUrl`         | `string` | No        | URL absoluta del logotipo de la marca.               |
 | `primaryColor`    | `string` | Sí        | Código de color hexadecimal (ej. `#FF5733`).          |
 | `socialLinksJson` | `object` | No        | Objeto JSON con urls de las redes sociales del comercio.|
+>>>>>>> develop
 
 #### 3. Respuestas (Responses)
 
@@ -917,6 +925,9 @@ Actualiza la configuración de identidad visual y branding del sistema de forma 
 
 Retornado cuando la actualización en la base de datos finaliza con éxito.
 
+Retornado cuando la actualización en la base de datos finaliza con éxito.
+
+>>>>>>> develop
 ```json
 {
   "success": true,
@@ -955,6 +966,68 @@ Retornado si la sucursal con el ID provisto no existe.
 ##### Error de Validación (HTTP 400 Bad Request)
 
 Retornado si los campos enviados no cumplen con los tipos o validaciones de Zod.
+>>>>>>> develop
+
+```json
+{
+  "success": false,
+  "error": "La sucursal no existe"
+}
+```
+
+---
+
+### PATCH /api/v1/branches/:id/status
+
+Permite activar o desactivar una sucursal en el sistema, lo cual impacta su disponibilidad comercial general.
+
+#### 1. Especificación del Endpoint
+
+| Método  | Ruta                          | Autenticación      | Permiso Requerido |
+| :------ | :---------------------------- | :----------------- | :---------------- |
+| `PATCH` | `/api/v1/branches/:id/status` | JWT `Bearer Token` | `users:write`     |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "isActive": false
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro  | Tipo      | Requerido | Reglas de Validación                       |
+| :--------- | :-------- | :-------- | :----------------------------------------- |
+| `isActive` | `boolean` | Sí        | Determina el nuevo estado de la sucursal.  |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+Retornado cuando el estado ha sido actualizado con éxito.
+
+```json
+{
+  "success": true,
+  "message": "Sucursal inactivada correctamente",
+  "data": {
+    "id": 2,
+    "name": "Sucursal Norte Refactor",
+    "address": null,
+    "phone": "987654321",
+    "isActive": false,
+    "warehouse": {
+      "id": 102,
+      "createdAt": "2026-05-20T17:30:00.000Z"
+    },
+    "createdAt": "2026-05-20T17:30:00.000Z",
+    "updatedAt": "2026-05-20T17:40:00.000Z"
+  }
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
 
 ```json
 {
@@ -1258,4 +1331,3 @@ Actualiza masivamente el peso del orden (`order`) de un listado de banners para 
   "message": "Banners reordenados exitosamente"
 }
 ```
-
