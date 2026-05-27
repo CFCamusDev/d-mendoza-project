@@ -10,6 +10,7 @@ import employeeRoutes from '@infrastructure/http/routes/employee.routes';
 import branchRoutes from '@infrastructure/http/routes/branch.routes';
 import profileRoutes from '@infrastructure/http/routes/profile.routes';
 import { globalErrorHandler } from '@infrastructure/http/middlewares/error.middleware';
+import brandRoutes from '@infrastructure/http/routes/brand.routes';
 import clientRoutes from '@infrastructure/http/routes/client.routes';
 import productRoutes from '@infrastructure/http/routes/product.routes'; // HU-014
 
@@ -40,6 +41,7 @@ app.use('/api/v1', userRoutes);
 app.use('/api/v1', employeeRoutes);
 app.use('/api/v1', branchRoutes);
 app.use('/api/v1', profileRoutes);
+app.use('/api/v1', brandRoutes);
 app.use('/api/v1', clientRoutes);
 app.use('/api/v1', productRoutes); // HU-014 — Variantes SKU
 app.get('/api', (_req: Request, res: Response) => {
