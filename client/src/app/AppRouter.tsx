@@ -10,6 +10,7 @@ import UnauthorizedPage from '../features/admin/UnauthorizedPage';
 import EmployeesPage from '../features/admin/EmployeesPage';
 import BrandingPage from '../features/admin/BrandingPage';
 import ClientLinkPage from '../features/admin/ClientLinkPage';
+import BannersPage from '../features/admin/BannersPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
 
@@ -58,7 +59,13 @@ export const AppRouter = () => {
         }
       />
       <Route
-        path="/pos"
+        path="/admin/banners"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <BannersPage />
+          </ProtectedRoute>
+        }
+      />
       <Route 
         path="/admin/clients/link" 
         element={
