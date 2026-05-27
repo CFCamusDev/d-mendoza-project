@@ -8,7 +8,7 @@ import GoogleAuthSuccessPage from '../features/ecommerce/auth/GoogleAuthSuccessP
 import HomePage from '../features/ecommerce/HomePage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
 import EmployeesPage from '../features/admin/EmployeesPage';
-import BranchesPage from '../features/admin/branches/BranchesPage';
+import BranchesPage from '../features/admin/BranchesPage';
 import BrandingPage from '../features/admin/BrandingPage';
 import ClientLinkPage from '../features/admin/ClientLinkPage';
 import BannersPage from '../features/admin/BannersPage';
@@ -72,14 +72,6 @@ export const AppRouter = () => {
         element={
           <ProtectedRoute allowedPermissions={['users:write']}>
             <ClientLinkPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/branches"
-        element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
-            <BranchesPage />
           </ProtectedRoute>
         }
       />
