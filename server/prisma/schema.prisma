@@ -106,3 +106,16 @@ model BrandConfig {
   socialLinksJson Json?    // { facebook: string, instagram: string, ... }
   updatedAt       DateTime @updatedAt
 }
+
+// ─────────────────────────────────────────────
+// HU-019: Gestión de Banners y Sliders (T-083)
+// ─────────────────────────────────────────────
+model Banner {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String   @db.Text
+  linkUrl   String?  @db.Text
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
