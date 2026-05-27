@@ -817,5 +817,222 @@ Retornado si los campos enviados no cumplen con los tipos o validaciones de Zod.
 
 - **HTTP 401 Unauthorized**: Si falta el Token en los headers o si es inválido.
 - **HTTP 403 Forbidden**: Si el usuario autenticado no posee los permisos requeridos (`roles:manage`).
+```
+
+---
+
+## Gestión de Banners y Sliders
+
+Este módulo permite administrar los banners promocionales y sliders publicitarios del Home de la tienda e-commerce.
+
+### GET /api/v1/ecommerce/banners
+
+Obtiene la lista de todos los banners activos ordenados ascendentemente por su peso o prioridad de orden. Endpoint público.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                           | Autenticación     | Rol Requerido |
+| :----- | :----------------------------- | :---------------- | :------------ |
+| `GET`  | `/api/v1/ecommerce/banners`   | Ninguna (Público) | Invitado      |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "imageUrl": "https://res.cloudinary.com/demo/image/upload/v12345/banners/banner1.png",
+      "linkUrl": "https://dmendoza.com/catalog/winter-season",
+      "order": 0,
+      "isActive": true,
+      "createdAt": "2026-05-26T21:22:02.000Z",
+      "updatedAt": "2026-05-26T21:22:02.000Z"
+    }
+  ]
 }
 ```
+
+---
+
+### GET /api/v1/banners
+
+Obtiene la lista de todos los banners registrados en el sistema (tanto activos como inactivos). Solo accesible para administradores.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta               | Autenticación      | Rol Requerido |
+| :----- | :----------------- | :----------------- | :------------ |
+| `GET`  | `/api/v1/banners`  | JWT `Bearer Token` | Admin         |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "imageUrl": "https://res.cloudinary.com/demo/image/upload/v12345/banners/banner1.png",
+      "linkUrl": "https://dmendoza.com/catalog/winter",
+      "order": 0,
+      "isActive": true,
+      "createdAt": "2026-05-26T21:22:02.000Z",
+      "updatedAt": "2026-05-26T21:22:02.000Z"
+    },
+    {
+      "id": 2,
+      "imageUrl": "https://res.cloudinary.com/demo/image/upload/v12345/banners/banner2.png",
+      "linkUrl": null,
+      "order": 1,
+      "isActive": false,
+      "createdAt": "2026-05-26T21:22:02.000Z",
+      "updatedAt": "2026-05-26T21:22:02.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/v1/banners
+
+Crea un nuevo banner publicitario cargando la imagen por medio de `multer` a Cloudinary.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta               | Autenticación      | Rol Requerido |
+| :----- | :----------------- | :----------------- | :------------ |
+| `POST` | `/api/v1/banners`  | JWT `Bearer Token` | Admin         |
+
+#### 2. Cuerpo de la Petición (Request Body)
+Se espera una petición multipart/form-data con los siguientes campos:
+
+| Campo     | Tipo     | Requerido | Descripción |
+| :-------- | :------- | :-------- | :---------- |
+| `image`   | `file`   | Sí        | Archivo de imagen del banner (PNG, JPG, WEBP). Máx 5MB. |
+| `linkUrl` | `string` | No        | URL absoluta del enlace a redireccionar (ej: `https://dmendoza.com/offers`). |
+| `order`   | `number` | No        | Peso de orden. Entero no negativo. |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 3,
+    "imageUrl": "https://res.cloudinary.com/demo/image/upload/v12345/banners/banner3.png",
+    "linkUrl": "https://dmendoza.com/offers",
+    "order": 2,
+    "isActive": true,
+    "createdAt": "2026-05-26T21:22:02.000Z",
+    "updatedAt": "2026-05-26T21:22:02.000Z"
+  }
+}
+```
+
+---
+
+### PUT /api/v1/banners/:id
+
+Actualiza las propiedades de un banner existente. Permite actualizar la imagen opcionalmente mediante la subida de un nuevo archivo en el campo `image`.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                   | Autenticación      | Rol Requerido |
+| :----- | :--------------------- | :----------------- | :------------ |
+| `PUT`  | `/api/v1/banners/:id`  | JWT `Bearer Token` | Admin         |
+
+#### 2. Cuerpo de la Petición (Request Body)
+Se espera una petición multipart/form-data con los siguientes campos opcionales:
+
+| Campo      | Tipo      | Requerido | Descripción |
+| :--------- | :-------- | :-------- | :---------- |
+| `image`    | `file`    | No        | Nuevo archivo de imagen para actualizar la actual. |
+| `linkUrl`  | `string`  | No        | Nueva URL de redirección. |
+| `order`    | `number`  | No        | Nuevo orden entero no negativo. |
+| `isActive` | `boolean` | No        | Estado activo/inactivo del banner (`true` o `false`). |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 3,
+    "imageUrl": "https://res.cloudinary.com/demo/image/upload/v12345/banners/banner3_updated.png",
+    "linkUrl": "https://dmendoza.com/new-collection",
+    "order": 2,
+    "isActive": true,
+    "createdAt": "2026-05-26T21:22:02.000Z",
+    "updatedAt": "2026-05-27T02:00:00.000Z"
+  }
+}
+```
+
+---
+
+### DELETE /api/v1/banners/:id
+
+Elimina físicamente un banner del sistema.
+
+#### 1. Especificación del Endpoint
+
+| Método   | Ruta                   | Autenticación      | Rol Requerido |
+| :------- | :--------------------- | :----------------- | :------------ |
+| `DELETE` | `/api/v1/banners/:id`  | JWT `Bearer Token` | Admin         |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Banner eliminado exitosamente"
+}
+```
+
+---
+
+### PATCH /api/v1/banners/reorder
+
+Actualiza masivamente el peso del orden (`order`) de un listado de banners para la drag-and-drop sortable matrix.
+
+#### 1. Especificación del Endpoint
+
+| Método  | Ruta                        | Autenticación      | Rol Requerido |
+| :------ | :-------------------------- | :----------------- | :------------ |
+| `PATCH` | `/api/v1/banners/reorder`   | JWT `Bearer Token` | Admin         |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "orders": [
+    { "id": 1, "order": 1 },
+    { "id": 2, "order": 0 }
+  ]
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Banners reordenados exitosamente"
+}
+```
+
