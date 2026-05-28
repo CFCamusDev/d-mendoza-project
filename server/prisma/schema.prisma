@@ -65,8 +65,17 @@ model Branch {
   phone     String?
   isActive  Boolean    @default(true)
   employees Employee[]
+  warehouse Warehouse?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+}
+
+model Warehouse {
+  id        Int      @id @default(autoincrement())
+  branchId  Int      @unique
+  branch    Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Role {
@@ -128,4 +137,58 @@ model ProductVariant {
   updatedAt      DateTime @updatedAt
 
   @@index([productId])
+}
+
+model BrandConfig {
+  id              Int      @id @default(1)
+  brandName       String   @default("D'Mendoza")
+  logoUrl         String?
+  primaryColor    String   @default("#4F46E5")
+  socialLinksJson Json?
+  updatedAt       DateTime @updatedAt
+}
+
+// ─── HU-011 ───────────────────────────────────────────────────────────────────
+
+model Category {
+  id        Int        @id @default(autoincrement())
+  name      String
+  parentId  Int?
+  parent    Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryChildren")
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Brand {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  logoUrl   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── HU-012 ───────────────────────────────────────────────────────────────────
+
+model Attribute {
+  id        Int              @id @default(autoincrement())
+  name      String           @unique
+  isActive  Boolean          @default(true)
+  values    AttributeValue[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model AttributeValue {
+  id          Int       @id @default(autoincrement())
+  value       String
+  isActive    Boolean   @default(true)
+  attributeId Int
+  attribute   Attribute @relation(fields: [attributeId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([attributeId, value])
 }
