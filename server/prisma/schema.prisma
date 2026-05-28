@@ -109,6 +109,7 @@ model AuditLog {
 
 // ─────────────────────────────────────────────
 // HU-014: Gestión de Variantes SKU (T-076)
+// HU-015: Inactivación Lógica de Productos
 // ─────────────────────────────────────────────
 
 model Product {
