@@ -1,60 +1,43 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { z } from 'zod';
-import { PrismaBrandRepository } from '@infrastructure/database/repositories/PrismaBrandRepository';
+import { PrismaBrandConfigRepository } from '@infrastructure/database/repositories/PrismaBrandConfigRepository';
+import { PrismaAuditLogRepository } from '@infrastructure/database/repositories/PrismaAuditLogRepository';
+import { GetBrandConfigUseCase } from '@application/use-cases/brand/GetBrandConfigUseCase';
+import { UpdateBrandConfigUseCase } from '@application/use-cases/brand/UpdateBrandConfigUseCase';
 
-const repo = new PrismaBrandRepository();
-
-const CreateSchema = z.object({
-  name: z.string().min(1, 'El nombre es obligatorio'),
-  logoUrl: z.string().url().nullable().optional(),
+const BrandConfigSchema = z.object({
+  brandName: z.string(),
+  logoUrl: z.string().optional().nullable(),
+  primaryColor: z.string(),
+  socialLinksJson: z.any().optional().nullable(),
 });
 
-const UpdateSchema = CreateSchema.extend({ isActive: z.boolean().optional() }).partial();
+const brandConfigRepository = new PrismaBrandConfigRepository();
+const auditLogRepository = new PrismaAuditLogRepository();
+const getBrandConfigUseCase = new GetBrandConfigUseCase(brandConfigRepository);
+const updateBrandConfigUseCase = new UpdateBrandConfigUseCase(brandConfigRepository, auditLogRepository);
 
 export class BrandController {
-  async getAll(_req: Request, res: Response, next: NextFunction) {
+  async getBrandConfig(_req: Request, res: Response) {
     try {
-      const data = await repo.findAll();
-      return res.status(200).json({ success: true, data });
-    } catch (e) { next(e); }
+      const config = await getBrandConfigUseCase.execute();
+      return res.status(200).json({ success: true, data: config });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    }
   }
 
-  async getOne(req: Request, res: Response, next: NextFunction) {
+  async updateBrandConfig(req: Request, res: Response) {
     try {
-      const id = parseInt(String(req.params.id), 10);
-      if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID inválido' });
-      const data = await repo.findById(id);
-      if (!data) return res.status(404).json({ success: false, error: 'Marca no encontrada' });
-      return res.status(200).json({ success: true, data });
-    } catch (e) { next(e); }
-  }
-
-  async create(req: Request, res: Response, next: NextFunction) {
-    try {
-      const parsed = CreateSchema.safeParse(req.body);
-      if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.issues });
-      const data = await repo.create(parsed.data);
-      return res.status(201).json({ success: true, data });
-    } catch (e) { next(e); }
-  }
-
-  async update(req: Request, res: Response, next: NextFunction) {
-    try {
-      const id = parseInt(String(req.params.id), 10);
-      if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID inválido' });
-      const parsed = UpdateSchema.safeParse(req.body);
-      if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.issues });
-      const data = await repo.update(id, parsed.data);
-      return res.status(200).json({ success: true, data });
-    } catch (e) { next(e); }
-  }
-
-  async deactivate(req: Request, res: Response, next: NextFunction) {
-    try {
-      const id = parseInt(String(req.params.id), 10);
-      if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID inválido' });
-      await repo.deactivate(id);
-      return res.status(200).json({ success: true, message: 'Marca inactivada' });
-    } catch (e) { next(e); }
+      const validation = BrandConfigSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ success: false, error: validation.error.issues });
+      }
+      const adminUserId = req.auth?.userId ?? null;
+      const config = await updateBrandConfigUseCase.execute(validation.data, adminUserId);
+      return res.status(200).json({ success: true, data: config });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    }
   }
 }
