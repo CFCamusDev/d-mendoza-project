@@ -1,6 +1,3 @@
--- CreateEnum: KardexType (HU-026 / T-099)
-CREATE TYPE `KardexType` AS ENUM ('ENTRADA', 'SALIDA', 'AJUSTE');
-
 -- CreateTable: Product (HU-013 / T-072)
 CREATE TABLE `Product` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
