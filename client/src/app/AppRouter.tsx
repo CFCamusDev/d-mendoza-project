@@ -8,13 +8,18 @@ import GoogleAuthSuccessPage from '../features/ecommerce/auth/GoogleAuthSuccessP
 import HomePage from '../features/ecommerce/HomePage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
 import EmployeesPage from '../features/admin/EmployeesPage';
-import BranchesPage from '../features/admin/BranchesPage';
 import BranchesPage from '../features/admin/branches/BranchesPage';
 import BrandingPage from '../features/admin/BrandingPage';
 import ClientLinkPage from '../features/admin/ClientLinkPage';
 import BannersPage from '../features/admin/BannersPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
+import CategoriesPage from '../features/admin/CategoriesPage';
+import BrandsPage from '../features/admin/BrandsPage';
+import AttributesPage from '../features/admin/AttributesPage';
+import ProductFormPage from '../features/admin/ProductFormPage';
+import AdjustmentPage from '../features/admin/AdjustmentPage';
+import RotationReportPage from '../features/admin/RotationReportPage';
 
 export const AppRouter = () => {
   return (
@@ -68,8 +73,6 @@ export const AppRouter = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/admin/clients/link"
       <Route 
         path="/admin/clients/link" 
         element={
@@ -78,8 +81,6 @@ export const AppRouter = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/pos"
       <Route 
         path="/admin/branches" 
         element={
@@ -104,6 +105,23 @@ export const AppRouter = () => {
           </ProtectedRoute>
         }
       />
+
+      {/* HU-011 */}
+      <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['ADMIN']}><CategoriesPage /></ProtectedRoute>} />
+      <Route path="/admin/brands" element={<ProtectedRoute allowedRoles={['ADMIN']}><BrandsPage /></ProtectedRoute>} />
+
+      {/* HU-012 */}
+      <Route path="/admin/attributes" element={<ProtectedRoute allowedRoles={['ADMIN']}><AttributesPage /></ProtectedRoute>} />
+
+      {/* HU-013 */}
+      <Route path="/admin/products/new" element={<ProtectedRoute allowedRoles={['ADMIN']}><ProductFormPage /></ProtectedRoute>} />
+      <Route path="/admin/products/:id/edit" element={<ProtectedRoute allowedRoles={['ADMIN']}><ProductFormPage /></ProtectedRoute>} />
+
+      {/* HU-028 */}
+      <Route path="/admin/inventory/adjustments" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdjustmentPage /></ProtectedRoute>} />
+
+      {/* HU-030 */}
+      <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN']}><RotationReportPage /></ProtectedRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
