@@ -1,41 +1,66 @@
 import prisma from '@infrastructure/database/prisma';
 import { Product, CreateProductDTO } from '@domain/entities/Product';
+import { IProductRepository } from '@domain/repositories/IProductVariantRepository';
 
-export class PrismaProductRepository {
+export class PrismaProductRepository implements IProductRepository {
   async findAll(): Promise<Product[]> {
     return prisma.product.findMany({
-      where: { isActive: true },
-      include: { images: true, category: true, brand: true },
+      include: { images: true, category: true, brand: true, variants: true },
       orderBy: { name: 'asc' },
-    }) as Promise<Product[]>;
+    }) as unknown as Promise<Product[]>;
+  }
+
+  async findAllActive(): Promise<Product[]> {
+    return prisma.product.findMany({
+      where: { isActive: true },
+      include: { images: true, category: true, brand: true, variants: true },
+      orderBy: { name: 'asc' },
+    }) as unknown as Promise<Product[]>;
   }
 
   async findById(id: number): Promise<Product | null> {
     return prisma.product.findUnique({
       where: { id },
-      include: { images: true, category: true, brand: true },
-    }) as Promise<Product | null>;
+      include: { images: true, category: true, brand: true, variants: true },
+    }) as unknown as Promise<Product | null>;
   }
 
-  async create(data: CreateProductDTO): Promise<Product> {
+  async findByCode(code: string): Promise<Product | null> {
+    return prisma.product.findUnique({
+      where: { code },
+      include: { images: true, category: true, brand: true, variants: true },
+    }) as unknown as Promise<Product | null>;
+  }
+
+  async create(data: CreateProductDTO | { code: string; name: string; description?: string }): Promise<Product> {
+    const fullData = data as CreateProductDTO;
     return prisma.product.create({
       data: {
-        name: data.name,
-        description: data.description ?? null,
-        categoryId: data.categoryId,
-        brandId: data.brandId,
-        gender: data.gender ?? null,
+        code: fullData.code,
+        name: fullData.name,
+        description: fullData.description ?? null,
+        categoryId: fullData.categoryId ?? null,
+        brandId: fullData.brandId ?? null,
+        gender: fullData.gender ?? null,
       },
-      include: { images: true },
-    }) as Promise<Product>;
+      include: { images: true, variants: true },
+    }) as unknown as Promise<Product>;
   }
 
   async update(id: number, data: Partial<CreateProductDTO & { isActive: boolean }>): Promise<Product> {
     return prisma.product.update({
       where: { id },
       data,
-      include: { images: true },
-    }) as Promise<Product>;
+      include: { images: true, variants: true },
+    }) as unknown as Promise<Product>;
+  }
+
+  async updateStatus(id: number, isActive: boolean): Promise<Product> {
+    return prisma.product.update({
+      where: { id },
+      data: { isActive },
+      include: { images: true, variants: true },
+    }) as unknown as Promise<Product>;
   }
 
   async addImage(productId: number, url: string, isMain: boolean): Promise<void> {
