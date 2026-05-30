@@ -78,6 +78,10 @@ export const AppRouter = () => {
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <ProductsAdminPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
         path="/admin/branches" 
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
