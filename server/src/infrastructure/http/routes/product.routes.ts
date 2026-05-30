@@ -5,21 +5,59 @@ import { requirePermission } from '@infrastructure/http/middlewares/auth.middlew
 
 const router = Router();
 const productVariantController = new ProductVariantController();
-const ctrl = new ProductController();
+const productController = new ProductController();
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Rutas de Productos y Variantes — HU-014 / Develop
+// Rutas de Productos y Variantes — HU-014 / HU-015
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/products', requirePermission('products:read'), ctrl.getAll.bind(ctrl));
-router.get('/products/:id', requirePermission('products:read'), ctrl.getOne.bind(ctrl));
-router.post('/products', requirePermission('products:write'), ctrl.create.bind(ctrl));
-router.patch('/products/:id', requirePermission('products:write'), ctrl.update.bind(ctrl));
+// GET /api/v1/ecommerce/products — Listar productos activos (Público de e-commerce)
+router.get(
+  '/ecommerce/products',
+  productController.getActiveProducts.bind(productController)
+);
+
+// GET /api/v1/products — Listar todos los productos
+router.get(
+  '/products',
+  requirePermission('products:read'),
+  productController.getAll.bind(productController)
+);
+
+// GET /api/v1/products/:id — Obtener un producto
+router.get(
+  '/products/:id',
+  requirePermission('products:read'),
+  productController.getOne.bind(productController)
+);
+
+// POST /api/v1/products — Crear producto
+router.post(
+  '/products',
+  requirePermission('products:write'),
+  productController.create.bind(productController)
+);
+
+// PATCH /api/v1/products/:id — Actualizar producto
+router.patch(
+  '/products/:id',
+  requirePermission('products:write'),
+  productController.update.bind(productController)
+);
+
+// PATCH /api/v1/products/:id/status — Inactivación / activación lógica de un producto (Admin)
+router.patch(
+  '/products/:id/status',
+  requirePermission('products:write'),
+  productController.toggleStatus.bind(productController)
+);
+
+// POST /api/v1/products/:id/images — Subir imágenes de producto
 router.post(
   '/products/:id/images',
   requirePermission('products:write'),
   productUpload.array('images', 10),
-  ctrl.uploadImages.bind(ctrl)
+  productController.uploadImages.bind(productController)
 );
 
 // GET /api/v1/products/:id/variants — Listar variantes de un producto

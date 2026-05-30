@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { PrismaProductRepository, PrismaProductVariantRepository } from '@infrastructure/database/repositories/PrismaProductVariantRepository';
+import { PrismaProductVariantRepository } from '@infrastructure/database/repositories/PrismaProductVariantRepository';
+import { PrismaProductRepository } from '@infrastructure/database/repositories/PrismaProductRepository';
 import { CreateVariantsUseCase } from '@application/use-cases/product/CreateVariantsUseCase';
 import { UpdateVariantUseCase } from '@application/use-cases/product/UpdateVariantUseCase';
 

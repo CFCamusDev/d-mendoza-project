@@ -10,11 +10,11 @@ export interface ProductImage {
 
 export interface Product {
   id: number;
-  code: string;        // Código base para auto-SKU (ej. "CAM")
+  code: string;
   name: string;
   description: string | null;
   categoryId: number | null;
-  brandId?: number;
+  brandId?: number | null;
   gender?: string | null;
   isActive: boolean;
   variants?: ProductVariant[];
@@ -24,6 +24,7 @@ export interface Product {
 }
 
 export interface CreateProductDTO {
+  code: string;
   name: string;
   description?: string | null;
   categoryId: number;
