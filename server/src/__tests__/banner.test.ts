@@ -39,7 +39,7 @@ jest.mock('@infrastructure/services/JwtService', () => ({
 // Mock StorageService
 jest.mock('@infrastructure/services/CloudinaryStorageService', () => ({
   CloudinaryStorageService: jest.fn().mockImplementation(() => ({
-    uploadImage: jest.fn().mockResolvedValue('https://res.cloudinary.com/demo/image/upload/v12345/banners/banner1.png'),
+    uploadImage: jest.fn().mockImplementation(() => Promise.resolve('https://res.cloudinary.com/demo/image/upload/v12345/banners/banner1.png')),
   })),
 }));
 
