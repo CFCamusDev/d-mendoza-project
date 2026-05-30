@@ -14,7 +14,7 @@ import brandRoutes from '@infrastructure/http/routes/brand.routes';
 import clientRoutes from '@infrastructure/http/routes/client.routes';
 import catalogRoutes from '@infrastructure/http/routes/catalog.routes';
 import attributeRoutes from '@infrastructure/http/routes/attribute.routes';
-import productRoutes from '@infrastructure/http/routes/product.routes';
+import productRoutes from '@infrastructure/http/routes/product.routes'; // HU-014
 import kardexRoutes from '@infrastructure/http/routes/kardex.routes';
 import stockRoutes from '@infrastructure/http/routes/stock.routes';
 import reportRoutes from '@infrastructure/http/routes/report.routes';
@@ -50,7 +50,7 @@ app.use('/api/v1', brandRoutes);
 app.use('/api/v1', clientRoutes);
 app.use('/api/v1', catalogRoutes);
 app.use('/api/v1', attributeRoutes);
-app.use('/api/v1', productRoutes);
+app.use('/api/v1', productRoutes); // HU-014 — Variantes SKU
 app.use('/api/v1', kardexRoutes);
 app.use('/api/v1', stockRoutes);
 app.use('/api/v1', reportRoutes);

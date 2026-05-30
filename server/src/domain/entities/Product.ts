@@ -1,3 +1,5 @@
+import { ProductVariant } from './ProductVariant';
+
 export interface ProductImage {
   id: number;
   productId: number;
@@ -8,12 +10,14 @@ export interface ProductImage {
 
 export interface Product {
   id: number;
+  code: string;        // Código base para auto-SKU (ej. "CAM")
   name: string;
   description: string | null;
-  categoryId: number;
-  brandId: number;
-  gender: string | null;
+  categoryId: number | null;
+  brandId?: number;
+  gender?: string | null;
   isActive: boolean;
+  variants?: ProductVariant[];
   images?: ProductImage[];
   createdAt: Date;
   updatedAt: Date;

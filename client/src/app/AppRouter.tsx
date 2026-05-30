@@ -11,6 +11,7 @@ import EmployeesPage from '../features/admin/EmployeesPage';
 import BranchesPage from '../features/admin/branches/BranchesPage';
 import BrandingPage from '../features/admin/BrandingPage';
 import ClientLinkPage from '../features/admin/ClientLinkPage';
+import ProductsAdminPage from '../features/admin/ProductsAdminPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
 import { AppShell } from '../components/layout/AppShell';
@@ -41,63 +42,71 @@ export const AppRouter = () => {
         {/* Google OAuth Success Redirect (HU-001 / T-036) */}
         <Route path="/auth/google/success" element={<GoogleAuthSuccessPage />} />
 
-        {/* Restricted Routes (Protected by RBAC) */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/employees"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
-              <EmployeesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/branding"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
-              <BrandingPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route 
-          path="/admin/clients/link" 
-          element={
-            <ProtectedRoute allowedPermissions={['users:write']}>
-              <ClientLinkPage />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/branches" 
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
-              <BranchesPage />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/pos" 
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER', 'CLIENT']}>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
+      {/* Restricted Routes (Protected by RBAC) */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <HomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/employees"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <EmployeesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/branding"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <BrandingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route 
+        path="/admin/clients/link" 
+        element={
+          <ProtectedRoute allowedPermissions={['users:write']}>
+            <ClientLinkPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/products" 
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProductsAdminPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/branches" 
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <BranchesPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/pos" 
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
+            <HomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'SELLER', 'CLIENT']}>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
 
         {/* HU-011 */}
         <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['ADMIN']}><CategoriesPage /></ProtectedRoute>} />
