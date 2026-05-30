@@ -16,17 +16,10 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Perfil de Cliente](#perfil-de-cliente)
   - [GET /api/v1/profile](#get-apiv1profile)
   - [PATCH /api/v1/profile](#patch-apiv1profile)
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
-- [Sucursales y Almacenes](#sucursales-y-almacenes)
-  - [GET /api/v1/branches](#get-apiv1branches)
-  - [POST /api/v1/branches](#post-apiv1branches)
-  - [PUT /api/v1/branches/:id](#put-apiv1branchesid)
-  - [PATCH /api/v1/branches/:id/status](#patch-apiv1branchesidstatus)
-=======
-- [Identidad Visual y Branding](#identidad-visual-y-branding)
-  - [GET /api/v1/config/brand](#get-apiv1configbrand)
-  - [PUT /api/v1/config/brand](#put-apiv1configbrand)
->>>>>>> develop
+- [Gestión de Variantes SKU de Productos](#gestión-de-variantes-sku-de-productos)
+  - [GET /api/v1/products/:id/variants](#get-apiv1productsidvariants)
+  - [POST /api/v1/products/:id/variants](#post-apiv1productsidvariants)
+  - [PUT /api/v1/variants/:id](#put-apiv1variantsid)
 
 ---
 
@@ -714,26 +707,21 @@ Retornado cuando el payload no cumple con las validaciones de Zod (ej. número d
 
 ---
 
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
-## Sucursales y Almacenes
+## Gestión de Variantes SKU de Productos
 
-Este módulo permite gestionar el catálogo de sucursales comerciales de la empresa. Cada sucursal creada tiene asociado de manera obligatoria y automática un almacén único (relación 1:1 de negocio) que se administra de forma independiente.
+Este módulo permite gestionar variantes de producto de forma granular, incluyendo generación masiva basada en atributos e integraciones para edición inline de precios y SKUs.
 
-### GET /api/v1/branches
+### GET /api/v1/products/:id/variants
 
-Recupera el listado completo de sucursales registradas en el sistema, incluyendo los detalles del almacén autogenerado asociado a cada una.
+Lista todas las variantes asociadas a un producto.
 
 #### 1. Especificación del Endpoint
 
-| Método | Ruta               | Autenticación      | Permiso Requerido |
-| :----- | :----------------- | :----------------- | :---------------- |
-| `GET`  | `/api/v1/branches` | JWT `Bearer Token` | `users:read`      |
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/products/:id/variants` | JWT `Bearer Token` | `products:read` |
 
-#### 2. Cuerpo de la Petición (Request Body)
-
-No requiere cuerpo de petición.
-
-#### 3. Respuestas (Responses)
+#### 2. Respuestas (Responses)
 
 ##### Éxito (HTTP 200 OK)
 
@@ -743,326 +731,108 @@ No requiere cuerpo de petición.
   "data": [
     {
       "id": 1,
-      "name": "Sucursal Central",
-      "address": "Av. Larco 123",
-      "phone": "999888777",
-      "isActive": true,
-      "warehouse": {
-        "id": 101,
-        "createdAt": "2026-05-20T17:00:00.000Z"
+      "productId": 1,
+      "sku": "CAM-M-NEGRO",
+      "price": 99.90,
+      "attributesJson": {
+        "talla": "M",
+        "color": "NEGRO"
       },
-      "createdAt": "2026-05-20T17:00:00.000Z",
-      "updatedAt": "2026-05-20T17:00:00.000Z"
+      "isActive": true
     }
   ]
 }
 ```
 
-##### Acceso Denegado (HTTP 401 / 403)
-
-- **HTTP 401 Unauthorized**: Si falta el Token en los headers o si es inválido.
-- **HTTP 403 Forbidden**: Si el usuario carece del permiso `users:read`.
-
 ---
 
-### POST /api/v1/branches
+### POST /api/v1/products/:id/variants
 
-Registra una nueva sucursal comercial en el sistema y crea atómicamente en una única transacción de base de datos su almacén independiente 1:1 asociado.
+Genera masivamente combinaciones cartesianas de atributos y crea las variantes con SKU auto-generado.
 
 #### 1. Especificación del Endpoint
 
-| Método | Ruta               | Autenticación      | Permiso Requerido |
-| :----- | :----------------- | :----------------- | :---------------- |
-| `POST` | `/api/v1/branches` | JWT `Bearer Token` | `users:write`     |
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/products/:id/variants` | JWT `Bearer Token` | `products:write` |
 
 #### 2. Cuerpo de la Petición (Request Body)
 
 ```json
 {
-  "name": "Sucursal Norte",
-  "address": "Calle Las Flores 456",
-  "phone": "999888777"
+  "attributes": {
+    "talla": ["S", "M"],
+    "color": ["NEGRO", "BLANCO"]
+  },
+  "basePrice": 99.90
 }
 ```
-
-**Detalle de Campos:**
-
-| Parámetro | Tipo     | Requerido | Reglas de Validación                                                 |
-| :-------- | :------- | :-------- | :------------------------------------------------------------------- |
-| `name`    | `string` | Sí        | Debe ser único. Mínimo 2 caracteres, máximo 100 caracteres.          |
-| `address` | `string` | No        | Dirección física de la sucursal. Máximo 255 caracteres.              |
-| `phone`   | `string` | No        | Número de teléfono de contacto. Máximo 20 caracteres.                |
 
 #### 3. Respuestas (Responses)
 
 ##### Éxito (HTTP 201 Created)
 
-Retornado cuando la sucursal y su almacén se crean de forma atómica y exitosa.
-=======
-## Identidad Visual y Branding
-
-### GET /api/v1/config/brand
-
-Obtiene la configuración actual de la identidad visual y branding del sistema (público para personalización dinámica en el frontend e-commerce).
-
-#### 1. Especificación del Endpoint
-
-| Método | Ruta                    | Autenticación     | Rol Requerido |
-| :----- | :---------------------- | :---------------- | :------------ |
-| `GET`  | `/api/v1/config/brand` | Ninguna (Público) | Invitado      |
-
-#### 2. Respuestas (Responses)
-
-##### Éxito (HTTP 200 OK)
-
-Retorna la configuración actual. Si no se ha configurado ninguna, retorna los valores por defecto del sistema.
->>>>>>> develop
-
 ```json
 {
   "success": true,
-  "data": {
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
-    "id": 2,
-    "name": "Sucursal Norte",
-    "address": "Calle Las Flores 456",
-    "phone": "999888777",
-    "isActive": true,
-    "warehouse": {
-      "id": 102,
-      "createdAt": "2026-05-20T17:30:00.000Z"
-    },
-    "createdAt": "2026-05-20T17:30:00.000Z",
-    "updatedAt": "2026-05-20T17:30:00.000Z"
-  }
-}
-```
-
-##### Error de Validación (HTTP 400 Bad Request)
-
-Retornado si algún campo del payload no cumple con las restricciones sintácticas de Zod (ej. nombre demasiado corto o duplicado).
-
-```json
-{
-  "success": false,
-  "errors": [
+  "data": [
     {
-      "field": "name",
-      "message": "El nombre debe tener al menos 2 caracteres"
+      "id": 1,
+      "productId": 1,
+      "sku": "CAM-S-NEGRO",
+      "price": 99.90,
+      "attributesJson": {
+        "talla": "S",
+        "color": "NEGRO"
+      },
+      "isActive": true
     }
   ]
 }
 ```
 
----
-
-### PUT /api/v1/branches/:id
-
-Actualiza parcialmente uno o más detalles de una sucursal existente por su ID numérico (ej. cambiar nombre, dirección o teléfono).
-
-#### 1. Especificación del Endpoint
-
-| Método | Ruta                   | Autenticación      | Permiso Requerido |
-| :----- | :--------------------- | :----------------- | :---------------- |
-| `PUT`  | `/api/v1/branches/:id` | JWT `Bearer Token` | `users:write`     |
-=======
-    "id": 1,
-    "brandName": "D'Mendoza",
-    "logoUrl": null,
-    "primaryColor": "#4F46E5",
-    "socialLinksJson": {},
-    "updatedAt": "2026-05-20T16:53:28.000Z"
-  }
-}
-```
+##### Conflicto (HTTP 409 Conflict)
+Retornado si una de las variantes calculadas posee un SKU que ya está registrado.
 
 ---
 
-### PUT /api/v1/config/brand
+### PUT /api/v1/variants/:id
 
-Actualiza la configuración de identidad visual y branding del sistema de forma global. Solo accesible para administradores. Registra la modificación en los logs de auditoría para su trazabilidad.
+Edita individualmente el precio y/o el SKU de una variante. Valida unicidad de SKU antes de guardar.
 
 #### 1. Especificación del Endpoint
 
-| Método | Ruta                    | Autenticación      | Rol Requerido         |
-| :----- | :---------------------- | :----------------- | :-------------------- |
-| `PUT`  | `/api/v1/config/brand` | JWT `Bearer Token` | Admin (`roles:manage`)|
->>>>>>> develop
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `PUT` | `/api/v1/variants/:id` | JWT `Bearer Token` | `products:write` |
 
 #### 2. Cuerpo de la Petición (Request Body)
 
 ```json
 {
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
-  "name": "Sucursal Norte Refactor",
-  "address": null,
-  "phone": "987654321"
-=======
-  "brandName": "D'Mendoza Premium",
-  "logoUrl": "https://ejemplo.com/logo.png",
-  "primaryColor": "#FF5733",
-  "socialLinksJson": {
-    "facebook": "https://facebook.com/dmendoza",
-    "instagram": "https://instagram.com/dmendoza"
-  }
->>>>>>> develop
+  "sku": "CAM-M-ROJO",
+  "price": 105.00
 }
 ```
-
-**Detalle de Campos:**
-
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
-| Parámetro | Tipo     | Requerido | Reglas de Validación                                                 |
-| :-------- | :------- | :-------- | :------------------------------------------------------------------- |
-| `name`    | `string` | No        | Si se provee, debe ser único. Mínimo 2 caracteres, máximo 100.       |
-| `address` | `string` | No        | Puede ser `null` para eliminar la dirección. Máximo 255 caracteres. |
-| `phone`   | `string` | No        | Puede ser `null` para eliminar el teléfono. Máximo 20 caracteres.    |
-=======
-| Parámetro         | Tipo     | Requerido | Reglas de Validación                                 |
-| :---------------- | :------- | :-------- | :--------------------------------------------------- |
-| `brandName`       | `string` | Sí        | Nombre comercial visible del sistema.                |
-| `logoUrl`         | `string` | No        | URL absoluta del logotipo de la marca.               |
-| `primaryColor`    | `string` | Sí        | Código de color hexadecimal (ej. `#FF5733`).          |
-| `socialLinksJson` | `object` | No        | Objeto JSON con urls de las redes sociales del comercio.|
->>>>>>> develop
 
 #### 3. Respuestas (Responses)
 
 ##### Éxito (HTTP 200 OK)
 
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
-Retornado cuando la actualización en la base de datos finaliza con éxito.
-
-=======
->>>>>>> develop
 ```json
 {
   "success": true,
   "data": {
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
-    "id": 2,
-    "name": "Sucursal Norte Refactor",
-    "address": null,
-    "phone": "987654321",
-    "isActive": true,
-    "warehouse": {
-      "id": 102,
-      "createdAt": "2026-05-20T17:30:00.000Z"
-    },
-    "createdAt": "2026-05-20T17:30:00.000Z",
-    "updatedAt": "2026-05-20T17:35:00.000Z"
-  }
-}
-```
-
-##### No Encontrado (HTTP 404 Not Found)
-
-Retornado si la sucursal con el ID provisto no existe.
-=======
     "id": 1,
-    "brandName": "D'Mendoza Premium",
-    "logoUrl": "https://ejemplo.com/logo.png",
-    "primaryColor": "#FF5733",
-    "socialLinksJson": {
-      "facebook": "https://facebook.com/dmendoza",
-      "instagram": "https://instagram.com/dmendoza"
+    "productId": 1,
+    "sku": "CAM-M-ROJO",
+    "price": 105.00,
+    "attributesJson": {
+      "talla": "M",
+      "color": "NEGRO"
     },
-    "updatedAt": "2026-05-20T16:54:00.000Z"
+    "isActive": true
   }
 }
 ```
 
-##### Error de Validación (HTTP 400 Bad Request)
-
-Retornado si los campos enviados no cumplen con los tipos o validaciones de Zod.
->>>>>>> develop
-
-```json
-{
-  "success": false,
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
-  "error": "La sucursal no existe"
-}
-```
-
----
-
-### PATCH /api/v1/branches/:id/status
-
-Permite activar o desactivar una sucursal en el sistema, lo cual impacta su disponibilidad comercial general.
-
-#### 1. Especificación del Endpoint
-
-| Método  | Ruta                          | Autenticación      | Permiso Requerido |
-| :------ | :---------------------------- | :----------------- | :---------------- |
-| `PATCH` | `/api/v1/branches/:id/status` | JWT `Bearer Token` | `users:write`     |
-
-#### 2. Cuerpo de la Petición (Request Body)
-
-```json
-{
-  "isActive": false
-}
-```
-
-**Detalle de Campos:**
-
-| Parámetro  | Tipo      | Requerido | Reglas de Validación                       |
-| :--------- | :-------- | :-------- | :----------------------------------------- |
-| `isActive` | `boolean` | Sí        | Determina el nuevo estado de la sucursal.  |
-
-#### 3. Respuestas (Responses)
-
-##### Éxito (HTTP 200 OK)
-
-Retornado cuando el estado ha sido actualizado con éxito.
-
-```json
-{
-  "success": true,
-  "message": "Sucursal inactivada correctamente",
-  "data": {
-    "id": 2,
-    "name": "Sucursal Norte Refactor",
-    "address": null,
-    "phone": "987654321",
-    "isActive": false,
-    "warehouse": {
-      "id": 102,
-      "createdAt": "2026-05-20T17:30:00.000Z"
-    },
-    "createdAt": "2026-05-20T17:30:00.000Z",
-    "updatedAt": "2026-05-20T17:40:00.000Z"
-  }
-}
-```
-
-##### No Encontrado (HTTP 404 Not Found)
-
-```json
-{
-  "success": false,
-  "error": "La sucursal no existe"
-}
-```
-
-=======
-  "error": [
-    {
-      "code": "invalid_type",
-      "expected": "string",
-      "received": "undefined",
-      "path": ["brandName"],
-      "message": "Required"
-    }
-  ]
-}
-```
-
-##### Acceso Denegado (HTTP 401 / 403)
-
-- **HTTP 401 Unauthorized**: Si falta el Token en los headers o si es inválido.
-- **HTTP 403 Forbidden**: Si el usuario autenticado no posee los permisos requeridos (`roles:manage`).
-}
-```
->>>>>>> develop

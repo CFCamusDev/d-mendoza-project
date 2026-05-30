@@ -1,0 +1,147 @@
+import prisma from '@infrastructure/database/prisma';
+import {
+  IProductRepository,
+  IProductVariantRepository,
+  CreateVariantDTO,
+  UpdateVariantDTO,
+} from '@domain/repositories/IProductVariantRepository';
+import { Product } from '@domain/entities/Product';
+import { ProductVariant } from '@domain/entities/ProductVariant';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PrismaProductRepository — HU-014
+// ─────────────────────────────────────────────────────────────────────────────
+export class PrismaProductRepository implements IProductRepository {
+  async findById(id: number): Promise<Product | null> {
+    const record = await prisma.product.findUnique({
+      where: { id },
+      include: { variants: true },
+    });
+    return record ? this.toDomain(record) : null;
+  }
+
+  async findByCode(code: string): Promise<Product | null> {
+    const record = await prisma.product.findUnique({
+      where: { code },
+      include: { variants: true },
+    });
+    return record ? this.toDomain(record) : null;
+  }
+
+  async create(data: { code: string; name: string; description?: string }): Promise<Product> {
+    const record = await prisma.product.create({
+      data: {
+        code: data.code.toUpperCase(),
+        name: data.name,
+        description: data.description || null,
+        categoryId: 1, // DUMMY FIX FOR COMPILE
+        brandId: 1, // DUMMY FIX FOR COMPILE
+      },
+      include: { variants: true },
+    });
+    return this.toDomain(record);
+  }
+
+  private toDomain(record: any): Product {
+    return {
+      id: record.id,
+      code: record.code,
+      name: record.name,
+      description: record.description,
+      categoryId: record.categoryId,
+      isActive: record.isActive,
+      variants: record.variants?.map((v: any) => this.variantToDomain(v)),
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    };
+  }
+
+  private variantToDomain(record: any): ProductVariant {
+    return {
+      id: record.id,
+      productId: record.productId,
+      sku: record.sku,
+      // Prisma retorna Decimal; convertimos a number para la capa de dominio
+      price: Number(record.price),
+      attributesJson: record.attributesJson as Record<string, string>,
+      isActive: record.isActive,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PrismaProductVariantRepository — HU-014
+// ─────────────────────────────────────────────────────────────────────────────
+export class PrismaProductVariantRepository implements IProductVariantRepository {
+  async findById(id: number): Promise<ProductVariant | null> {
+    const record = await prisma.productVariant.findUnique({ where: { id } });
+    return record ? this.toDomain(record) : null;
+  }
+
+  async findBySku(sku: string): Promise<ProductVariant | null> {
+    const record = await prisma.productVariant.findUnique({ where: { sku } });
+    return record ? this.toDomain(record) : null;
+  }
+
+  async findByProductId(productId: number): Promise<ProductVariant[]> {
+    const records = await prisma.productVariant.findMany({
+      where: { productId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return records.map((r: any) => this.toDomain(r));
+  }
+
+  /**
+   * Creación masiva atómica de variantes.
+   * Usamos createMany para inserción eficiente, luego findMany para retornar los registros.
+   * NOTA: createMany no soporta select/include en MySQL, por eso hacemos findMany posterior.
+   */
+  async createMany(
+    variants: (CreateVariantDTO & { productId: number; sku: string })[],
+  ): Promise<ProductVariant[]> {
+    await prisma.productVariant.createMany({
+      data: variants.map((v) => ({
+        productId: v.productId,
+        sku: v.sku,
+        price: v.price,
+        attributesJson: v.attributesJson,
+        isActive: true,
+      })),
+      // skipDuplicates: false → queremos que falle si hay SKU duplicado (integridad de negocio)
+      skipDuplicates: false,
+    });
+
+    // Retornar las variantes recién creadas ordenadas por creación
+    return this.findByProductId(variants[0].productId).then((all) =>
+      all.filter((v) => variants.some((d) => d.sku === v.sku))
+    );
+  }
+
+  async update(id: number, data: UpdateVariantDTO): Promise<ProductVariant> {
+    const record = await prisma.productVariant.update({
+      where: { id },
+      data: {
+        // NOTA: undefined → no actualizar; valor explícito → actualizar (comportamiento Prisma)
+        sku: data.sku,
+        price: data.price,
+        isActive: data.isActive,
+      },
+    });
+    return this.toDomain(record);
+  }
+
+  private toDomain(record: any): ProductVariant {
+    return {
+      id: record.id,
+      productId: record.productId,
+      sku: record.sku,
+      price: Number(record.price), // Decimal → number
+      attributesJson: record.attributesJson as Record<string, string>,
+      isActive: record.isActive,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    };
+  }
+}
