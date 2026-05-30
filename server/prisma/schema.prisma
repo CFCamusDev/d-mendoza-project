@@ -109,7 +109,11 @@ model AuditLog {
   createdAt DateTime @default(now())
 }
 
-// ─── HU-014: Gestión de Variantes SKU (T-076) ───
+// ─────────────────────────────────────────────
+// HU-014: Gestión de Variantes SKU (T-076)
+// HU-015: Inactivación Lógica de Productos
+// ─────────────────────────────────────────────
+
 
 model BrandConfig {
   id              Int      @id @default(1)
@@ -174,10 +178,10 @@ model Product {
   code        String           @unique // Código base para auto-generación de SKU (ej. "CAM")
   name        String
   description String?          @db.Text
-  categoryId  Int
-  category    Category         @relation(fields: [categoryId], references: [id])
-  brandId     Int
-  brand       Brand            @relation(fields: [brandId], references: [id])
+  categoryId  Int?
+  category    Category?        @relation(fields: [categoryId], references: [id])
+  brandId     Int?
+  brand       Brand?           @relation(fields: [brandId], references: [id])
   gender      String?
   isActive    Boolean          @default(true)
   images      ProductImage[]
@@ -201,9 +205,9 @@ model ProductVariant {
   id             Int           @id @default(autoincrement())
   productId      Int
   product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
-  sku            String        @unique
-  price          Decimal       @db.Decimal(10, 2)
-  attributesJson Json
+  sku            String        @unique // SKU único auto-generado: código_producto-talla-color
+  price          Decimal       @default(0) @db.Decimal(10, 2)
+  attributesJson Json?         // JSON con los atributos de la variante
   isActive       Boolean       @default(true)
   branchStock    BranchStock[]
   kardexEntries  KardexEntry[]

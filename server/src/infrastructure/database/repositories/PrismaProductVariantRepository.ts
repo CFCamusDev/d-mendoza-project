@@ -8,68 +8,6 @@ import {
 import { Product } from '@domain/entities/Product';
 import { ProductVariant } from '@domain/entities/ProductVariant';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PrismaProductRepository — HU-014
-// ─────────────────────────────────────────────────────────────────────────────
-export class PrismaProductRepository implements IProductRepository {
-  async findById(id: number): Promise<Product | null> {
-    const record = await prisma.product.findUnique({
-      where: { id },
-      include: { variants: true },
-    });
-    return record ? this.toDomain(record) : null;
-  }
-
-  async findByCode(code: string): Promise<Product | null> {
-    const record = await prisma.product.findUnique({
-      where: { code },
-      include: { variants: true },
-    });
-    return record ? this.toDomain(record) : null;
-  }
-
-  async create(data: { code: string; name: string; description?: string }): Promise<Product> {
-    const record = await prisma.product.create({
-      data: {
-        code: data.code.toUpperCase(),
-        name: data.name,
-        description: data.description || null,
-        categoryId: 1, // DUMMY FIX FOR COMPILE
-        brandId: 1, // DUMMY FIX FOR COMPILE
-      },
-      include: { variants: true },
-    });
-    return this.toDomain(record);
-  }
-
-  private toDomain(record: any): Product {
-    return {
-      id: record.id,
-      code: record.code,
-      name: record.name,
-      description: record.description,
-      categoryId: record.categoryId,
-      isActive: record.isActive,
-      variants: record.variants?.map((v: any) => this.variantToDomain(v)),
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
-    };
-  }
-
-  private variantToDomain(record: any): ProductVariant {
-    return {
-      id: record.id,
-      productId: record.productId,
-      sku: record.sku,
-      // Prisma retorna Decimal; convertimos a number para la capa de dominio
-      price: Number(record.price),
-      attributesJson: record.attributesJson as Record<string, string>,
-      isActive: record.isActive,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
-    };
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PrismaProductVariantRepository — HU-014
