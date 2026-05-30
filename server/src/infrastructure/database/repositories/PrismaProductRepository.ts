@@ -20,6 +20,7 @@ export class PrismaProductRepository {
   async create(data: CreateProductDTO): Promise<Product> {
     return prisma.product.create({
       data: {
+        code: data.name.substring(0, 3).toUpperCase() + '-' + Date.now().toString().slice(-4),
         name: data.name,
         description: data.description ?? null,
         categoryId: data.categoryId,
