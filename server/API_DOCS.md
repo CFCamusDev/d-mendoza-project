@@ -16,9 +16,10 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Perfil de Cliente](#perfil-de-cliente)
   - [GET /api/v1/profile](#get-apiv1profile)
   - [PATCH /api/v1/profile](#patch-apiv1profile)
-- [Identidad Visual y Branding](#identidad-visual-y-branding)
-  - [GET /api/v1/config/brand](#get-apiv1configbrand)
-  - [PUT /api/v1/config/brand](#put-apiv1configbrand)
+- [Gestión de Variantes SKU de Productos](#gestión-de-variantes-sku-de-productos)
+  - [GET /api/v1/products/:id/variants](#get-apiv1productsidvariants)
+  - [POST /api/v1/products/:id/variants](#post-apiv1productsidvariants)
+  - [PUT /api/v1/variants/:id](#put-apiv1variantsid)
 
 ---
 
@@ -706,134 +707,19 @@ Retornado cuando el payload no cumple con las validaciones de Zod (ej. número d
 
 ---
 
-## Identidad Visual y Branding
+## Gestión de Variantes SKU de Productos
 
-### GET /api/v1/config/brand
+Este módulo permite gestionar variantes de producto de forma granular, incluyendo generación masiva basada en atributos e integraciones para edición inline de precios y SKUs.
 
-Obtiene la configuración actual de la identidad visual y branding del sistema (público para personalización dinámica en el frontend e-commerce).
+### GET /api/v1/products/:id/variants
 
-#### 1. Especificación del Endpoint
-
-| Método | Ruta                    | Autenticación     | Rol Requerido |
-| :----- | :---------------------- | :---------------- | :------------ |
-| `GET`  | `/api/v1/config/brand` | Ninguna (Público) | Invitado      |
-
-#### 2. Respuestas (Responses)
-
-##### Éxito (HTTP 200 OK)
-
-Retorna la configuración actual. Si no se ha configurado ninguna, retorna los valores por defecto del sistema.
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "brandName": "D'Mendoza",
-    "logoUrl": null,
-    "primaryColor": "#4F46E5",
-    "socialLinksJson": {},
-    "updatedAt": "2026-05-20T16:53:28.000Z"
-  }
-}
-```
-
----
-
-### PUT /api/v1/config/brand
-
-Actualiza la configuración de identidad visual y branding del sistema de forma global. Solo accesible para administradores. Registra la modificación en los logs de auditoría para su trazabilidad.
+Lista todas las variantes asociadas a un producto.
 
 #### 1. Especificación del Endpoint
 
-| Método | Ruta                    | Autenticación      | Rol Requerido         |
-| :----- | :---------------------- | :----------------- | :-------------------- |
-| `PUT`  | `/api/v1/config/brand` | JWT `Bearer Token` | Admin (`roles:manage`)|
-
-#### 2. Cuerpo de la Petición (Request Body)
-
-```json
-{
-  "brandName": "D'Mendoza Premium",
-  "logoUrl": "https://ejemplo.com/logo.png",
-  "primaryColor": "#FF5733",
-  "socialLinksJson": {
-    "facebook": "https://facebook.com/dmendoza",
-    "instagram": "https://instagram.com/dmendoza"
-  }
-}
-```
-
-**Detalle de Campos:**
-
-| Parámetro         | Tipo     | Requerido | Reglas de Validación                                 |
-| :---------------- | :------- | :-------- | :--------------------------------------------------- |
-| `brandName`       | `string` | Sí        | Nombre comercial visible del sistema.                |
-| `logoUrl`         | `string` | No        | URL absoluta del logotipo de la marca.               |
-| `primaryColor`    | `string` | Sí        | Código de color hexadecimal (ej. `#FF5733`).          |
-| `socialLinksJson` | `object` | No        | Objeto JSON con urls de las redes sociales del comercio.|
-
-#### 3. Respuestas (Responses)
-
-##### Éxito (HTTP 200 OK)
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "brandName": "D'Mendoza Premium",
-    "logoUrl": "https://ejemplo.com/logo.png",
-    "primaryColor": "#FF5733",
-    "socialLinksJson": {
-      "facebook": "https://facebook.com/dmendoza",
-      "instagram": "https://instagram.com/dmendoza"
-    },
-    "updatedAt": "2026-05-20T16:54:00.000Z"
-  }
-}
-```
-
-##### Error de Validación (HTTP 400 Bad Request)
-
-Retornado si los campos enviados no cumplen con los tipos o validaciones de Zod.
-
-```json
-{
-  "success": false,
-  "error": [
-    {
-      "code": "invalid_type",
-      "expected": "string",
-      "received": "undefined",
-      "path": ["brandName"],
-      "message": "Required"
-    }
-  ]
-}
-```
-
-##### Acceso Denegado (HTTP 401 / 403)
-
-- **HTTP 401 Unauthorized**: Si falta el Token en los headers o si es inválido.
-- **HTTP 403 Forbidden**: Si el usuario autenticado no posee los permisos requeridos (`roles:manage`).
-```
-
----
-
-## Gestión de Banners y Sliders
-
-Este módulo permite administrar los banners promocionales y sliders publicitarios del Home de la tienda e-commerce.
-
-### GET /api/v1/ecommerce/banners
-
-Obtiene la lista de todos los banners activos ordenados ascendentemente por su peso o prioridad de orden. Endpoint público.
-
-#### 1. Especificación del Endpoint
-
-| Método | Ruta                           | Autenticación     | Rol Requerido |
-| :----- | :----------------------------- | :---------------- | :------------ |
-| `GET`  | `/api/v1/ecommerce/banners`   | Ninguna (Público) | Invitado      |
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/products/:id/variants` | JWT `Bearer Token` | `products:read` |
 
 #### 2. Respuestas (Responses)
 
@@ -845,12 +731,14 @@ Obtiene la lista de todos los banners activos ordenados ascendentemente por su p
   "data": [
     {
       "id": 1,
-      "imageUrl": "https://res.cloudinary.com/demo/image/upload/v12345/banners/banner1.png",
-      "linkUrl": "https://dmendoza.com/catalog/winter-season",
-      "order": 0,
-      "isActive": true,
-      "createdAt": "2026-05-26T21:22:02.000Z",
-      "updatedAt": "2026-05-26T21:22:02.000Z"
+      "productId": 1,
+      "sku": "CAM-M-NEGRO",
+      "price": 99.90,
+      "attributesJson": {
+        "talla": "M",
+        "color": "NEGRO"
+      },
+      "isActive": true
     }
   ]
 }
@@ -858,66 +746,27 @@ Obtiene la lista de todos los banners activos ordenados ascendentemente por su p
 
 ---
 
-### GET /api/v1/banners
+### POST /api/v1/products/:id/variants
 
-Obtiene la lista de todos los banners registrados en el sistema (tanto activos como inactivos). Solo accesible para administradores.
+Genera masivamente combinaciones cartesianas de atributos y crea las variantes con SKU auto-generado.
 
 #### 1. Especificación del Endpoint
 
-| Método | Ruta               | Autenticación      | Rol Requerido |
-| :----- | :----------------- | :----------------- | :------------ |
-| `GET`  | `/api/v1/banners`  | JWT `Bearer Token` | Admin         |
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/products/:id/variants` | JWT `Bearer Token` | `products:write` |
 
-#### 2. Respuestas (Responses)
-
-##### Éxito (HTTP 200 OK)
+#### 2. Cuerpo de la Petición (Request Body)
 
 ```json
 {
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "imageUrl": "https://res.cloudinary.com/demo/image/upload/v12345/banners/banner1.png",
-      "linkUrl": "https://dmendoza.com/catalog/winter",
-      "order": 0,
-      "isActive": true,
-      "createdAt": "2026-05-26T21:22:02.000Z",
-      "updatedAt": "2026-05-26T21:22:02.000Z"
-    },
-    {
-      "id": 2,
-      "imageUrl": "https://res.cloudinary.com/demo/image/upload/v12345/banners/banner2.png",
-      "linkUrl": null,
-      "order": 1,
-      "isActive": false,
-      "createdAt": "2026-05-26T21:22:02.000Z",
-      "updatedAt": "2026-05-26T21:22:02.000Z"
-    }
-  ]
+  "attributes": {
+    "talla": ["S", "M"],
+    "color": ["NEGRO", "BLANCO"]
+  },
+  "basePrice": 99.90
 }
 ```
-
----
-
-### POST /api/v1/banners
-
-Crea un nuevo banner publicitario cargando la imagen por medio de `multer` a Cloudinary.
-
-#### 1. Especificación del Endpoint
-
-| Método | Ruta               | Autenticación      | Rol Requerido |
-| :----- | :----------------- | :----------------- | :------------ |
-| `POST` | `/api/v1/banners`  | JWT `Bearer Token` | Admin         |
-
-#### 2. Cuerpo de la Petición (Request Body)
-Se espera una petición multipart/form-data con los siguientes campos:
-
-| Campo     | Tipo     | Requerido | Descripción |
-| :-------- | :------- | :-------- | :---------- |
-| `image`   | `file`   | Sí        | Archivo de imagen del banner (PNG, JPG, WEBP). Máx 5MB. |
-| `linkUrl` | `string` | No        | URL absoluta del enlace a redireccionar (ej: `https://dmendoza.com/offers`). |
-| `order`   | `number` | No        | Peso de orden. Entero no negativo. |
 
 #### 3. Respuestas (Responses)
 
@@ -926,105 +775,46 @@ Se espera una petición multipart/form-data con los siguientes campos:
 ```json
 {
   "success": true,
-  "data": {
-    "id": 3,
-    "imageUrl": "https://res.cloudinary.com/demo/image/upload/v12345/banners/banner3.png",
-    "linkUrl": "https://dmendoza.com/offers",
-    "order": 2,
-    "isActive": true,
-    "createdAt": "2026-05-26T21:22:02.000Z",
-    "updatedAt": "2026-05-26T21:22:02.000Z"
-  }
-}
-```
-
----
-
-### PUT /api/v1/banners/:id
-
-Actualiza las propiedades de un banner existente. Permite actualizar la imagen opcionalmente mediante la subida de un nuevo archivo en el campo `image`.
-
-#### 1. Especificación del Endpoint
-
-| Método | Ruta                   | Autenticación      | Rol Requerido |
-| :----- | :--------------------- | :----------------- | :------------ |
-| `PUT`  | `/api/v1/banners/:id`  | JWT `Bearer Token` | Admin         |
-
-#### 2. Cuerpo de la Petición (Request Body)
-Se espera una petición multipart/form-data con los siguientes campos opcionales:
-
-| Campo      | Tipo      | Requerido | Descripción |
-| :--------- | :-------- | :-------- | :---------- |
-| `image`    | `file`    | No        | Nuevo archivo de imagen para actualizar la actual. |
-| `linkUrl`  | `string`  | No        | Nueva URL de redirección. |
-| `order`    | `number`  | No        | Nuevo orden entero no negativo. |
-| `isActive` | `boolean` | No        | Estado activo/inactivo del banner (`true` o `false`). |
-
-#### 3. Respuestas (Responses)
-
-##### Éxito (HTTP 200 OK)
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 3,
-    "imageUrl": "https://res.cloudinary.com/demo/image/upload/v12345/banners/banner3_updated.png",
-    "linkUrl": "https://dmendoza.com/new-collection",
-    "order": 2,
-    "isActive": true,
-    "createdAt": "2026-05-26T21:22:02.000Z",
-    "updatedAt": "2026-05-27T02:00:00.000Z"
-  }
-}
-```
-
----
-
-### DELETE /api/v1/banners/:id
-
-Elimina físicamente un banner del sistema.
-
-#### 1. Especificación del Endpoint
-
-| Método   | Ruta                   | Autenticación      | Rol Requerido |
-| :------- | :--------------------- | :----------------- | :------------ |
-| `DELETE` | `/api/v1/banners/:id`  | JWT `Bearer Token` | Admin         |
-
-#### 2. Respuestas (Responses)
-
-##### Éxito (HTTP 200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Banner eliminado exitosamente"
-}
-```
-
----
-
-### PATCH /api/v1/banners/reorder
-
-Actualiza masivamente el peso del orden (`order`) de un listado de banners para la drag-and-drop sortable matrix.
-
-#### 1. Especificación del Endpoint
-
-| Método  | Ruta                        | Autenticación      | Rol Requerido |
-| :------ | :-------------------------- | :----------------- | :------------ |
-| `PATCH` | `/api/v1/banners/reorder`   | JWT `Bearer Token` | Admin         |
-
-#### 2. Cuerpo de la Petición (Request Body)
-
-```json
-{
-  "orders": [
-    { "id": 1, "order": 1 },
-    { "id": 2, "order": 0 }
+  "data": [
+    {
+      "id": 1,
+      "productId": 1,
+      "sku": "CAM-S-NEGRO",
+      "price": 99.90,
+      "attributesJson": {
+        "talla": "S",
+        "color": "NEGRO"
+      },
+      "isActive": true
+    }
   ]
 }
 ```
 
+##### Conflicto (HTTP 409 Conflict)
+Retornado si una de las variantes calculadas posee un SKU que ya está registrado.
+
+---
+
+### PUT /api/v1/variants/:id
+
+Edita individualmente el precio y/o el SKU de una variante. Valida unicidad de SKU antes de guardar.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `PUT` | `/api/v1/variants/:id` | JWT `Bearer Token` | `products:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "sku": "CAM-M-ROJO",
+  "price": 105.00
+}
+```
+
 #### 3. Respuestas (Responses)
 
 ##### Éxito (HTTP 200 OK)
@@ -1032,7 +822,17 @@ Actualiza masivamente el peso del orden (`order`) de un listado de banners para 
 ```json
 {
   "success": true,
-  "message": "Banners reordenados exitosamente"
+  "data": {
+    "id": 1,
+    "productId": 1,
+    "sku": "CAM-M-ROJO",
+    "price": 105.00,
+    "attributesJson": {
+      "talla": "M",
+      "color": "NEGRO"
+    },
+    "isActive": true
+  }
 }
 ```
 

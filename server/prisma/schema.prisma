@@ -109,6 +109,8 @@ model AuditLog {
   createdAt DateTime @default(now())
 }
 
+// ─── HU-014: Gestión de Variantes SKU (T-076) ───
+
 model BrandConfig {
   id              Int      @id @default(1)
   brandName       String   @default("D'Mendoza")
@@ -182,7 +184,7 @@ model AttributeValue {
 
 model Product {
   id          Int              @id @default(autoincrement())
-  code        String           @unique // Código base para auto-SKU (ej. "CAM")
+  code        String           @unique // Código base para auto-generación de SKU (ej. "CAM")
   name        String
   description String?          @db.Text
   categoryId  Int?
@@ -211,15 +213,17 @@ model ProductImage {
 model ProductVariant {
   id             Int           @id @default(autoincrement())
   productId      Int
-  product        Product       @relation(fields: [productId], references: [id])
+  product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   sku            String        @unique
-  price          Decimal       @default(0) @db.Decimal(10, 2)
-  attributesJson Json?
+  price          Decimal       @db.Decimal(10, 2)
+  attributesJson Json
   isActive       Boolean       @default(true)
   branchStock    BranchStock[]
   kardexEntries  KardexEntry[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+
+  @@index([productId])
 }
 
 model BranchStock {
