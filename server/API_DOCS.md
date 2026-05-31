@@ -34,6 +34,8 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/stock/entries](#post-apiv1stockentries)
 - [Visualización de Stock — HU-021](#visualización-de-stock--hu-021)
   - [GET /api/v1/stock](#get-apiv1stock)
+- [Auditoría de Inventario Físico — HU-029](#auditoría-de-inventario-físico--hu-029)
+  - [POST /api/v1/inventory-audits](#post-apiv1inventoryaudits)
 
 ---
 
@@ -1624,4 +1626,127 @@ Consulta la lista de existencias consolidadas y por sucursal. Soporta filtros op
   "error": "Acceso denegado: Se requiere el permiso 'inventory:read'"
 }
 ```
+
+---
+
+## Auditoría de Inventario Físico — HU-029
+
+Este módulo permite registrar tomas o auditorías de inventario físico en las sucursales, comparando el conteo de existencias del personal (`physicalQty`) contra el stock registrado en el sistema (`systemQty`) y calculando las diferencias de manera automática.
+
+### POST /api/v1/inventory-audits
+
+Registra una auditoría de inventario físico. Si se guarda como `CONFIRMED`, sincroniza de manera atómica el stock físico e historial contable (asientos `AJUSTE` en Kardex).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/inventory-audits` | JWT `Bearer Token` | `inventory:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "branchId": 1,
+  "status": "CONFIRMED",
+  "items": [
+    {
+      "variantId": 10,
+      "physicalQty": 45
+    },
+    {
+      "variantId": 15,
+      "physicalQty": 30
+    }
+  ]
+}
+```
+
+**Detalle de Campos — Cabecero:**
+
+| Parámetro | Tipo | Requerido | Reglas de Validación |
+| :--- | :--- | :--- | :--- |
+| `branchId` | `number` | Sí | ID entero positivo. La sucursal debe existir. |
+| `status` | `string` | Sí | Debe ser `'PENDING'` (borrador/conteo preliminar) o `'CONFIRMED'` (aplica el ajuste de stock). |
+| `items` | `array` | Sí | Al menos 1 ítem a auditar. |
+
+**Detalle de Campos — Ítems (`items[]`):**
+
+| Parámetro | Tipo | Requerido | Reglas de Validación |
+| :--- | :--- | :--- | :--- |
+| `variantId` | `number` | Sí | ID entero positivo de la variante a auditar. Debe existir. |
+| `physicalQty` | `number` | Sí | Cantidad física real contada. Debe ser un número no negativo (mayor o igual a 0). |
+
+#### 3. Respuestas (Responses)
+
+##### Registro Exitoso (HTTP 201 Created)
+
+Retornado cuando la auditoría se guarda correctamente. El cálculo de la diferencia se realiza automáticamente en base al stock actual de la sucursal.
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "branchId": 1,
+    "status": "CONFIRMED",
+    "items": [
+      {
+        "id": 1,
+        "variantId": 10,
+        "physicalQty": 45,
+        "systemQty": 50,
+        "difference": -5
+      },
+      {
+        "id": 2,
+        "variantId": 15,
+        "physicalQty": 30,
+        "systemQty": 30,
+        "difference": 0
+      }
+    ],
+    "createdAt": "2026-05-31T06:30:00.000Z",
+    "updatedAt": "2026-05-31T06:30:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Si faltan parámetros o no corresponden con las especificaciones.
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "status",
+      "message": "El estado debe ser 'PENDING' o 'CONFIRMED'"
+    }
+  ]
+}
+```
+
+##### Sucursal/Variante No Encontrada (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "La sucursal con ID 99 no existe"
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+- **HTTP 401 Unauthorized**: Si falta el Token o es inválido.
+- **HTTP 403 Forbidden**: Si el usuario carece del permiso `inventory:write`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el permiso 'inventory:write'"
+}
+```
+
 

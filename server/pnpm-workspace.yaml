@@ -5,3 +5,11 @@ allowBuilds:
   esbuild: true
   prisma: true
   unrs-resolver: true
+
+ignoredBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - bcrypt
+  - esbuild
+  - prisma
+  - unrs-resolver
