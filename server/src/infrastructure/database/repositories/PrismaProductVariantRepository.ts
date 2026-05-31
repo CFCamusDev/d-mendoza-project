@@ -4,6 +4,7 @@ import {
   IProductVariantRepository,
   CreateVariantDTO,
   UpdateVariantDTO,
+  VariantSearchResult,
 } from '@domain/repositories/IProductVariantRepository';
 import { Product } from '@domain/entities/Product';
 import { ProductVariant } from '@domain/entities/ProductVariant';
@@ -70,6 +71,29 @@ export class PrismaProductVariantRepository implements IProductVariantRepository
     return this.toDomain(record);
   }
 
+  async search(query: string, limit: number): Promise<VariantSearchResult[]> {
+    const records = await prisma.productVariant.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { sku: { contains: query } },
+          { product: { name: { contains: query } } },
+        ],
+      },
+      include: {
+        product: true,
+      },
+      take: limit,
+    });
+
+    return records.map((r: any) => ({
+      id: r.id,
+      sku: r.sku,
+      productName: r.product.name,
+      price: Number(r.price),
+    }));
+  }
+
   private toDomain(record: any): ProductVariant {
     return {
       id: record.id,
@@ -83,3 +107,4 @@ export class PrismaProductVariantRepository implements IProductVariantRepository
     };
   }
 }
+

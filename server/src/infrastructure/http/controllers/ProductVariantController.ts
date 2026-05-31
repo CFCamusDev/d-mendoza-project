@@ -4,12 +4,15 @@ import { PrismaProductVariantRepository } from '@infrastructure/database/reposit
 import { PrismaProductRepository } from '@infrastructure/database/repositories/PrismaProductRepository';
 import { CreateVariantsUseCase } from '@application/use-cases/product/CreateVariantsUseCase';
 import { UpdateVariantUseCase } from '@application/use-cases/product/UpdateVariantUseCase';
+import { SearchVariantsUseCase } from '@application/use-cases/product/SearchVariantsUseCase';
 
 // Instancias de repositorios y use cases
 const productRepository = new PrismaProductRepository();
 const variantRepository = new PrismaProductVariantRepository();
 const createVariantsUseCase = new CreateVariantsUseCase(productRepository, variantRepository);
 const updateVariantUseCase = new UpdateVariantUseCase(variantRepository);
+const searchVariantsUseCase = new SearchVariantsUseCase(variantRepository);
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Zod Schemas de Validación — T-077 / T-078
@@ -159,6 +162,32 @@ export class ProductVariantController {
       if (error.message.includes('mayor a 0')) {
         return res.status(400).json({ success: false, error: error.message });
       }
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/v1/variants/search
+   * Permite buscar variantes de productos por texto libre (coincidencia parcial en SKU o nombre de producto)
+   */
+  async searchVariants(req: Request, res: Response, next: NextFunction) {
+    try {
+      const q = req.query.q;
+      if (typeof q !== 'string' || q.trim() === '') {
+        return res.status(400).json({ success: false, error: 'El parámetro de búsqueda "q" es requerido y no puede estar vacío' });
+      }
+
+      let limit = 10;
+      if (req.query.limit) {
+        const parsedLimit = parseInt(String(req.query.limit), 10);
+        if (!isNaN(parsedLimit) && parsedLimit > 0) {
+          limit = Math.min(parsedLimit, 50); // Límite máximo de 50 para evitar sobrecarga
+        }
+      }
+
+      const results = await searchVariantsUseCase.execute(q, limit);
+      return res.status(200).json({ success: true, data: results });
+    } catch (error) {
       next(error);
     }
   }

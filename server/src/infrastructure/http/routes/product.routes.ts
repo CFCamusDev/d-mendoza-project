@@ -74,6 +74,13 @@ router.post(
   productVariantController.createVariants.bind(productVariantController)
 );
 
+// GET /api/v1/variants/search — Buscar variantes de productos por texto libre (autocomplete)
+router.get(
+  '/variants/search',
+  requirePermission('inventory:read'),
+  productVariantController.searchVariants.bind(productVariantController)
+);
+
 // PUT /api/v1/variants/:id — Editar precio y/o SKU de una variante individual
 router.put(
   '/variants/:id',
