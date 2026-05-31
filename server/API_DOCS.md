@@ -30,7 +30,10 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [PUT /api/v1/suppliers/:id](#put-apiv1suppliersid)
   - [PATCH /api/v1/suppliers/:id/status](#patch-apiv1suppliersidstatus)
 - [Ingreso de Mercadería — HU-051](#ingreso-de-mercadería--hu-051)
+  - [GET /api/v1/variants/search](#get-apiv1variantssearch)
   - [POST /api/v1/stock/entries](#post-apiv1stockentries)
+- [Visualización de Stock — HU-021](#visualización-de-stock--hu-021)
+  - [GET /api/v1/stock](#get-apiv1stock)
 
 ---
 
@@ -1555,3 +1558,70 @@ Retornado si falla la transacción de base de datos (ej. FK inválida en `varian
   "error": "Internal server error"
 }
 ```
+
+---
+
+## Visualización de Stock — HU-021
+
+Este módulo permite consultar de forma centralizada el stock consolidado (global) y desglosado por sucursal de todas las variantes de producto activas del sistema.
+
+### GET /api/v1/stock
+
+Consulta la lista de existencias consolidadas y por sucursal. Soporta filtros opcionales de búsqueda.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/stock` | JWT `Bearer Token` | `inventory:read` |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `variantId` | `number` | No | ID de la variante específica a consultar |
+| `branchId` | `number` | No | ID de la sucursal para filtrar los desgloses de stock |
+| `sku` | `string` | No | Filtro de coincidencia parcial en el SKU de la variante |
+
+#### 3. Respuestas (Responses)
+
+##### Consulta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "variantId": 10,
+      "sku": "CAMISA-M-AZUL",
+      "productName": "Camisa de Algodón Manga Larga",
+      "globalStock": 80,
+      "byBranch": [
+        {
+          "branchId": 2,
+          "branchName": "Sucursal Norte",
+          "quantity": 50
+        },
+        {
+          "branchId": 3,
+          "branchName": "Sucursal Sur",
+          "quantity": 30
+        }
+      ]
+    }
+  ]
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+- **HTTP 401 Unauthorized**: Si falta el Token o es inválido.
+- **HTTP 403 Forbidden**: Si el usuario carece del permiso `inventory:read`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el permiso 'inventory:read'"
+}
+```
+
