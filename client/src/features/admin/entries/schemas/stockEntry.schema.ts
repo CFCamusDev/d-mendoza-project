@@ -29,6 +29,25 @@ export const stockEntrySchema = Yup.object().shape({
         unitCost: Yup.number()
           .required('El costo unitario es obligatorio')
           .positive('El costo unitario debe ser mayor a 0'),
+        distributions: Yup.array().of(
+          Yup.object().shape({
+            branchId: Yup.number().required(),
+            branchName: Yup.string().required(),
+            quantity: Yup.number()
+              .transform((value) => (isNaN(value) || value === null ? 0 : value))
+              .min(0, 'No puede ser negativo')
+              .integer('Debe ser entero')
+              .required(),
+          })
+        ).test(
+          'sum-not-exceed-total',
+          'La cantidad total distribuida no puede superar la cantidad ingresada',
+          function (distributions) {
+            const quantity = Number(this.parent.quantity) || 0;
+            const sum = (distributions || []).reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
+            return sum <= quantity;
+          }
+        ),
       })
     )
     .min(1, 'Debe agregar al menos un ítem al ingreso de mercadería'),
@@ -36,3 +55,4 @@ export const stockEntrySchema = Yup.object().shape({
 
 export type StockEntryFormData = Yup.InferType<typeof stockEntrySchema>;
 export type StockEntryItemFormData = NonNullable<Yup.InferType<typeof stockEntrySchema>['items']>[number];
+export type DistributionItemForm = NonNullable<StockEntryItemFormData['distributions']>[number];

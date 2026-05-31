@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { 
@@ -12,7 +12,10 @@ import {
   FileSignature, 
   Calculator, 
   Save, 
-  AlertCircle 
+  AlertCircle,
+  GitFork,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { useStockEntries } from './hooks/useStockEntries';
 import { useSuppliers } from '../suppliers/hooks/useSuppliers';
@@ -20,7 +23,9 @@ import { useBranches } from '../branches/hooks/useBranches';
 import { stockEntrySchema } from './schemas/stockEntry.schema';
 import type { StockEntryFormData } from './schemas/stockEntry.schema';
 import { VariantAutocomplete } from './components/VariantAutocomplete';
+import { DistributionPanel } from './components/DistributionPanel';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
+
 
 export const StockEntriesPage: React.FC = () => {
   useDocumentTitle('Registro de Ingreso de Mercadería');
@@ -29,10 +34,13 @@ export const StockEntriesPage: React.FC = () => {
   const { suppliers, fetchSuppliers, loading: loadingSuppliers } = useSuppliers();
   const { branches, fetchBranches, loading: loadingBranches } = useBranches();
 
+  const [expandedItemIndex, setExpandedItemIndex] = useState<number | null>(null);
+
   const {
     register,
     control,
     handleSubmit,
+    setValue,
     watch,
     formState: { errors },
     reset,
@@ -55,6 +63,8 @@ export const StockEntriesPage: React.FC = () => {
     fetchSuppliers();
     fetchBranches();
   }, [fetchSuppliers, fetchBranches]);
+
+  const selectedBranchId = watch('branchId');
 
   // Filters to find only active suppliers and branches
   const activeSuppliers = useMemo(() => suppliers.filter(s => s.isActive), [suppliers]);
@@ -89,10 +99,27 @@ export const StockEntriesPage: React.FC = () => {
       productName: variant.productName,
       quantity: 1,
       unitCost: variant.price, // Default unit cost to its current catalog price
+      distributions: [],
     });
   };
 
   const onSubmit = async (data: StockEntryFormData) => {
+    // Construct distributionItems array
+    const distributionItems: Array<{ branchId: number; variantId: number; quantity: number }> = [];
+    (data.items || []).forEach(item => {
+      if (item.distributions) {
+        item.distributions.forEach(dist => {
+          if (dist.quantity > 0) {
+            distributionItems.push({
+              branchId: Number(dist.branchId),
+              variantId: Number(item.variantId),
+              quantity: Number(dist.quantity),
+            });
+          }
+        });
+      }
+    });
+
     // Form is already validated by Yup. Format payload to exact numbers
     const payload = {
       supplierId: Number(data.supplierId),
@@ -103,10 +130,12 @@ export const StockEntriesPage: React.FC = () => {
         quantity: Number(item.quantity),
         unitCost: Number(item.unitCost),
       })),
+      distributionItems,
     };
 
     const success = await createStockEntry(payload);
     if (success) {
+      setExpandedItemIndex(null);
       reset({
         supplierId: undefined,
         branchId: undefined,
@@ -273,81 +302,132 @@ export const StockEntriesPage: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4 max-h-[450px] overflow-y-auto pr-1">
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
                   {fields.map((field, index) => {
                     const itemError = errors.items?.[index];
+                    const isExpanded = expandedItemIndex === index;
 
                     return (
                       <div 
-                        key={field.id}
-                        className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl border border-[#D9D9D2]/40 bg-[#FAFAFA]/40 hover:bg-[#FAFAFA] transition-all group"
+                        key={field.id} 
+                        className={`rounded-xl border transition-all duration-200 overflow-hidden ${
+                          isExpanded 
+                            ? 'border-[#3F3F3F] bg-white shadow-md' 
+                            : 'border-[#D9D9D2]/40 bg-white/40 hover:bg-white shadow-sm'
+                        }`}
                       >
-                        {/* Title & SKU info */}
-                        <div className="flex-1 min-w-0">
-                          <span className="block font-bold text-xs text-[#3F3F3F] truncate">{field.sku}</span>
-                          <span className="block text-[11px] text-[#6B6B6B] mt-0.5 truncate">{field.productName}</span>
+                        {/* Main Item Row */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 group">
+                          {/* Title & SKU info */}
+                          <div className="flex-1 min-w-0">
+                            <span className="block font-bold text-xs text-[#3F3F3F] truncate">{field.sku}</span>
+                            <span className="block text-[11px] text-[#6B6B6B] mt-0.5 truncate">{field.productName}</span>
+                          </div>
+
+                          {/* Numeric Fields */}
+                          <div className="flex items-center gap-3 shrink-0">
+                            
+                            {/* Quantity */}
+                            <div className="w-20">
+                              <label className="block text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider mb-1">
+                                Cant. *
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                className={`w-full px-2 py-1 text-xs text-center font-semibold rounded-lg border bg-white focus:outline-none focus:ring-1 focus:ring-[#3F3F3F] focus:border-[#3F3F3F] transition-all ${
+                                  itemError?.quantity ? 'border-red-500 ring-1 ring-red-500/20' : 'border-[#D9D9D2]'
+                                }`}
+                                {...register(`items.${index}.quantity` as const, { valueAsNumber: true })}
+                              />
+                              {itemError?.quantity && (
+                                <p className="text-[9px] text-red-500 mt-0.5">{itemError.quantity.message}</p>
+                              )}
+                            </div>
+
+                            {/* Unit Cost */}
+                            <div className="w-24">
+                              <label className="block text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider mb-1">
+                                Costo Unit. *
+                              </label>
+                              <input
+                                type="number"
+                                min="0.01"
+                                step="0.01"
+                                className={`w-full px-2 py-1 text-xs text-center font-semibold rounded-lg border bg-white focus:outline-none focus:ring-1 focus:ring-[#3F3F3F] focus:border-[#3F3F3F] transition-all ${
+                                  itemError?.unitCost ? 'border-red-500 ring-1 ring-red-500/20' : 'border-[#D9D9D2]'
+                                }`}
+                                {...register(`items.${index}.unitCost` as const, { valueAsNumber: true })}
+                              />
+                              {itemError?.unitCost && (
+                                <p className="text-[9px] text-red-500 mt-0.5">{itemError.unitCost.message}</p>
+                              )}
+                            </div>
+
+                            {/* Total cost for item */}
+                            <div className="w-20 text-right pr-1">
+                              <span className="block text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider mb-1">
+                                Total
+                              </span>
+                              <span className="text-xs font-bold text-[#3F3F3F]">
+                                S/. {((watchedItems[index]?.quantity || 0) * (watchedItems[index]?.unitCost || 0)).toFixed(2)}
+                              </span>
+                            </div>
+
+                            {/* Distribute Button */}
+                            <button
+                              type="button"
+                              disabled={!selectedBranchId}
+                              onClick={() => setExpandedItemIndex(isExpanded ? null : index)}
+                              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider border transition-all ${
+                                !selectedBranchId 
+                                  ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-50'
+                                  : isExpanded
+                                    ? 'bg-[#3F3F3F] text-white border-[#3F3F3F]'
+                                    : 'bg-white text-[#3F3F3F] border-[#D9D9D2] hover:bg-[#FAFAFA]'
+                              }`}
+                              title={!selectedBranchId ? 'Selecciona una sucursal destino en la cabecera primero' : 'Distribuir Mercadería'}
+                            >
+                              <GitFork className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Distribuir</span>
+                              {isExpanded ? (
+                                <ChevronUp className="w-3 h-3" />
+                              ) : (
+                                <ChevronDown className="w-3 h-3" />
+                              )}
+                            </button>
+
+                            {/* Delete Action */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isExpanded) setExpandedItemIndex(null);
+                                remove(index);
+                              }}
+                              className="p-1.5 text-[#6B6B6B] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Quitar Ítem"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
 
-                        {/* Numeric Fields */}
-                        <div className="flex items-center gap-3 shrink-0">
-                          
-                          {/* Quantity */}
-                          <div className="w-24">
-                            <label className="block text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider mb-1">
-                              Cant. *
-                            </label>
-                            <input
-                              type="number"
-                              min="1"
-                              step="1"
-                              className={`w-full px-2.5 py-1.5 text-xs text-center font-semibold rounded-lg border bg-white focus:outline-none focus:ring-1 focus:ring-[#3F3F3F] focus:border-[#3F3F3F] transition-all ${
-                                itemError?.quantity ? 'border-red-500 ring-1 ring-red-500/20' : 'border-[#D9D9D2]'
-                              }`}
-                              {...register(`items.${index}.quantity` as const, { valueAsNumber: true })}
+                        {/* Collapsible Distribution Panel */}
+                        {isExpanded && selectedBranchId && (
+                          <div className="border-t border-[#D9D9D2]/30 px-4 pb-4">
+                            <DistributionPanel
+                              control={control}
+                              watch={watch}
+                              setValue={setValue}
+                              itemIndex={index}
+                              branches={branches}
+                              primaryBranchId={Number(selectedBranchId)}
+                              totalQuantity={Number(watchedItems[index]?.quantity) || 0}
+                              errors={itemError}
                             />
-                            {itemError?.quantity && (
-                              <p className="text-[9px] text-red-500 mt-0.5">{itemError.quantity.message}</p>
-                            )}
                           </div>
-
-                          {/* Unit Cost */}
-                          <div className="w-28">
-                            <label className="block text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider mb-1">
-                              Costo Unit. (S/.) *
-                            </label>
-                            <input
-                              type="number"
-                              min="0.01"
-                              step="0.01"
-                              className={`w-full px-2.5 py-1.5 text-xs text-center font-semibold rounded-lg border bg-white focus:outline-none focus:ring-1 focus:ring-[#3F3F3F] focus:border-[#3F3F3F] transition-all ${
-                                itemError?.unitCost ? 'border-red-500 ring-1 ring-red-500/20' : 'border-[#D9D9D2]'
-                              }`}
-                              {...register(`items.${index}.unitCost` as const, { valueAsNumber: true })}
-                            />
-                            {itemError?.unitCost && (
-                              <p className="text-[9px] text-red-500 mt-0.5">{itemError.unitCost.message}</p>
-                            )}
-                          </div>
-
-                          {/* Total cost for item */}
-                          <div className="w-24 text-right pr-2">
-                            <span className="block text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider mb-1">
-                              Total
-                            </span>
-                            <span className="text-xs font-bold text-[#3F3F3F]">
-                              S/. {((watchedItems[index]?.quantity || 0) * (watchedItems[index]?.unitCost || 0)).toFixed(2)}
-                            </span>
-                          </div>
-
-                          {/* Delete Action */}
-                          <button
-                            type="button"
-                            onClick={() => remove(index)}
-                            className="p-1.5 text-[#6B6B6B] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-4 md:mt-0"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        )}
                       </div>
                     );
                   })}
