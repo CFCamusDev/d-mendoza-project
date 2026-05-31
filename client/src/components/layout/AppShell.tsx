@@ -15,7 +15,8 @@ import {
   ClipboardList,
   FileSignature,
   Bell,
-  Boxes
+  Boxes,
+  ClipboardCheck
 } from 'lucide-react';
 import { useStockAlerts } from '@/features/admin/hooks/useStockAlerts';
 
@@ -52,6 +53,7 @@ export const AppShell: React.FC = () => {
     { label: 'Proveedores', path: '/admin/inventory/suppliers', icon: <ClipboardList className="w-4 h-4" /> },
     { label: 'Ingreso Mercadería', path: '/admin/inventory/entries', icon: <FileSignature className="w-4 h-4" /> },
     { label: 'Control de Stock', path: '/admin/inventory/stock', icon: <Boxes className="w-4 h-4" /> },
+    { label: 'Auditoría Física', path: '/admin/inventory/audits', icon: <ClipboardCheck className="w-4 h-4" /> },
   ];
 
 
