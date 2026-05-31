@@ -8,6 +8,7 @@ export interface ProductVariant {
   price: number;         // Precio unitario de la variante (Decimal en BD → number en dominio)
   attributesJson: Record<string, string>; // Atributos clave-valor de la variante
   isActive: boolean;
+  minStock: number;
   createdAt: Date;
   updatedAt: Date;
 }
