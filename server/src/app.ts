@@ -19,6 +19,7 @@ import attributeRoutes from '@infrastructure/http/routes/attribute.routes';
 import kardexRoutes from '@infrastructure/http/routes/kardex.routes';
 import stockRoutes from '@infrastructure/http/routes/stock.routes';
 import reportRoutes from '@infrastructure/http/routes/report.routes';
+import supplierRoutes from '@infrastructure/http/routes/supplier.routes'; // HU-051
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use('/api/v1', attributeRoutes);
 app.use('/api/v1', kardexRoutes);
 app.use('/api/v1', stockRoutes);
 app.use('/api/v1', reportRoutes);
+app.use('/api/v1', supplierRoutes); // HU-051 — Gestión de Proveedores
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });
