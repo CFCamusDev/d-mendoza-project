@@ -1413,26 +1413,48 @@ Registra un ingreso de mercadería desde un proveedor activo hacia el almacén d
       "quantity": 30,
       "unitCost": 18.00
     }
+  ],
+  "distributionItems": [
+    {
+      "branchId": 2,
+      "variantId": 10,
+      "quantity": 30
+    },
+    {
+      "branchId": 3,
+      "variantId": 10,
+      "quantity": 20
+    }
   ]
 }
 ```
 
 **Detalle de Campos — Cabecero:**
 
-| Parámetro       | Tipo     | Requerido | Reglas de Validación                                                       |
-| :-------------- | :------- | :-------- | :------------------------------------------------------------------------- |
-| `supplierId`    | `number` | Sí        | ID entero positivo. El proveedor debe existir y estar activo.              |
-| `invoiceNumber` | `string` | Sí        | Número de comprobante de pago (factura/boleta). Máximo 50 caracteres.      |
-| `branchId`      | `number` | Sí        | ID entero positivo. Identifica la sucursal destino del ingreso.            |
-| `items`         | `array`  | Sí        | Al menos 1 ítem. Cada ítem representa una variante de producto ingresada.  |
+| Parámetro | Tipo | Requerido | Reglas de Validación |
+| :--- | :--- | :--- | :--- |
+| `supplierId` | `number` | Sí | ID entero positivo. El proveedor debe existir y estar activo. |
+| `invoiceNumber` | `string` | Sí | Número de comprobante de pago (factura/boleta). Máximo 50 caracteres. |
+| `branchId` | `number` | Sí | ID entero positivo. Identifica la sucursal destino del ingreso (sucursal receptora principal). |
+| `items` | `array` | Sí | Al menos 1 ítem. Cada ítem representa una variante de producto ingresada. |
+| `distributionItems`| `array` | No | Lista opcional de asignaciones para distribuir el stock a sucursales secundarias durante el ingreso (HU-022). |
 
 **Detalle de Campos — Ítems (`items[]`):**
 
-| Parámetro   | Tipo     | Requerido | Reglas de Validación                                               |
-| :---------- | :------- | :-------- | :----------------------------------------------------------------- |
-| `variantId` | `number` | Sí        | ID entero positivo de la variante de producto (`ProductVariant`).  |
-| `quantity`  | `number` | Sí        | Cantidad ingresada. Debe ser un número positivo mayor a 0.         |
-| `unitCost`  | `number` | Sí        | Costo unitario de compra. Debe ser un número positivo mayor a 0.   |
+| Parámetro | Tipo | Requerido | Reglas de Validación |
+| :--- | :--- | :--- | :--- |
+| `variantId` | `number` | Sí | ID entero positivo de la variante de producto (`ProductVariant`). |
+| `quantity` | `number` | Sí | Cantidad ingresada. Debe ser un número positivo mayor a 0. |
+| `unitCost` | `number` | Sí | Costo unitario de compra. Debe ser un número positivo mayor a 0. |
+
+**Detalle de Campos — Distribución (`distributionItems[]`):**
+
+| Parámetro | Tipo | Requerido | Reglas de Validación |
+| :--- | :--- | :--- | :--- |
+| `branchId` | `number` | Sí | ID entero positivo de la sucursal de destino. |
+| `variantId` | `number` | Sí | ID entero positivo de la variante de producto a distribuir. |
+| `quantity` | `number` | Sí | Cantidad a distribuir. Debe ser un número positivo mayor a 0. La suma de cantidades distribuidas por variante no debe superar la cantidad total ingresada en `items[]`. El remanente se asignará automáticamente a la sucursal receptora (`branchId`). |
+
 
 #### 3. Respuestas (Responses)
 
