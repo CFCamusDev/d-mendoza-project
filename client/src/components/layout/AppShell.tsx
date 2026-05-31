@@ -12,7 +12,8 @@ import {
   Palette, 
   Users, 
   Home,
-
+  ClipboardList,
+  FileSignature
 } from 'lucide-react';
 
 export const AppShell: React.FC = () => {
@@ -41,7 +42,10 @@ export const AppShell: React.FC = () => {
     { label: 'Banners', path: '/admin/banners', icon: <ImageIcon className="w-4 h-4" /> },
     { label: 'Identidad Visual', path: '/admin/branding', icon: <Palette className="w-4 h-4" /> },
     { label: 'Empleados', path: '/admin/employees', icon: <Users className="w-4 h-4" /> },
+    { label: 'Proveedores', path: '/admin/inventory/suppliers', icon: <ClipboardList className="w-4 h-4" /> },
+    { label: 'Ingreso Mercadería', path: '/admin/inventory/entries', icon: <FileSignature className="w-4 h-4" /> },
   ];
+
 
   return (
     <div className="min-h-screen bg-brand-bg flex flex-col font-sans selection:bg-brand-accent selection:text-white">

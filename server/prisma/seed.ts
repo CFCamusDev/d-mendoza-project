@@ -60,6 +60,25 @@ async function main() {
     },
   });
 
+  // HU-051: Permisos para gestión de inventario, proveedores e ingreso de mercadería
+  const permissionInventoryRead = await prisma.permission.upsert({
+    where: { name: 'inventory:read' },
+    update: {},
+    create: {
+      name: 'inventory:read',
+      description: 'Capacidad para visualizar proveedores e ingreso de mercadería.',
+    },
+  });
+
+  const permissionInventoryWrite = await prisma.permission.upsert({
+    where: { name: 'inventory:write' },
+    update: {},
+    create: {
+      name: 'inventory:write',
+      description: 'Capacidad para crear y modificar proveedores e ingresar mercadería.',
+    },
+  });
+
   console.log('✅ Master permissions registered.');
 
   // ------------------------------------------------------------------
@@ -75,6 +94,8 @@ async function main() {
           { id: permissionUsersWrite.id },
           { id: permissionProductsRead.id },   // HU-014
           { id: permissionProductsWrite.id },  // HU-014
+          { id: permissionInventoryRead.id },  // HU-051
+          { id: permissionInventoryWrite.id }, // HU-051
         ],
       },
     },
@@ -88,6 +109,8 @@ async function main() {
           { id: permissionUsersWrite.id },
           { id: permissionProductsRead.id },   // HU-014
           { id: permissionProductsWrite.id },  // HU-014
+          { id: permissionInventoryRead.id },  // HU-051
+          { id: permissionInventoryWrite.id }, // HU-051
         ],
       },
     },
