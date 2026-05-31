@@ -16,17 +16,21 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Perfil de Cliente](#perfil-de-cliente)
   - [GET /api/v1/profile](#get-apiv1profile)
   - [PATCH /api/v1/profile](#patch-apiv1profile)
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
+- [Identidad Visual y Branding](#identidad-visual-y-branding)
+  - [GET /api/v1/config/brand](#get-apiv1configbrand)
+  - [PUT /api/v1/config/brand](#put-apiv1configbrand)
 - [Sucursales y Almacenes](#sucursales-y-almacenes)
   - [GET /api/v1/branches](#get-apiv1branches)
   - [POST /api/v1/branches](#post-apiv1branches)
   - [PUT /api/v1/branches/:id](#put-apiv1branchesid)
   - [PATCH /api/v1/branches/:id/status](#patch-apiv1branchesidstatus)
-=======
-- [Identidad Visual y Branding](#identidad-visual-y-branding)
-  - [GET /api/v1/config/brand](#get-apiv1configbrand)
-  - [PUT /api/v1/config/brand](#put-apiv1configbrand)
->>>>>>> develop
+- [Gestión de Proveedores — HU-051](#gestión-de-proveedores--hu-051)
+  - [GET /api/v1/suppliers](#get-apiv1suppliers)
+  - [POST /api/v1/suppliers](#post-apiv1suppliers)
+  - [PUT /api/v1/suppliers/:id](#put-apiv1suppliersid)
+  - [PATCH /api/v1/suppliers/:id/status](#patch-apiv1suppliersidstatus)
+- [Ingreso de Mercadería — HU-051](#ingreso-de-mercadería--hu-051)
+  - [POST /api/v1/stock/entries](#post-apiv1stockentries)
 
 ---
 
@@ -675,7 +679,7 @@ Retornado cuando los campos son válidos, la imagen ha sido subida exitosamente 
 
 ##### Error de Validación (HTTP 400 Bad Request)
 
-Retornado cuando el payload no cumple con las validaciones de Zod (ej. número de teléfono con formato inválido, nombres muy cortos) o si el archivo subido excede el límite de tamaño de 5MB o formato inadecuado.
+Retornado cuando el payload no cumple con las validaciones de Zod.
 
 **Ejemplo de Teléfono Inválido:**
 
@@ -714,7 +718,120 @@ Retornado cuando el payload no cumple con las validaciones de Zod (ej. número d
 
 ---
 
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
+## Identidad Visual y Branding
+
+### GET /api/v1/config/brand
+
+Obtiene la configuración actual de la identidad visual y branding del sistema (público para personalización dinámica en el frontend e-commerce).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                   | Autenticación     | Rol Requerido |
+| :----- | :--------------------- | :---------------- | :------------ |
+| `GET`  | `/api/v1/config/brand` | Ninguna (Público) | Invitado      |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+Retorna la configuración actual. Si no se ha configurado ninguna, retorna los valores por defecto del sistema.
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "brandName": "D'Mendoza",
+    "logoUrl": null,
+    "primaryColor": "#4F46E5",
+    "socialLinksJson": {},
+    "updatedAt": "2026-05-20T16:53:28.000Z"
+  }
+}
+```
+
+---
+
+### PUT /api/v1/config/brand
+
+Actualiza la configuración de identidad visual y branding del sistema de forma global. Solo accesible para administradores. Registra la modificación en los logs de auditoría para su trazabilidad.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                   | Autenticación      | Permiso Requerido      |
+| :----- | :--------------------- | :----------------- | :--------------------- |
+| `PUT`  | `/api/v1/config/brand` | JWT `Bearer Token` | Admin (`roles:manage`) |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "brandName": "D'Mendoza Premium",
+  "logoUrl": "https://ejemplo.com/logo.png",
+  "primaryColor": "#FF5733",
+  "socialLinksJson": {
+    "facebook": "https://facebook.com/dmendoza",
+    "instagram": "https://instagram.com/dmendoza"
+  }
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro         | Tipo     | Requerido | Reglas de Validación                                     |
+| :---------------- | :------- | :-------- | :------------------------------------------------------- |
+| `brandName`       | `string` | Sí        | Nombre comercial visible del sistema.                    |
+| `logoUrl`         | `string` | No        | URL absoluta del logotipo de la marca.                   |
+| `primaryColor`    | `string` | Sí        | Código de color hexadecimal (ej. `#FF5733`).             |
+| `socialLinksJson` | `object` | No        | Objeto JSON con urls de las redes sociales del comercio. |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "brandName": "D'Mendoza Premium",
+    "logoUrl": "https://ejemplo.com/logo.png",
+    "primaryColor": "#FF5733",
+    "socialLinksJson": {
+      "facebook": "https://facebook.com/dmendoza",
+      "instagram": "https://instagram.com/dmendoza"
+    },
+    "updatedAt": "2026-05-20T16:54:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Retornado si los campos enviados no cumplen con los tipos o validaciones de Zod.
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "code": "invalid_type",
+      "expected": "string",
+      "received": "undefined",
+      "path": ["brandName"],
+      "message": "Required"
+    }
+  ]
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+- **HTTP 401 Unauthorized**: Si falta el Token en los headers o si es inválido.
+- **HTTP 403 Forbidden**: Si el usuario autenticado no posee los permisos requeridos (`roles:manage`).
+
+---
+
 ## Sucursales y Almacenes
 
 Este módulo permite gestionar el catálogo de sucursales comerciales de la empresa. Cada sucursal creada tiene asociado de manera obligatoria y automática un almacén único (relación 1:1 de negocio) que se administra de forma independiente.
@@ -787,42 +904,22 @@ Registra una nueva sucursal comercial en el sistema y crea atómicamente en una 
 
 **Detalle de Campos:**
 
-| Parámetro | Tipo     | Requerido | Reglas de Validación                                                 |
-| :-------- | :------- | :-------- | :------------------------------------------------------------------- |
-| `name`    | `string` | Sí        | Debe ser único. Mínimo 2 caracteres, máximo 100 caracteres.          |
-| `address` | `string` | No        | Dirección física de la sucursal. Máximo 255 caracteres.              |
-| `phone`   | `string` | No        | Número de teléfono de contacto. Máximo 20 caracteres.                |
+| Parámetro | Tipo     | Requerido | Reglas de Validación                                                |
+| :-------- | :------- | :-------- | :------------------------------------------------------------------ |
+| `name`    | `string` | Sí        | Debe ser único. Mínimo 2 caracteres, máximo 100 caracteres.         |
+| `address` | `string` | No        | Dirección física de la sucursal. Máximo 255 caracteres.             |
+| `phone`   | `string` | No        | Número de teléfono de contacto. Máximo 20 caracteres.               |
 
 #### 3. Respuestas (Responses)
 
 ##### Éxito (HTTP 201 Created)
 
 Retornado cuando la sucursal y su almacén se crean de forma atómica y exitosa.
-=======
-## Identidad Visual y Branding
-
-### GET /api/v1/config/brand
-
-Obtiene la configuración actual de la identidad visual y branding del sistema (público para personalización dinámica en el frontend e-commerce).
-
-#### 1. Especificación del Endpoint
-
-| Método | Ruta                    | Autenticación     | Rol Requerido |
-| :----- | :---------------------- | :---------------- | :------------ |
-| `GET`  | `/api/v1/config/brand` | Ninguna (Público) | Invitado      |
-
-#### 2. Respuestas (Responses)
-
-##### Éxito (HTTP 200 OK)
-
-Retorna la configuración actual. Si no se ha configurado ninguna, retorna los valores por defecto del sistema.
->>>>>>> develop
 
 ```json
 {
   "success": true,
   "data": {
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
     "id": 2,
     "name": "Sucursal Norte",
     "address": "Calle Las Flores 456",
@@ -840,8 +937,6 @@ Retorna la configuración actual. Si no se ha configurado ninguna, retorna los v
 
 ##### Error de Validación (HTTP 400 Bad Request)
 
-Retornado si algún campo del payload no cumple con las restricciones sintácticas de Zod (ej. nombre demasiado corto o duplicado).
-
 ```json
 {
   "success": false,
@@ -858,88 +953,40 @@ Retornado si algún campo del payload no cumple con las restricciones sintáctic
 
 ### PUT /api/v1/branches/:id
 
-Actualiza parcialmente uno o más detalles de una sucursal existente por su ID numérico (ej. cambiar nombre, dirección o teléfono).
+Actualiza parcialmente uno o más detalles de una sucursal existente por su ID numérico.
 
 #### 1. Especificación del Endpoint
 
 | Método | Ruta                   | Autenticación      | Permiso Requerido |
 | :----- | :--------------------- | :----------------- | :---------------- |
 | `PUT`  | `/api/v1/branches/:id` | JWT `Bearer Token` | `users:write`     |
-=======
-    "id": 1,
-    "brandName": "D'Mendoza",
-    "logoUrl": null,
-    "primaryColor": "#4F46E5",
-    "socialLinksJson": {},
-    "updatedAt": "2026-05-20T16:53:28.000Z"
-  }
-}
-```
-
----
-
-### PUT /api/v1/config/brand
-
-Actualiza la configuración de identidad visual y branding del sistema de forma global. Solo accesible para administradores. Registra la modificación en los logs de auditoría para su trazabilidad.
-
-#### 1. Especificación del Endpoint
-
-| Método | Ruta                    | Autenticación      | Rol Requerido         |
-| :----- | :---------------------- | :----------------- | :-------------------- |
-| `PUT`  | `/api/v1/config/brand` | JWT `Bearer Token` | Admin (`roles:manage`)|
->>>>>>> develop
 
 #### 2. Cuerpo de la Petición (Request Body)
 
 ```json
 {
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
   "name": "Sucursal Norte Refactor",
   "address": null,
   "phone": "987654321"
-=======
-  "brandName": "D'Mendoza Premium",
-  "logoUrl": "https://ejemplo.com/logo.png",
-  "primaryColor": "#FF5733",
-  "socialLinksJson": {
-    "facebook": "https://facebook.com/dmendoza",
-    "instagram": "https://instagram.com/dmendoza"
-  }
->>>>>>> develop
 }
 ```
 
 **Detalle de Campos:**
 
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
-| Parámetro | Tipo     | Requerido | Reglas de Validación                                                 |
-| :-------- | :------- | :-------- | :------------------------------------------------------------------- |
-| `name`    | `string` | No        | Si se provee, debe ser único. Mínimo 2 caracteres, máximo 100.       |
-| `address` | `string` | No        | Puede ser `null` para eliminar la dirección. Máximo 255 caracteres. |
-| `phone`   | `string` | No        | Puede ser `null` para eliminar el teléfono. Máximo 20 caracteres.    |
-=======
-| Parámetro         | Tipo     | Requerido | Reglas de Validación                                 |
-| :---------------- | :------- | :-------- | :--------------------------------------------------- |
-| `brandName`       | `string` | Sí        | Nombre comercial visible del sistema.                |
-| `logoUrl`         | `string` | No        | URL absoluta del logotipo de la marca.               |
-| `primaryColor`    | `string` | Sí        | Código de color hexadecimal (ej. `#FF5733`).          |
-| `socialLinksJson` | `object` | No        | Objeto JSON con urls de las redes sociales del comercio.|
->>>>>>> develop
+| Parámetro | Tipo     | Requerido | Reglas de Validación                                                  |
+| :-------- | :------- | :-------- | :-------------------------------------------------------------------- |
+| `name`    | `string` | No        | Si se provee, debe ser único. Mínimo 2 caracteres, máximo 100.        |
+| `address` | `string` | No        | Puede ser `null` para eliminar la dirección. Máximo 255 caracteres.   |
+| `phone`   | `string` | No        | Puede ser `null` para eliminar el teléfono. Máximo 20 caracteres.     |
 
 #### 3. Respuestas (Responses)
 
 ##### Éxito (HTTP 200 OK)
 
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
-Retornado cuando la actualización en la base de datos finaliza con éxito.
-
-=======
->>>>>>> develop
 ```json
 {
   "success": true,
   "data": {
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
     "id": 2,
     "name": "Sucursal Norte Refactor",
     "address": null,
@@ -957,30 +1004,9 @@ Retornado cuando la actualización en la base de datos finaliza con éxito.
 
 ##### No Encontrado (HTTP 404 Not Found)
 
-Retornado si la sucursal con el ID provisto no existe.
-=======
-    "id": 1,
-    "brandName": "D'Mendoza Premium",
-    "logoUrl": "https://ejemplo.com/logo.png",
-    "primaryColor": "#FF5733",
-    "socialLinksJson": {
-      "facebook": "https://facebook.com/dmendoza",
-      "instagram": "https://instagram.com/dmendoza"
-    },
-    "updatedAt": "2026-05-20T16:54:00.000Z"
-  }
-}
-```
-
-##### Error de Validación (HTTP 400 Bad Request)
-
-Retornado si los campos enviados no cumplen con los tipos o validaciones de Zod.
->>>>>>> develop
-
 ```json
 {
   "success": false,
-<<<<<<< feature/HU-020-branch-configuration-with-independent-warehouses
   "error": "La sucursal no existe"
 }
 ```
@@ -1007,15 +1033,13 @@ Permite activar o desactivar una sucursal en el sistema, lo cual impacta su disp
 
 **Detalle de Campos:**
 
-| Parámetro  | Tipo      | Requerido | Reglas de Validación                       |
-| :--------- | :-------- | :-------- | :----------------------------------------- |
-| `isActive` | `boolean` | Sí        | Determina el nuevo estado de la sucursal.  |
+| Parámetro  | Tipo      | Requerido | Reglas de Validación                      |
+| :--------- | :-------- | :-------- | :---------------------------------------- |
+| `isActive` | `boolean` | Sí        | Determina el nuevo estado de la sucursal. |
 
 #### 3. Respuestas (Responses)
 
 ##### Éxito (HTTP 200 OK)
-
-Retornado cuando el estado ha sido actualizado con éxito.
 
 ```json
 {
@@ -1046,14 +1070,43 @@ Retornado cuando el estado ha sido actualizado con éxito.
 }
 ```
 
-=======
-  "error": [
+---
+
+## Gestión de Proveedores — HU-051
+
+Este módulo permite administrar el catálogo de proveedores del sistema, incluyendo su registro, actualización y gestión del estado activo/inactivo (baja lógica).
+
+### GET /api/v1/suppliers
+
+Retorna el listado completo de proveedores registrados, ordenados por fecha de creación descendente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                | Autenticación      | Permiso Requerido |
+| :----- | :------------------ | :----------------- | :---------------- |
+| `GET`  | `/api/v1/suppliers` | JWT `Bearer Token` | `inventory:read`  |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+No requiere cuerpo de petición.
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
     {
-      "code": "invalid_type",
-      "expected": "string",
-      "received": "undefined",
-      "path": ["brandName"],
-      "message": "Required"
+      "id": 1,
+      "ruc": "20123456789",
+      "razonSocial": "Textiles S.A.C.",
+      "contacto": "Pedro Gómez",
+      "direccion": "Av. Industrial 123, Lima",
+      "isActive": true,
+      "createdAt": "2026-05-31T10:00:00.000Z",
+      "updatedAt": "2026-05-31T10:00:00.000Z"
     }
   ]
 }
@@ -1061,8 +1114,373 @@ Retornado cuando el estado ha sido actualizado con éxito.
 
 ##### Acceso Denegado (HTTP 401 / 403)
 
-- **HTTP 401 Unauthorized**: Si falta el Token en los headers o si es inválido.
-- **HTTP 403 Forbidden**: Si el usuario autenticado no posee los permisos requeridos (`roles:manage`).
+- **HTTP 401 Unauthorized**: Si falta el Token o es inválido.
+- **HTTP 403 Forbidden**: Si el usuario carece del permiso `inventory:read`.
+
+---
+
+### POST /api/v1/suppliers
+
+Registra un nuevo proveedor en el sistema. El RUC debe ser único en la base de datos.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                | Autenticación      | Permiso Requerido  |
+| :----- | :------------------ | :----------------- | :----------------- |
+| `POST` | `/api/v1/suppliers` | JWT `Bearer Token` | `inventory:write`  |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "ruc": "20123456789",
+  "razonSocial": "Textiles S.A.C.",
+  "contacto": "Pedro Gómez",
+  "direccion": "Av. Industrial 123, Lima"
 }
 ```
->>>>>>> develop
+
+**Detalle de Campos:**
+
+| Parámetro    | Tipo     | Requerido | Reglas de Validación                                                    |
+| :----------- | :------- | :-------- | :---------------------------------------------------------------------- |
+| `ruc`        | `string` | Sí        | Exactamente 11 dígitos numéricos. Debe ser único en el sistema.         |
+| `razonSocial`| `string` | Sí        | Mínimo 2 caracteres, máximo 200.                                        |
+| `contacto`   | `string` | Sí        | Nombre de persona o área de contacto. Mínimo 2, máximo 100 caracteres.  |
+| `direccion`  | `string` | No        | Dirección física del proveedor. Máximo 255 caracteres. Puede ser `null`.|
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "ruc": "20123456789",
+    "razonSocial": "Textiles S.A.C.",
+    "contacto": "Pedro Gómez",
+    "direccion": "Av. Industrial 123, Lima",
+    "isActive": true,
+    "createdAt": "2026-05-31T10:00:00.000Z",
+    "updatedAt": "2026-05-31T10:00:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "ruc",
+      "message": "El RUC debe tener al menos 11 dígitos"
+    }
+  ]
+}
+```
+
+##### Conflicto (HTTP 409 Conflict)
+
+Retornado si el RUC ya está registrado en el sistema.
+
+```json
+{
+  "success": false,
+  "error": "El RUC '20123456789' ya se encuentra registrado"
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+- **HTTP 401 Unauthorized**: Si falta el Token o es inválido.
+- **HTTP 403 Forbidden**: Si el usuario carece del permiso `inventory:write`.
+
+---
+
+### PUT /api/v1/suppliers/:id
+
+Actualiza los datos de un proveedor existente. Si se modifica el RUC, se valida que no esté en uso por otro proveedor.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                    | Autenticación      | Permiso Requerido |
+| :----- | :---------------------- | :----------------- | :---------------- |
+| `PUT`  | `/api/v1/suppliers/:id` | JWT `Bearer Token` | `inventory:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+Todos los campos son opcionales; se actualiza únicamente lo que se envíe.
+
+```json
+{
+  "razonSocial": "Textiles Premium S.A.C.",
+  "contacto": "Carlos López",
+  "direccion": null
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro    | Tipo     | Requerido | Reglas de Validación                                            |
+| :----------- | :------- | :-------- | :-------------------------------------------------------------- |
+| `ruc`        | `string` | No        | Exactamente 11 dígitos numéricos. Debe ser único.               |
+| `razonSocial`| `string` | No        | Mínimo 2 caracteres, máximo 200.                                |
+| `contacto`   | `string` | No        | Mínimo 2 caracteres, máximo 100.                                |
+| `direccion`  | `string` | No        | Puede ser `null` para eliminar la dirección. Máximo 255.        |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "ruc": "20123456789",
+    "razonSocial": "Textiles Premium S.A.C.",
+    "contacto": "Carlos López",
+    "direccion": null,
+    "isActive": true,
+    "createdAt": "2026-05-31T10:00:00.000Z",
+    "updatedAt": "2026-05-31T10:30:00.000Z"
+  }
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "El proveedor con ID 1 no existe"
+}
+```
+
+##### Conflicto (HTTP 409 Conflict)
+
+```json
+{
+  "success": false,
+  "error": "El RUC '20999888777' ya se encuentra registrado"
+}
+```
+
+---
+
+### PATCH /api/v1/suppliers/:id/status
+
+Activa o inactiva un proveedor (baja lógica). Un proveedor inactivo no puede ser utilizado en nuevos ingresos de mercadería.
+
+#### 1. Especificación del Endpoint
+
+| Método  | Ruta                           | Autenticación      | Permiso Requerido |
+| :------ | :----------------------------- | :----------------- | :---------------- |
+| `PATCH` | `/api/v1/suppliers/:id/status` | JWT `Bearer Token` | `inventory:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "isActive": false
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro  | Tipo      | Requerido | Reglas de Validación                        |
+| :--------- | :-------- | :-------- | :------------------------------------------ |
+| `isActive` | `boolean` | Sí        | Determina el nuevo estado del proveedor.    |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Proveedor inactivado correctamente",
+  "data": {
+    "id": 1,
+    "ruc": "20123456789",
+    "razonSocial": "Textiles S.A.C.",
+    "contacto": "Pedro Gómez",
+    "direccion": "Av. Industrial 123, Lima",
+    "isActive": false,
+    "createdAt": "2026-05-31T10:00:00.000Z",
+    "updatedAt": "2026-05-31T11:00:00.000Z"
+  }
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "El proveedor con ID 1 no existe"
+}
+```
+
+---
+
+## Ingreso de Mercadería — HU-051
+
+Este módulo registra los ingresos de mercadería desde proveedores al almacén de una sucursal. Cada registro ejecuta una **transacción atómica** que:
+
+1. Persiste el cabecero `StockEntry` y sus ítems `StockEntryItem`.
+2. Actualiza (upsert) el stock actual en `BranchStock` por variante y sucursal.
+3. Genera el asiento contable `ENTRADA` en el `KardexEntry` con saldo acumulado.
+
+### POST /api/v1/stock/entries
+
+Registra un ingreso de mercadería desde un proveedor activo hacia el almacén de una sucursal.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                    | Autenticación      | Permiso Requerido |
+| :----- | :---------------------- | :----------------- | :---------------- |
+| `POST` | `/api/v1/stock/entries` | JWT `Bearer Token` | `inventory:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "supplierId": 1,
+  "invoiceNumber": "F001-00123",
+  "branchId": 2,
+  "items": [
+    {
+      "variantId": 10,
+      "quantity": 50,
+      "unitCost": 25.50
+    },
+    {
+      "variantId": 15,
+      "quantity": 30,
+      "unitCost": 18.00
+    }
+  ]
+}
+```
+
+**Detalle de Campos — Cabecero:**
+
+| Parámetro       | Tipo     | Requerido | Reglas de Validación                                                       |
+| :-------------- | :------- | :-------- | :------------------------------------------------------------------------- |
+| `supplierId`    | `number` | Sí        | ID entero positivo. El proveedor debe existir y estar activo.              |
+| `invoiceNumber` | `string` | Sí        | Número de comprobante de pago (factura/boleta). Máximo 50 caracteres.      |
+| `branchId`      | `number` | Sí        | ID entero positivo. Identifica la sucursal destino del ingreso.            |
+| `items`         | `array`  | Sí        | Al menos 1 ítem. Cada ítem representa una variante de producto ingresada.  |
+
+**Detalle de Campos — Ítems (`items[]`):**
+
+| Parámetro   | Tipo     | Requerido | Reglas de Validación                                               |
+| :---------- | :------- | :-------- | :----------------------------------------------------------------- |
+| `variantId` | `number` | Sí        | ID entero positivo de la variante de producto (`ProductVariant`).  |
+| `quantity`  | `number` | Sí        | Cantidad ingresada. Debe ser un número positivo mayor a 0.         |
+| `unitCost`  | `number` | Sí        | Costo unitario de compra. Debe ser un número positivo mayor a 0.   |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 201 Created)
+
+Retornado cuando la transacción completa se ejecuta exitosamente. El stock y el Kardex han sido actualizados.
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 5,
+    "supplierId": 1,
+    "supplierRazonSocial": "Textiles S.A.C.",
+    "invoiceNumber": "F001-00123",
+    "branchId": 2,
+    "items": [
+      {
+        "id": 9,
+        "variantId": 10,
+        "quantity": 50,
+        "unitCost": 25.50
+      },
+      {
+        "id": 10,
+        "variantId": 15,
+        "quantity": 30,
+        "unitCost": 18.00
+      }
+    ],
+    "createdAt": "2026-05-31T14:00:00.000Z",
+    "updatedAt": "2026-05-31T14:00:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Retornado cuando el payload no cumple con las restricciones del schema Zod.
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "items",
+      "message": "El ingreso debe contener al menos un ítem"
+    },
+    {
+      "field": "items.0.unitCost",
+      "message": "El costo unitario debe ser mayor a 0"
+    }
+  ]
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+
+Retornado si el `supplierId` no corresponde a ningún proveedor existente.
+
+```json
+{
+  "success": false,
+  "error": "El proveedor con ID 99 no existe"
+}
+```
+
+##### Entidad no Procesable (HTTP 422 Unprocessable Entity)
+
+Retornado si el proveedor existe pero se encuentra inactivo.
+
+```json
+{
+  "success": false,
+  "error": "El proveedor 'Textiles S.A.C.' se encuentra inactivo"
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+- **HTTP 401 Unauthorized**: Si falta el Token o es inválido.
+- **HTTP 403 Forbidden**: Si el usuario carece del permiso `inventory:write`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el permiso 'inventory:write'"
+}
+```
+
+##### Error Interno (HTTP 500 Internal Server Error)
+
+Retornado si falla la transacción de base de datos (ej. FK inválida en `variantId` o `branchId`). La transacción Prisma hace rollback automático garantizando consistencia.
+
+```json
+{
+  "success": false,
+  "error": "Internal server error"
+}
+```
