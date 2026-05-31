@@ -6,11 +6,18 @@ export interface StockEntryItemRequestDTO {
   unitCost: number;
 }
 
+export interface StockEntryDistributionItemRequestDTO {
+  branchId: number;
+  variantId: number;
+  quantity: number;
+}
+
 export interface CreateStockEntryRequestDTO {
   supplierId: number;
   invoiceNumber: string;
   branchId: number;
   items: StockEntryItemRequestDTO[];
+  distributionItems?: StockEntryDistributionItemRequestDTO[];
 }
 
 export interface StockEntryItemResponseDTO {
