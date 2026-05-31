@@ -88,4 +88,11 @@ router.put(
   productVariantController.updateVariant.bind(productVariantController)
 );
 
+// PATCH /api/v1/variants/:id/min-stock — Editar umbral de stock mínimo (HU-027)
+router.patch(
+  '/variants/:id/min-stock',
+  requirePermission('products:write'),
+  productVariantController.updateMinStock.bind(productVariantController)
+);
+
 export default router;

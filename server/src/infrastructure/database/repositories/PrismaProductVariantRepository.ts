@@ -66,6 +66,7 @@ export class PrismaProductVariantRepository implements IProductVariantRepository
         sku: data.sku,
         price: data.price,
         isActive: data.isActive,
+        minStock: data.minStock,
       },
     });
     return this.toDomain(record);
@@ -102,6 +103,7 @@ export class PrismaProductVariantRepository implements IProductVariantRepository
       price: Number(record.price), // Decimal → number
       attributesJson: record.attributesJson as Record<string, string>,
       isActive: record.isActive,
+      minStock: record.minStock,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };

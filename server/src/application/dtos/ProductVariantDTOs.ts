@@ -13,6 +13,11 @@ export interface UpdateVariantRequestDTO {
   sku?: string;
   price?: number;
   isActive?: boolean;
+  minStock?: number;
+}
+
+export interface UpdateVariantMinStockRequestDTO {
+  minStock: number;
 }
 
 export interface VariantResponseDTO {
@@ -22,6 +27,7 @@ export interface VariantResponseDTO {
   price: number;
   attributesJson: Record<string, string>;
   isActive: boolean;
+  minStock: number;
   createdAt: Date;
   updatedAt: Date;
 }

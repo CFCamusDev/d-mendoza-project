@@ -12,6 +12,7 @@ export interface UpdateVariantDTO {
   sku?: string;    // Editar SKU manualmente (se valida unicidad)
   price?: number;  // Editar precio
   isActive?: boolean;
+  minStock?: number;
 }
 
 // Repositorio de productos: solo lo necesario para HU-014 / HU-015

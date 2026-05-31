@@ -14,14 +14,20 @@ import {
   Home,
   ClipboardList,
   FileSignature,
+  Bell,
   Boxes
 } from 'lucide-react';
+import { useStockAlerts } from '@/features/admin/hooks/useStockAlerts';
 
 export const AppShell: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { alerts } = useStockAlerts();
+  
+  // Count active alerts
+  const activeAlertsCount = alerts.length;
 
   const handleLogout = () => {
     logout();
@@ -102,6 +108,17 @@ export const AppShell: React.FC = () => {
 
           {/* Área del Usuario (Login/Logout/Perfil) - Desktop */}
           <div className="hidden md:flex items-center gap-4">
+            {isAuthenticated && user?.role === 'ADMIN' && (
+              <div className="relative flex items-center justify-center w-8 h-8 rounded-full hover:bg-brand-primary/20 transition-colors cursor-pointer mr-2" title="Alertas de Stock">
+                <Bell className="w-5 h-5 text-brand-text" />
+                {activeAlertsCount > 0 && (
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+                    {activeAlertsCount}
+                  </span>
+                )}
+              </div>
+            )}
+            
             {isAuthenticated && user ? (
               <div className="flex items-center gap-4">
                 <Link 
@@ -206,6 +223,19 @@ export const AppShell: React.FC = () => {
 
             {/* Sesión de Usuario - Móvil */}
             <div className="pt-6 border-t border-brand-primary/60 space-y-4">
+              {isAuthenticated && user?.role === 'ADMIN' && (
+                <div className="flex items-center justify-between p-2 rounded-xl bg-red-50 border border-red-100 mb-2">
+                  <div className="flex items-center gap-2 text-red-600">
+                    <Bell className="w-5 h-5" />
+                    <span className="text-sm font-bold">Alertas de Stock</span>
+                  </div>
+                  {activeAlertsCount > 0 && (
+                    <span className="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                      {activeAlertsCount}
+                    </span>
+                  )}
+                </div>
+              )}
               {isAuthenticated && user ? (
                 <div className="space-y-4">
                   <Link

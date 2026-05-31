@@ -62,6 +62,13 @@ const UpdateVariantSchema = z
     message: 'Debes proporcionar al menos un campo a actualizar (sku, price o isActive)',
   });
 
+const UpdateVariantMinStockSchema = z.object({
+  minStock: z
+    .number()
+    .int('El stock mínimo debe ser un número entero')
+    .min(0, 'El stock mínimo no puede ser negativo')
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ProductVariantController — HU-014
 // ─────────────────────────────────────────────────────────────────────────────
@@ -161,6 +168,38 @@ export class ProductVariantController {
       }
       if (error.message.includes('mayor a 0')) {
         return res.status(400).json({ success: false, error: error.message });
+      }
+      next(error);
+    }
+  }
+
+  /**
+   * PATCH /api/v1/variants/:id/min-stock
+   * Actualiza únicamente el umbral de stock mínimo de una variante.
+   */
+  async updateMinStock(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = parseInt(String(req.params.id), 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ success: false, error: 'ID de variante inválido' });
+      }
+
+      const validation = UpdateVariantMinStockSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({
+          success: false,
+          errors: validation.error.issues.map((err) => ({
+            field: err.path.join('.'),
+            message: err.message,
+          })),
+        });
+      }
+
+      const variant = await updateVariantUseCase.execute(id, { minStock: validation.data.minStock });
+      return res.status(200).json({ success: true, data: variant });
+    } catch (error: any) {
+      if (error.message.includes('no existe')) {
+        return res.status(404).json({ success: false, error: error.message });
       }
       next(error);
     }
