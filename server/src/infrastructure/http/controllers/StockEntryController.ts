@@ -18,6 +18,12 @@ const StockEntryItemSchema = z.object({
   unitCost: z.number().positive('El costo unitario debe ser mayor a 0'),
 });
 
+const StockEntryDistributionItemSchema = z.object({
+  branchId: z.number().int().positive('El ID de sucursal de destino debe ser un entero positivo'),
+  variantId: z.number().int().positive('El ID de variante debe ser un entero positivo'),
+  quantity: z.number().positive('La cantidad a distribuir debe ser mayor a 0'),
+});
+
 const CreateStockEntrySchema = z.object({
   supplierId: z.number().int().positive('El ID de proveedor debe ser un entero positivo'),
   invoiceNumber: z
@@ -28,6 +34,9 @@ const CreateStockEntrySchema = z.object({
   items: z
     .array(StockEntryItemSchema)
     .min(1, 'El ingreso debe contener al menos un ítem'),
+  distributionItems: z
+    .array(StockEntryDistributionItemSchema)
+    .optional(),
 });
 
 // ── Utilidad DRY: parsear errores Zod ────────────────────────────────────────

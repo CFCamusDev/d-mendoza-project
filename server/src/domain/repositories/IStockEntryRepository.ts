@@ -13,6 +13,11 @@ export interface CreateStockEntryDTO {
   invoiceNumber: string;
   branchId: number;
   items: CreateStockEntryItemDTO[];
+  distributionItems?: {
+    branchId: number;
+    variantId: number;
+    quantity: number;
+  }[];
 }
 
 export interface IStockEntryRepository {

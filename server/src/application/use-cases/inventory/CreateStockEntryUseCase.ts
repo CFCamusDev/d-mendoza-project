@@ -27,6 +27,7 @@ export class CreateStockEntryUseCase {
       invoiceNumber: dto.invoiceNumber,
       branchId: dto.branchId,
       items: dto.items,
+      distributionItems: dto.distributionItems,
     });
 
     return this.mapToDTO(stockEntry, supplier.razonSocial);

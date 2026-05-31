@@ -46,38 +46,69 @@ export class PrismaStockEntryRepository implements IStockEntryRepository {
         },
       });
 
-      // 2. Por cada ítem: actualizar BranchStock y generar asiento Kardex
+      // 2. Por cada ítem: actualizar BranchStock y generar asiento Kardex (soportando distribución de sucursales)
       for (const item of data.items) {
-        // Obtener el último asiento del kardex para calcular saldo acumulado
-        const lastKardex = await tx.kardexEntry.findFirst({
-          where: { variantId: item.variantId, branchId: data.branchId },
-          orderBy: { createdAt: 'desc' },
-        });
+        // Encontrar distribuciones especificadas para este variantId
+        const dists = (data.distributionItems || []).filter(
+          (d) => d.variantId === item.variantId
+        );
 
-        const prevBalanceQty = lastKardex?.balanceQty ?? 0;
-        const prevBalanceCost = lastKardex?.balanceCost ?? 0;
-        const newBalanceQty = prevBalanceQty + item.quantity;
-        const newBalanceCost = prevBalanceCost + item.quantity * item.unitCost;
+        const totalDistributed = dists.reduce((sum, d) => sum + d.quantity, 0);
 
-        // Upsert del stock en sucursal
-        await tx.branchStock.upsert({
-          where: { variantId_branchId: { variantId: item.variantId, branchId: data.branchId } },
-          create: { variantId: item.variantId, branchId: data.branchId, quantity: item.quantity },
-          update: { quantity: { increment: item.quantity } },
-        });
+        if (totalDistributed > item.quantity) {
+          throw new Error(
+            `La suma de cantidades a distribuir para la variante ${item.variantId} (${totalDistributed}) supera la cantidad total ingresada (${item.quantity})`
+          );
+        }
 
-        // Asiento ENTRADA en Kardex
-        await tx.kardexEntry.create({
-          data: {
-            variantId: item.variantId,
-            branchId: data.branchId,
-            type: 'ENTRADA',
-            quantity: item.quantity,
-            unitCost: item.unitCost,
-            balanceQty: newBalanceQty,
-            balanceCost: newBalanceCost,
-          },
-        });
+        const remainingQuantity = item.quantity - totalDistributed;
+
+        // Agrupar cantidades a asignar por branchId
+        const groupedAssignments: Record<number, number> = {};
+
+        for (const dist of dists) {
+          groupedAssignments[dist.branchId] = (groupedAssignments[dist.branchId] || 0) + dist.quantity;
+        }
+
+        if (remainingQuantity > 0) {
+          groupedAssignments[data.branchId] = (groupedAssignments[data.branchId] || 0) + remainingQuantity;
+        }
+
+        // Procesar transacciones individuales para cada sucursal de destino
+        for (const [branchIdStr, qty] of Object.entries(groupedAssignments)) {
+          const targetBranchId = parseInt(branchIdStr, 10);
+
+          // Obtener el último asiento del kardex para esa sucursal y variante
+          const lastKardex = await tx.kardexEntry.findFirst({
+            where: { variantId: item.variantId, branchId: targetBranchId },
+            orderBy: { createdAt: 'desc' },
+          });
+
+          const prevBalanceQty = lastKardex?.balanceQty ?? 0;
+          const prevBalanceCost = lastKardex?.balanceCost ?? 0;
+          const newBalanceQty = prevBalanceQty + qty;
+          const newBalanceCost = prevBalanceCost + qty * item.unitCost;
+
+          // Upsert del stock en la sucursal de asignación
+          await tx.branchStock.upsert({
+            where: { variantId_branchId: { variantId: item.variantId, branchId: targetBranchId } },
+            create: { variantId: item.variantId, branchId: targetBranchId, quantity: qty },
+            update: { quantity: { increment: qty } },
+          });
+
+          // Asiento ENTRADA en Kardex para la sucursal de asignación
+          await tx.kardexEntry.create({
+            data: {
+              variantId: item.variantId,
+              branchId: targetBranchId,
+              type: 'ENTRADA',
+              quantity: qty,
+              unitCost: item.unitCost,
+              balanceQty: newBalanceQty,
+              balanceCost: newBalanceCost,
+            },
+          });
+        }
       }
 
       return stockEntry;
