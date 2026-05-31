@@ -1336,9 +1336,58 @@ Este módulo registra los ingresos de mercadería desde proveedores al almacén 
 2. Actualiza (upsert) el stock actual en `BranchStock` por variante y sucursal.
 3. Genera el asiento contable `ENTRADA` en el `KardexEntry` con saldo acumulado.
 
+### GET /api/v1/variants/search
+
+Busca variantes de productos por coincidencia parcial en el SKU de la variante o en el nombre del producto padre. Este endpoint está diseñado para alimentar selectores predictivos (Autocomplete) en la interfaz de usuario al registrar el ingreso de mercadería.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/variants/search` | JWT `Bearer Token` | `inventory:read` |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `q` | `string` | Sí | Término de búsqueda (coincide parcialmente con el SKU o nombre del producto) |
+| `limit` | `number` | No | Límite de resultados a retornar (por defecto `10`, máximo `50`) |
+
+#### 3. Respuestas del Servidor
+
+##### Búsqueda Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 10,
+      "sku": "CAMISA-M-AZUL",
+      "productName": "Camisa de Algodón Manga Larga",
+      "price": 45.00
+    }
+  ]
+}
+```
+
+##### Petición Incorrecta (HTTP 400 Bad Request)
+
+Si falta el parámetro `q` o está vacío.
+
+```json
+{
+  "success": false,
+  "error": "El parámetro de búsqueda \"q\" es requerido y no puede estar vacío"
+}
+```
+
+---
+
 ### POST /api/v1/stock/entries
 
 Registra un ingreso de mercadería desde un proveedor activo hacia el almacén de una sucursal.
+
 
 #### 1. Especificación del Endpoint
 

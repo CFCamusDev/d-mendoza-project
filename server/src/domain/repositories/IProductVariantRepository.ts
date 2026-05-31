@@ -23,6 +23,13 @@ export interface IProductRepository {
   updateStatus(id: number, isActive: boolean): Promise<Product>;
 }
 
+export interface VariantSearchResult {
+  id: number;
+  sku: string;
+  productName: string;
+  price: number;
+}
+
 // Repositorio de variantes
 export interface IProductVariantRepository {
   findById(id: number): Promise<ProductVariant | null>;
@@ -30,4 +37,6 @@ export interface IProductVariantRepository {
   findByProductId(productId: number): Promise<ProductVariant[]>;
   createMany(variants: (CreateVariantDTO & { productId: number; sku: string })[]): Promise<ProductVariant[]>;
   update(id: number, data: UpdateVariantDTO): Promise<ProductVariant>;
+  search(query: string, limit: number): Promise<VariantSearchResult[]>;
 }
+
