@@ -24,6 +24,8 @@ import AdjustmentPage from '../features/admin/AdjustmentPage';
 import RotationReportPage from '../features/admin/RotationReportPage';
 import SuppliersPage from '../features/admin/suppliers/SuppliersPage';
 import StockEntriesPage from '../features/admin/entries/StockEntriesPage';
+import StockPage from '../features/admin/stock/StockPage';
+
 
 
 export const AppRouter = () => {
@@ -137,6 +139,10 @@ export const AppRouter = () => {
         {/* HU-051 */}
         <Route path="/admin/inventory/suppliers" element={<ProtectedRoute allowedRoles={['ADMIN']}><SuppliersPage /></ProtectedRoute>} />
         <Route path="/admin/inventory/entries" element={<ProtectedRoute allowedRoles={['ADMIN']}><StockEntriesPage /></ProtectedRoute>} />
+
+        {/* HU-021 */}
+        <Route path="/admin/inventory/stock" element={<ProtectedRoute allowedRoles={['ADMIN']}><StockPage /></ProtectedRoute>} />
+
 
 
         {/* HU-030 */}
