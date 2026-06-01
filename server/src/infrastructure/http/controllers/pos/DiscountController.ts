@@ -32,9 +32,10 @@ const ValidateDiscountSchema = z.object({
    * - "percentage" → porcentaje sobre el subtotal (ej. 10 = 10%)
    * - "fixed"      → monto fijo en moneda local (ej. 5.00 = S/. 5.00)
    */
-  discountType: z.enum(['percentage', 'fixed'], {
-    errorMap: () => ({ message: 'discountType debe ser "percentage" o "fixed"' }),
-  }),
+  discountType: z.enum(['percentage', 'fixed']).refine(
+    (val) => val === 'percentage' || val === 'fixed',
+    { message: 'discountType debe ser "percentage" o "fixed"' }
+  ),
 
   /**
    * Valor del descuento. Debe ser mayor que cero.
