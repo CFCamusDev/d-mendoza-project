@@ -315,19 +315,29 @@ export const EmployeesPage: React.FC = () => {
                 </select>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm font-bold text-[#3F3F3F]">Rol asignado (opcional)</label>
-                <select
-                  className="w-full px-4 py-2 border border-[#D9D9D2] rounded-xl outline-none focus:border-[#3F3F3F] transition-colors bg-white"
-                  value={formData.roleId}
-                  onChange={e => setFormData({ ...formData, roleId: e.target.value })}
-                >
-                  <option value="">Sin rol asignado</option>
-                  {roles.map(role => (
-                    <option key={role.id} value={role.id}>{role.name}</option>
-                  ))}
-                </select>
-              </div>
+              {editingEmployee && editingEmployee.userId && (
+                <div className="space-y-1">
+                  <label className="text-sm font-bold text-[#3F3F3F]">Rol asignado (opcional)</label>
+                  <select
+                    className="w-full px-4 py-2 border border-[#D9D9D2] rounded-xl outline-none focus:border-[#3F3F3F] transition-colors bg-white"
+                    value={formData.roleId}
+                    onChange={e => setFormData({ ...formData, roleId: e.target.value })}
+                  >
+                    <option value="">Sin rol asignado</option>
+                    {roles.map(role => (
+                      <option key={role.id} value={role.id}>{role.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              {editingEmployee && !editingEmployee.userId && (
+                <div className="p-3 bg-[#FAFAFA] border border-[#D9D9D2]/40 rounded-xl">
+                  <p className="text-xs text-[#6B6B6B]">
+                    ⚠️ No se puede asignar un rol administrativo porque el empleado no tiene una cuenta de usuario vinculada en el sistema.
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-3 mt-8">
                 <button
