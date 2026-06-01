@@ -13,7 +13,7 @@ export class PrismaPosProductRepository implements IPosProductRepository {
         OR: [
           {
             sku: {
-              equals: query,
+              contains: query,
             },
           },
           {
