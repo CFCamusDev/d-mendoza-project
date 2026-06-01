@@ -31,6 +31,7 @@ model User {
   roles           Role[] // RBAC many-to-many relationship (HU-004)
   employee        Employee?
   client          Client?
+  cashTurns       CashTurn[] // HU-032
 }
 
 model Client {
@@ -73,6 +74,7 @@ model Branch {
   updatedAt     DateTime      @updatedAt
   stockAlerts   StockAlert[]
   inventoryAudits InventoryAudit[] // HU-029
+  cashRegisters   CashRegister[]   // HU-032
 }
 
 model Warehouse {
@@ -364,4 +366,41 @@ model AuditItem {
   @@index([auditId])
   @@index([variantId])
 }
+
+// ─── HU-032: Apertura de Caja y Vinculación al Turno del Vendedor ─────────────
+
+enum TurnStatus {
+  OPEN
+  CLOSED
+}
+
+model CashRegister {
+  id        Int        @id @default(autoincrement())
+  branchId  Int
+  branch    Branch     @relation(fields: [branchId], references: [id])
+  name      String
+  cashTurns CashTurn[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([branchId])
+}
+
+model CashTurn {
+  id         Int          @id @default(autoincrement())
+  registerId Int
+  register   CashRegister @relation(fields: [registerId], references: [id])
+  userId     Int
+  user       User         @relation(fields: [userId], references: [id])
+  openAmount Float
+  status     TurnStatus   @default(OPEN)
+  openedAt   DateTime     @default(now())
+  closedAt   DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([registerId])
+  @@index([userId])
+}
+
 
