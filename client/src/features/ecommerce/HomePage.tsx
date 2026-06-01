@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useAuth } from '@/shared/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import logoHorizontal from '@/assets/logo-horizontal.png';
@@ -6,12 +5,6 @@ import logoHorizontal from '@/assets/logo-horizontal.png';
 export default function HomePage() {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isAuthenticated && (user?.role === 'ADMIN' || user?.role === 'SELLER')) {
-      navigate('/admin/inventory/stock', { replace: true });
-    }
-  }, [isAuthenticated, user, navigate]);
 
   const handleLogout = () => {
     logout();
