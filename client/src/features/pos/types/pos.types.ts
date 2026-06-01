@@ -19,3 +19,15 @@ export interface CartItem {
   stock: number;
   attributes: Record<string, string>;
 }
+
+export interface ClientLookupResult {
+  success: boolean;
+  documentNumber: string;
+  name: string;
+  lastName?: string;
+  address?: string;
+  department?: string;
+  province?: string;
+  district?: string;
+  ubigeo?: string;
+}

@@ -3,6 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/context/AuthContext';
 import { useStockAlerts } from '@/features/admin/hooks/useStockAlerts';
 import { useBrand } from '@/shared/context/BrandContext';
+import { QuickRegisterModal } from '@/features/pos/components/QuickRegisterModal';
 import { 
   Menu, 
   User, 
@@ -47,6 +48,7 @@ export const AdminShell: React.FC = () => {
   // Header Dropdowns
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isAlertsDropdownOpen, setIsAlertsDropdownOpen] = useState(false);
+  const [isClientRegisterOpen, setIsClientRegisterOpen] = useState(false);
 
   // Stock Alerts hook
   const { alerts, dismissAlert } = useStockAlerts();
@@ -384,6 +386,16 @@ export const AdminShell: React.FC = () => {
               <span className="hidden sm:inline">Ver Tienda</span>
             </Link>
 
+            {/* Quick Client Register Button (HU-007 Admin Extension) */}
+            <button
+              onClick={() => setIsClientRegisterOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#D9D9D2] hover:bg-[#FAFAFA] hover:border-[#3F3F3F] text-xs font-bold text-[#3F3F3F] transition-all cursor-pointer"
+              title="Registrar Cliente Rápido"
+            >
+              <UserPlus className="w-4 h-4 text-[#3F3F3F]" />
+              <span className="hidden md:inline">Alta Rápida Cliente</span>
+            </button>
+
             {/* Notification Bell Dropdown */}
             <div className="relative">
               <button
@@ -507,6 +519,12 @@ export const AdminShell: React.FC = () => {
         </main>
 
       </div>
+
+      {/* Quick Client Register Modal (HU-007 Admin Extension) */}
+      <QuickRegisterModal
+        isOpen={isClientRegisterOpen}
+        onClose={() => setIsClientRegisterOpen(false)}
+      />
 
     </div>
   );
