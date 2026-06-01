@@ -48,6 +48,49 @@ export class BrandController {
     }
   }
 
+  /**
+   * @swagger
+   * /api/v1/config/brand/upload:
+   *   post:
+   *     tags:
+   *       - Brand
+   *     summary: Sube una imagen (logo o favicon) para el Branding
+   *     description: Sube una imagen a Cloudinary y devuelve la URL para ser asignada al BrandConfig. Requiere permisos de administrador.
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         multipart/form-data:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               image:
+   *                 type: string
+   *                 format: binary
+   *                 description: El archivo de imagen (PNG, JPG, WEBP, etc.)
+   *     responses:
+   *       201:
+   *         description: Imagen subida correctamente
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     url:
+   *                       type: string
+   *                       example: "https://res.cloudinary.com/..."
+   *       400:
+   *         description: No se proporcionó la imagen
+   *       500:
+   *         description: Error interno del servidor al subir la imagen
+   */
   async uploadLogo(req: Request, res: Response) {
     try {
       if (!req.file) {
