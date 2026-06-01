@@ -747,9 +747,16 @@ Retorna la configuración actual. Si no se ha configurado ninguna, retorna los v
   "data": {
     "id": 1,
     "brandName": "D'Mendoza",
-    "logoUrl": null,
-    "primaryColor": "#4F46E5",
-    "socialLinksJson": {},
+    "faviconUrl": "https://res.cloudinary.com/...",
+    "logoHorizontalUrl": "https://res.cloudinary.com/...",
+    "logoVerticalUrl": "https://res.cloudinary.com/...",
+    "colorBrandBg": "#F7F7F5",
+    "colorBrandPrimary": "#D9D9D2",
+    "colorBrandText": "#6B6B6B",
+    "colorBrandAccent": "#3F3F3F",
+    "socialLinksJson": {
+      "facebook": "https://facebook.com/dmendoza"
+    },
     "updatedAt": "2026-05-20T16:53:28.000Z"
   }
 }
@@ -772,8 +779,13 @@ Actualiza la configuración de identidad visual y branding del sistema de forma 
 ```json
 {
   "brandName": "D'Mendoza Premium",
-  "logoUrl": "https://ejemplo.com/logo.png",
-  "primaryColor": "#FF5733",
+  "faviconUrl": "https://res.cloudinary.com/...",
+  "logoHorizontalUrl": "https://res.cloudinary.com/...",
+  "logoVerticalUrl": "https://res.cloudinary.com/...",
+  "colorBrandBg": "#F7F7F5",
+  "colorBrandPrimary": "#D9D9D2",
+  "colorBrandText": "#6B6B6B",
+  "colorBrandAccent": "#3F3F3F",
   "socialLinksJson": {
     "facebook": "https://facebook.com/dmendoza",
     "instagram": "https://instagram.com/dmendoza"
@@ -783,12 +795,17 @@ Actualiza la configuración de identidad visual y branding del sistema de forma 
 
 **Detalle de Campos:**
 
-| Parámetro         | Tipo     | Requerido | Reglas de Validación                                     |
-| :---------------- | :------- | :-------- | :------------------------------------------------------- |
-| `brandName`       | `string` | Sí        | Nombre comercial visible del sistema.                    |
-| `logoUrl`         | `string` | No        | URL absoluta del logotipo de la marca.                   |
-| `primaryColor`    | `string` | Sí        | Código de color hexadecimal (ej. `#FF5733`).             |
-| `socialLinksJson` | `object` | No        | Objeto JSON con urls de las redes sociales del comercio. |
+| Parámetro           | Tipo     | Requerido | Reglas de Validación                                     |
+| :------------------ | :------- | :-------- | :------------------------------------------------------- |
+| `brandName`         | `string` | Sí        | Nombre comercial visible del sistema.                    |
+| `faviconUrl`        | `string` | No        | URL absoluta del favicon de la marca.                    |
+| `logoHorizontalUrl` | `string` | No        | URL absoluta del logotipo horizontal de la marca.        |
+| `logoVerticalUrl`   | `string` | No        | URL absoluta del logotipo vertical de la marca.          |
+| `colorBrandBg`      | `string` | Sí        | Color principal de fondo (ej. `#F7F7F5`).                |
+| `colorBrandPrimary` | `string` | Sí        | Color primario de la marca (ej. `#D9D9D2`).              |
+| `colorBrandText`    | `string` | Sí        | Color principal del texto (ej. `#6B6B6B`).               |
+| `colorBrandAccent`  | `string` | Sí        | Color de acento/resalte (ej. `#3F3F3F`).                 |
+| `socialLinksJson`   | `object` | No        | Objeto JSON con urls de las redes sociales del comercio. |
 
 #### 3. Respuestas (Responses)
 
@@ -800,14 +817,61 @@ Actualiza la configuración de identidad visual y branding del sistema de forma 
   "data": {
     "id": 1,
     "brandName": "D'Mendoza Premium",
-    "logoUrl": "https://ejemplo.com/logo.png",
-    "primaryColor": "#FF5733",
+    "faviconUrl": "https://res.cloudinary.com/...",
+    "logoHorizontalUrl": "https://res.cloudinary.com/...",
+    "logoVerticalUrl": "https://res.cloudinary.com/...",
+    "colorBrandBg": "#F7F7F5",
+    "colorBrandPrimary": "#D9D9D2",
+    "colorBrandText": "#6B6B6B",
+    "colorBrandAccent": "#3F3F3F",
     "socialLinksJson": {
       "facebook": "https://facebook.com/dmendoza",
       "instagram": "https://instagram.com/dmendoza"
     },
     "updatedAt": "2026-05-20T16:54:00.000Z"
   }
+}
+```
+
+---
+
+### POST /api/v1/config/brand/upload
+
+Sube un archivo de imagen al servidor de almacenamiento en la nube (Cloudinary) y devuelve la URL absoluta de la imagen.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                          | Autenticación      | Permiso Requerido      |
+| :----- | :---------------------------- | :----------------- | :--------------------- |
+| `POST` | `/api/v1/config/brand/upload` | JWT `Bearer Token` | Admin (`roles:manage`) |
+
+#### 2. Cuerpo de la Petición (Request Body - multipart/form-data)
+
+Se requiere que el Content-Type de la petición sea `multipart/form-data`.
+
+| Parámetro | Tipo   | Requerido | Descripción |
+| :-------- | :----- | :-------- | :---------- |
+| `image`   | `File` | Sí        | Archivo de la imagen a subir (ej. PNG, JPG, WEBP). Tamaño máximo 5MB. |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "url": "https://res.cloudinary.com/tu-cloud-name/image/upload/v1684345231/logo-123456.png"
+  }
+}
+```
+
+##### Error de Archivo Faltante (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "La imagen del logo es requerida"
 }
 ```
 
