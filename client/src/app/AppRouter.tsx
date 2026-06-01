@@ -30,6 +30,7 @@ import StockPage from '../features/admin/stock/StockPage';
 import InventoryAuditPage from '../features/admin/audits/InventoryAuditPage';
 import { PosProvider, PosGuard } from '../features/pos/context/PosContext';
 import OpenCashPage from '../features/pos/OpenCashPage';
+import CashRegistersPage from '../features/admin/branches/CashRegistersPage';
 
 export const AppRouter = () => {
   return (
@@ -134,6 +135,14 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <BranchesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/branches/registers"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <CashRegistersPage />
             </ProtectedRoute>
           }
         />
