@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import RegisterPage from '../features/ecommerce/auth/RegisterPage';
 import VerifyPage from '../features/ecommerce/auth/VerifyPage';
 import LoginPage from '../features/ecommerce/auth/LoginPage';
@@ -27,6 +27,8 @@ import SuppliersPage from '../features/admin/suppliers/SuppliersPage';
 import StockEntriesPage from '../features/admin/entries/StockEntriesPage';
 import StockPage from '../features/admin/stock/StockPage';
 import InventoryAuditPage from '../features/admin/audits/InventoryAuditPage';
+import { PosProvider, PosGuard } from '../features/pos/context/PosContext';
+import OpenCashPage from '../features/pos/OpenCashPage';
 
 export const AppRouter = () => {
   return (
@@ -49,14 +51,26 @@ export const AppRouter = () => {
         {/* Google OAuth Success Redirect (HU-001 / T-036) */}
         <Route path="/auth/google/success" element={<GoogleAuthSuccessPage />} />
 
+        {/* POS Routes with Cash Register Opening Shift verification */}
         <Route
-          path="/pos"
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
-              <HomePage />
+              <PosProvider>
+                <Outlet />
+              </PosProvider>
             </ProtectedRoute>
           }
-        />
+        >
+          <Route path="/pos/open-cash" element={<OpenCashPage />} />
+          <Route
+            path="/pos"
+            element={
+              <PosGuard>
+                <HomePage />
+              </PosGuard>
+            }
+          />
+        </Route>
         <Route
           path="/profile"
           element={

@@ -63,4 +63,41 @@ export class CashTurnController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/v1/cash-registers?branchId=...
+   * Lista todas las cajas registradoras asociadas a una sucursal.
+   */
+  async getRegisters(req: Request, res: Response, next: NextFunction) {
+    try {
+      const branchId = parseInt(String(req.query.branchId), 10);
+      if (isNaN(branchId)) {
+        return res.status(400).json({ success: false, error: 'El parámetro branchId es obligatorio y debe ser un número entero' });
+      }
+
+      const registers = await cashTurnRepository.findRegistersByBranch(branchId);
+      return res.status(200).json({ success: true, data: registers });
+    } catch (error: any) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/v1/cash-turns/active
+   * Retorna el turno de caja abierto del usuario autenticado si es que existe.
+   */
+  async getActiveTurn(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.auth?.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Usuario no autenticado' });
+      }
+
+      const activeTurn = await cashTurnRepository.findActiveByUser(userId);
+      return res.status(200).json({ success: true, data: activeTurn });
+    } catch (error: any) {
+      next(error);
+    }
+  }
 }
+

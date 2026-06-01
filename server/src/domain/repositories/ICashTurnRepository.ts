@@ -11,4 +11,6 @@ export interface ICashTurnRepository {
   findActiveByUser(userId: number): Promise<CashTurn | null>;
   findActiveByRegister(registerId: number): Promise<CashTurn | null>;
   findRegisterById(registerId: number): Promise<CashRegister | null>;
+  findRegistersByBranch(branchId: number): Promise<CashRegister[]>;
 }
+

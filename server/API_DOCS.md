@@ -38,6 +38,9 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/inventory-audits](#post-apiv1inventoryaudits)
 - [Apertura de Caja y Turnos — HU-032](#apertura-de-caja-y-turnos--hu-032)
   - [POST /api/v1/cash-turns/open](#post-apiv1cashturnsopen)
+  - [GET /api/v1/cash-registers](#get-apiv1cashregisters)
+  - [GET /api/v1/cash-turns/active](#get-apiv1cashturnsactive)
+
 
 ---
 
@@ -1915,6 +1918,106 @@ Retornado si el vendedor ya tiene un turno abierto o si la caja seleccionada ya 
   "error": "Acceso denegado: Solo los roles Administrador o Vendedor están autorizados para abrir caja"
 }
 ```
+
+---
+
+### GET /api/v1/cash-registers
+
+Obtiene la lista de todas las cajas registradoras asociadas a una sucursal específica.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/cash-registers` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `branchId` | `number` | Sí | ID de la sucursal de la cual se desean obtener las cajas registradoras. |
+
+#### 3. Respuestas (Responses)
+
+##### Listado Exitoso (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "branchId": 1,
+      "name": "Caja Principal - Sede Sur",
+      "createdAt": "2026-06-01T11:00:00.000Z",
+      "updatedAt": "2026-06-01T11:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "branchId": 1,
+      "name": "Caja Secundaria - Sede Sur",
+      "createdAt": "2026-06-01T11:00:00.000Z",
+      "updatedAt": "2026-06-01T11:00:00.000Z"
+    }
+  ]
+}
+```
+
+##### Error de Parámetros (HTTP 400 Bad Request)
+
+Retornado si falta el parámetro `branchId` o si es inválido.
+
+```json
+{
+  "success": false,
+  "error": "El parámetro branchId es obligatorio y debe ser un número entero"
+}
+```
+
+---
+
+### GET /api/v1/cash-turns/active
+
+Obtiene el turno de caja abierto del usuario autenticado si es que existe. Utilizado para hidratar el estado de caja al cargar la aplicación.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/cash-turns/active` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Respuestas (Responses)
+
+##### Turno Activo Encontrado (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "registerId": 1,
+    "userId": 2,
+    "openAmount": 150.00,
+    "status": "OPEN",
+    "openedAt": "2026-06-01T11:45:00.000Z",
+    "closedAt": null,
+    "createdAt": "2026-06-01T11:45:00.000Z",
+    "updatedAt": "2026-06-01T11:45:00.000Z"
+  }
+}
+```
+
+##### Sin Turno Activo (HTTP 200 OK)
+
+Retornado cuando el usuario no tiene ningún turno de caja abierto en sesión.
+
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
 
 
 

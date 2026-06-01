@@ -43,6 +43,20 @@ export class PrismaCashTurnRepository implements ICashTurnRepository {
     } : null;
   }
 
+  async findRegistersByBranch(branchId: number): Promise<CashRegister[]> {
+    const records = await prisma.cashRegister.findMany({
+      where: { branchId },
+    });
+    return records.map((record) => ({
+      id: record.id,
+      branchId: record.branchId,
+      name: record.name,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    }));
+  }
+
+
   private toDomain(record: any): CashTurn {
     return {
       id: record.id,
