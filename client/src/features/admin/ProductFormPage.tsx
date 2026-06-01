@@ -12,6 +12,11 @@ interface SelectOption { id: number; name: string; }
 interface ImagePreview { file: File; url: string; isMain: boolean; }
 
 const schema = yup.object({
+  code: yup.string()
+    .required('El código base es obligatorio')
+    .min(2, 'Debe tener al menos 2 caracteres')
+    .max(10, 'No puede superar los 10 caracteres')
+    .matches(/^[A-Z0-9]+$/, 'Solo letras mayúsculas y números (sin espacios)'),
   name: yup.string().required('El nombre es obligatorio'),
   description: yup.string().nullable(),
   categoryId: yup.number().typeError('Selecciona una categoría').required(),
@@ -151,19 +156,37 @@ const ProductFormPage: React.FC = () => {
             </h3>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-[#3F3F3F] uppercase tracking-wider mb-2">
-                  Nombre del Producto *
-                </label>
-                <input 
-                  type="text"
-                  placeholder="Ej. Camisa Oxford Premium Slim"
-                  {...register('name')} 
-                  className={`w-full px-4 py-2.5 rounded-xl border bg-[#FAFAFA] text-sm text-[#3F3F3F] placeholder-[#6B6B6B]/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#3F3F3F]/20 focus:border-[#3F3F3F] transition-all ${
-                    errors.name ? 'border-red-500 ring-1 ring-red-500/20' : 'border-[#D9D9D2]/70'
-                  }`} 
-                />
-                {errors.name && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.name.message}</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-[#3F3F3F] uppercase tracking-wider mb-2">
+                    Nombre del Producto *
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="Ej. Camisa Oxford Premium Slim"
+                    {...register('name')} 
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-[#FAFAFA] text-sm text-[#3F3F3F] placeholder-[#6B6B6B]/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#3F3F3F]/20 focus:border-[#3F3F3F] transition-all ${
+                      errors.name ? 'border-red-500 ring-1 ring-red-500/20' : 'border-[#D9D9D2]/70'
+                    }`} 
+                  />
+                  {errors.name && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.name.message}</p>}
+                </div>
+
+                <div className="sm:col-span-1">
+                  <label className="block text-xs font-bold text-[#3F3F3F] uppercase tracking-wider mb-2">
+                    Código Base (SKU) *
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="Ej. CAM, PAN, POL"
+                    disabled={isEdit}
+                    {...register('code')} 
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-[#FAFAFA] text-sm text-[#3F3F3F] placeholder-[#6B6B6B]/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#3F3F3F]/20 focus:border-[#3F3F3F] transition-all uppercase disabled:opacity-60 disabled:cursor-not-allowed ${
+                      errors.code ? 'border-red-500 ring-1 ring-red-500/20' : 'border-[#D9D9D2]/70'
+                    }`} 
+                  />
+                  {errors.code && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.code.message}</p>}
+                </div>
               </div>
 
               <div>
