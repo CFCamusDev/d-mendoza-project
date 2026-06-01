@@ -213,7 +213,7 @@ export const ClientLinkPage: React.FC = () => {
                       <button
                         onClick={() => handleLink(client.id)}
                         disabled={linkingId === client.id}
-                        className="inline-flex items-center gap-1.5 text-[#6B6B6B] hover:text-[#3F3F3F] font-bold disabled:opacity-50 transition-colors duration-200 cursor-pointer text-sm"
+                        className="inline-flex items-center gap-1.5 text-[#3F3F3F] bg-[#FAFAFA] hover:bg-[#D9D9D2]/40 border border-[#D9D9D2] px-3 py-1.5 rounded-lg font-bold disabled:opacity-50 transition-colors duration-200 cursor-pointer text-sm shadow-sm"
                       >
                         {linkingId === client.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
