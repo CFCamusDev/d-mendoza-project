@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
-import { Loader2, Box, Eye, Layers } from 'lucide-react';
+import { Loader2, Box, Eye, Layers, Plus, Pencil } from 'lucide-react';
 import { VariantMatrix } from './components/VariantMatrix';
 
 interface Product {
@@ -13,6 +14,7 @@ interface Product {
 }
 
 export const ProductsAdminPage: React.FC = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -44,9 +46,18 @@ export const ProductsAdminPage: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto min-h-screen bg-[#F7F7F5]/50">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#3F3F3F]">Administración de Productos</h1>
-        <p className="text-[#6B6B6B] mt-1">Gestiona el inventario, catálogo y variantes de SKU únicas.</p>
+      <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-[#3F3F3F]">Administración de Productos</h1>
+          <p className="text-[#6B6B6B] mt-1">Gestiona el inventario, catálogo y variantes de SKU únicas.</p>
+        </div>
+        <button
+          onClick={() => navigate('/admin/products/new')}
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#3F3F3F] text-[#FAFAFA] rounded-xl text-sm font-bold shadow hover:bg-[#3F3F3F]/95 transition-all"
+        >
+          <Plus className="w-4.5 h-4.5" />
+          <span>Nuevo Producto</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -81,7 +92,20 @@ export const ProductsAdminPage: React.FC = () => {
                       <h3 className="text-sm font-semibold text-[#3F3F3F]">{p.name}</h3>
                       <span className="text-xs font-mono text-[#6B6B6B] mt-1 block">Código: {p.code}</span>
                     </div>
-                    <Layers className={`w-4 h-4 ${isSelected ? 'text-[#3F3F3F]' : 'text-gray-400'}`} />
+                    
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/admin/products/${p.id}/edit`);
+                        }}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-[#3F3F3F] hover:bg-gray-100 transition-colors"
+                        title="Editar Producto"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <Layers className={`w-4 h-4 ${isSelected ? 'text-[#3F3F3F]' : 'text-gray-400'}`} />
+                    </div>
                   </button>
                 );
               })}

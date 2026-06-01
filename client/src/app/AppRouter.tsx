@@ -16,6 +16,7 @@ import ProductsAdminPage from '../features/admin/ProductsAdminPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
 import { AppShell } from '../components/layout/AppShell';
+import { AdminShell } from '../components/layout/AdminShell';
 import CategoriesPage from '../features/admin/CategoriesPage';
 import BrandsPage from '../features/admin/BrandsPage';
 import AttributesPage from '../features/admin/AttributesPage';
@@ -27,12 +28,10 @@ import StockEntriesPage from '../features/admin/entries/StockEntriesPage';
 import StockPage from '../features/admin/stock/StockPage';
 import InventoryAuditPage from '../features/admin/audits/InventoryAuditPage';
 
-
-
-
 export const AppRouter = () => {
   return (
     <Routes>
+      {/* Public / E-commerce Routes (wrapped in AppShell) */}
       <Route element={<AppShell />}>
         {/* Main Entry Point */}
         <Route path="/" element={<HomePage />} />
@@ -50,14 +49,29 @@ export const AppRouter = () => {
         {/* Google OAuth Success Redirect (HU-001 / T-036) */}
         <Route path="/auth/google/success" element={<GoogleAuthSuccessPage />} />
 
-        {/* Restricted Routes (Protected by RBAC) */}
         <Route
-          path="/admin"
+          path="/pos"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
               <HomePage />
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER', 'CLIENT']}>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+
+      {/* Administrative Routes (wrapped in AdminShell) */}
+      <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><AdminShell /></ProtectedRoute>}>
+        <Route
+          path="/admin"
+          element={<Navigate to="/admin/inventory/stock" replace />}
         />
         <Route
           path="/admin/employees"
@@ -107,22 +121,6 @@ export const AppRouter = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/pos"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER', 'CLIENT']}>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
 
         {/* HU-011 */}
         <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['ADMIN']}><CategoriesPage /></ProtectedRoute>} />
@@ -148,15 +146,12 @@ export const AppRouter = () => {
         {/* HU-029 */}
         <Route path="/admin/inventory/audits" element={<ProtectedRoute allowedRoles={['ADMIN']}><InventoryAuditPage /></ProtectedRoute>} />
 
-
-
-
         {/* HU-030 */}
         <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN']}><RotationReportPage /></ProtectedRoute>} />
-
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
