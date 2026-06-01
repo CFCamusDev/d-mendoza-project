@@ -17,6 +17,7 @@ import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
 import { AppShell } from '../components/layout/AppShell';
 import { AdminShell } from '../components/layout/AdminShell';
+import { PosShell } from '../components/layout/PosShell';
 import CategoriesPage from '../features/admin/CategoriesPage';
 import BrandsPage from '../features/admin/BrandsPage';
 import AttributesPage from '../features/admin/AttributesPage';
@@ -27,6 +28,9 @@ import SuppliersPage from '../features/admin/suppliers/SuppliersPage';
 import StockEntriesPage from '../features/admin/entries/StockEntriesPage';
 import StockPage from '../features/admin/stock/StockPage';
 import InventoryAuditPage from '../features/admin/audits/InventoryAuditPage';
+import { PosProvider, PosGuard } from '../features/pos/context/PosContext';
+import OpenCashPage from '../features/pos/OpenCashPage';
+import CashRegistersPage from '../features/admin/branches/CashRegistersPage';
 
 export const AppRouter = () => {
   return (
@@ -50,19 +54,32 @@ export const AppRouter = () => {
         <Route path="/auth/google/success" element={<GoogleAuthSuccessPage />} />
 
         <Route
-          path="/pos"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/profile"
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'SELLER', 'CLIENT']}>
               <ProfilePage />
             </ProtectedRoute>
+          }
+        />
+      </Route>
+
+      {/* POS Routes with Cash Register Opening Shift verification (standalone container) */}
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
+            <PosProvider>
+              <PosShell />
+            </PosProvider>
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/pos/open-cash" element={<OpenCashPage />} />
+        <Route
+          path="/pos"
+          element={
+            <PosGuard>
+              <HomePage />
+            </PosGuard>
           }
         />
       </Route>
@@ -118,6 +135,14 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <BranchesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/branches/registers"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <CashRegistersPage />
             </ProtectedRoute>
           }
         />

@@ -26,7 +26,8 @@ import {
   FolderTree,
   Award,
   Sliders,
-  UserPlus
+  UserPlus,
+  Landmark
 } from 'lucide-react';
 
 export const AdminShell: React.FC = () => {
@@ -118,6 +119,17 @@ export const AdminShell: React.FC = () => {
               <Boxes className="w-4 h-4 shrink-0" />
               {!isCollapsed && <span>Control de Stock</span>}
             </Link>
+
+            <Link
+              to="/pos"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/pos') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Punto de Venta (POS)"
+            >
+              <Store className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Punto de Venta (POS)</span>}
+            </Link>
           </div>
 
           {/* Mantenimiento Section */}
@@ -172,12 +184,23 @@ export const AdminShell: React.FC = () => {
                 <Link
                   to="/admin/branches"
                   className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/branches') ? activeClass : inactiveClass
+                    isActiveRoute('/admin/branches') && location.pathname === '/admin/branches' ? activeClass : inactiveClass
                   } ${isCollapsed ? 'justify-center' : ''}`}
                   title="Sucursales"
                 >
                   <Building2 className="w-4 h-4 shrink-0" />
                   {!isCollapsed && <span>Sucursales y Almacén</span>}
+                </Link>
+
+                <Link
+                  to="/admin/branches/registers"
+                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                    isActiveRoute('/admin/branches/registers') ? activeClass : inactiveClass
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title="Gestión de Cajas"
+                >
+                  <Landmark className="w-4 h-4 shrink-0" />
+                  {!isCollapsed && <span>Gestión de Cajas</span>}
                 </Link>
 
                 <Link
