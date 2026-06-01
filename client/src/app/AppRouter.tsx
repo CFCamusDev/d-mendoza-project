@@ -31,6 +31,7 @@ import InventoryAuditPage from '../features/admin/audits/InventoryAuditPage';
 import { PosProvider, PosGuard } from '../features/pos/context/PosContext';
 import OpenCashPage from '../features/pos/OpenCashPage';
 import CashRegistersPage from '../features/admin/branches/CashRegistersPage';
+import PossScreen from '../features/pos/PossScreen';
 
 export const AppRouter = () => {
   return (
@@ -78,7 +79,7 @@ export const AppRouter = () => {
           path="/pos"
           element={
             <PosGuard>
-              <HomePage />
+              <PossScreen />
             </PosGuard>
           }
         />
