@@ -5,8 +5,13 @@
 export interface BrandConfig {
   id: number;
   brandName: string;
-  logoUrl: string | null;
-  primaryColor: string;
+  faviconUrl: string | null;
+  logoHorizontalUrl: string | null;
+  logoVerticalUrl: string | null;
+  colorBrandBg: string;
+  colorBrandPrimary: string;
+  colorBrandText: string;
+  colorBrandAccent: string;
   socialLinksJson: Record<string, string>;
   updatedAt: Date;
 }
@@ -18,8 +23,13 @@ export interface BrandConfig {
 export const DEFAULT_BRAND_CONFIG: BrandConfig = {
   id: 1,
   brandName: "D'Mendoza",
-  logoUrl: null,
-  primaryColor: "#4F46E5",
+  faviconUrl: null,
+  logoHorizontalUrl: null,
+  logoVerticalUrl: null,
+  colorBrandBg: "#F7F7F5",
+  colorBrandPrimary: "#D9D9D2",
+  colorBrandText: "#6B6B6B",
+  colorBrandAccent: "#3F3F3F",
   socialLinksJson: {},
   updatedAt: new Date(),
 };

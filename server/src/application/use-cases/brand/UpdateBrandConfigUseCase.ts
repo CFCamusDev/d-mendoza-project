@@ -4,8 +4,13 @@ import { BrandConfig } from '@domain/entities/BrandConfig';
 
 export interface UpdateBrandConfigDTO {
   brandName: string;
-  logoUrl?: string | null;
-  primaryColor: string;
+  faviconUrl?: string | null;
+  logoHorizontalUrl?: string | null;
+  logoVerticalUrl?: string | null;
+  colorBrandBg: string;
+  colorBrandPrimary: string;
+  colorBrandText: string;
+  colorBrandAccent: string;
   socialLinksJson?: any;
 }
 
