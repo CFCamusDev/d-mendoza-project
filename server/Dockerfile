@@ -39,17 +39,22 @@ RUN npm install -g pnpm@10.8.0
 
 COPY package.json pnpm-lock.yaml .npmrc ./
 
-# Instalar SOLO dependencias de producción congeladas
-RUN pnpm config set fetch-retries 5 && pnpm config set fetch-retry-mintimeout 20000 && pnpm install --prod --frozen-lockfile --ignore-scripts
+# Instalar dependencias incluyendo tsx (necesario para ejecutar seed.ts en runtime)
+RUN pnpm config set fetch-retries 5 && pnpm config set fetch-retry-mintimeout 20000 && pnpm install --frozen-lockfile --ignore-scripts
 
 # Copiar archivos necesarios desde el stage builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# Copiar el cliente Prisma generado (es crucial porque pnpm install --prod lo limpia)
+# Copiar el cliente Prisma generado (es crucial porque pnpm install lo puede limpiar)
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
+# Copiar y preparar el entrypoint de inicialización automática
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 EXPOSE 3000
 
-CMD ["node", "dist/server.js"]
+# Ejecuta: migrate deploy → seed → node server.js
+CMD ["./entrypoint.sh"]
