@@ -23,6 +23,13 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
+  // Automatic redirect if already authenticated
+  useEffect(() => {
+    if (auth.isAuthenticated && (auth.user?.role === 'ADMIN' || auth.user?.role === 'SELLER')) {
+      navigate('/admin/inventory/stock', { replace: true });
+    }
+  }, [auth.isAuthenticated, auth.user, navigate]);
+
   const handleLogin = async (data: LoginFormData) => {
     try {
       const result = await loginHook(data);
@@ -34,10 +41,8 @@ export default function LoginPage() {
 
       // Role-based redirect (RBAC)
       const role = auth.user?.role ?? result.data.user?.role;
-      if (role === 'ADMIN') {
-        navigate('/admin');
-      } else if (role === 'SELLER') {
-        navigate('/pos');
+      if (role === 'ADMIN' || role === 'SELLER') {
+        navigate('/admin/inventory/stock');
       } else {
         // CLIENT or unknown → e-commerce home
         navigate('/');
