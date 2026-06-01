@@ -142,7 +142,7 @@ export const ClientLinkPage: React.FC = () => {
             className="flex items-center gap-2 bg-[#3F3F3F] hover:bg-[#3F3F3F]/90 text-[#F7F7F5] px-4 py-2 rounded-xl transition-all shadow-md font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
           >
             {bulkLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-            Vincular Seleccionados ({selectedIds.length})
+            {selectedIds.length === 0 ? "Selecciona clientes para vincular" : `Vincular Seleccionados (${selectedIds.length})`}
           </button>
         </div>
       </div>
@@ -213,7 +213,7 @@ export const ClientLinkPage: React.FC = () => {
                       <button
                         onClick={() => handleLink(client.id)}
                         disabled={linkingId === client.id}
-                        className="inline-flex items-center gap-1.5 text-[#3F3F3F] bg-[#FAFAFA] hover:bg-[#D9D9D2]/40 border border-[#D9D9D2] px-3 py-1.5 rounded-lg font-bold disabled:opacity-50 transition-colors duration-200 cursor-pointer text-sm shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#D9D9D2] hover:bg-[#FAFAFA] text-[#3F3F3F] font-bold rounded-lg transition-all text-xs disabled:opacity-50 shadow-sm cursor-pointer"
                       >
                         {linkingId === client.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
