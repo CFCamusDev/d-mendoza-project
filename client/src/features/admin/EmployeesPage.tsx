@@ -142,8 +142,8 @@ export const EmployeesPage: React.FC = () => {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Gestión de Empleados</h1>
-          <p className="text-slate-500 mt-1">Administra el personal de tus sucursales y sus permisos.</p>
+          <h1 className="text-3xl font-bold text-[#3F3F3F]">Gestión de Empleados</h1>
+          <p className="text-[#3F3F3F]/60 mt-1">Administra el personal de tus sucursales y sus permisos.</p>
         </div>
         
         <button
@@ -152,20 +152,20 @@ export const EmployeesPage: React.FC = () => {
             setFormData({ name: '', dni: '', branchId: '', roleId: '' });
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-2 bg-[#3F3F3F] hover:bg-[#3F3F3F]/90 text-[#F7F7F5] px-4 py-2 rounded-xl transition-all shadow-md font-medium hover:scale-[1.02] active:scale-[0.98]"
         >
           <Plus className="w-4 h-4" />
           Nuevo Empleado
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
-          <Search className="w-5 h-5 text-slate-400" />
+      <div className="bg-white rounded-2xl shadow-sm border border-[#D9D9D2] overflow-hidden">
+        <div className="p-4 border-b border-[#D9D9D2]/40 bg-[#FAFAFA] flex items-center gap-3">
+          <Search className="w-5 h-5 text-[#6B6B6B]" />
           <input
             type="text"
             placeholder="Buscar por nombre o DNI..."
-            className="bg-transparent border-none focus:ring-0 w-full text-slate-700 outline-none"
+            className="bg-transparent border-none focus:ring-0 w-full text-[#3F3F3F] outline-none"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -174,7 +174,7 @@ export const EmployeesPage: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 text-slate-500 uppercase text-xs font-semibold tracking-wider border-b border-slate-200">
+              <tr className="bg-[#FAFAFA] text-[#3F3F3F] uppercase text-xs font-bold tracking-wider border-b border-[#D9D9D2]/40">
                 <th className="px-6 py-4">Empleado</th>
                 <th className="px-6 py-4">DNI</th>
                 <th className="px-6 py-4">Sucursal</th>
@@ -182,32 +182,32 @@ export const EmployeesPage: React.FC = () => {
                 <th className="px-6 py-4 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-[#D9D9D2]/40">
               {loading ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-500" />
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#3F3F3F]" />
                   </td>
                 </tr>
               ) : employees.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={5} className="px-6 py-12 text-center text-[#6B6B6B]">
                     No se encontraron empleados.
                   </td>
                 </tr>
               ) : (
                 employees.map((employee) => (
-                  <tr key={employee.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={employee.id} className="hover:bg-[#FAFAFA] transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">{employee.name}</div>
-                      <div className="text-xs text-slate-400">ID: {employee.id}</div>
+                      <div className="font-bold text-[#3F3F3F]">{employee.name}</div>
+                      <div className="text-xs text-[#6B6B6B] font-semibold">ID: {employee.id}</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm font-semibold text-[#3F3F3F]">
                       {employee.dni}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm font-semibold text-[#3F3F3F]">
                       <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-slate-400" />
+                        <Building2 className="w-4 h-4 text-[#6B6B6B]" />
                         {branches.find(b => b.id === employee.branchId)?.name || 'Cargando...'}
                       </div>
                     </td>
@@ -227,7 +227,7 @@ export const EmployeesPage: React.FC = () => {
                     <td className="px-6 py-4 text-right space-x-2">
                       <button 
                         onClick={() => openEditModal(employee)}
-                        className="text-slate-400 hover:text-indigo-600 transition-colors"
+                        className="text-[#6B6B6B] hover:text-[#3F3F3F] transition-colors"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -241,22 +241,22 @@ export const EmployeesPage: React.FC = () => {
 
         {/* Pagination */}
         {total > 10 && (
-          <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-            <span className="text-sm text-slate-500">
+          <div className="px-6 py-4 bg-[#FAFAFA] border-t border-[#D9D9D2]/40 flex items-center justify-between">
+            <span className="text-sm font-semibold text-[#6B6B6B]">
               Mostrando {(page - 1) * 10 + 1} - {Math.min(page * 10, total)} de {total} empleados
             </span>
             <div className="flex gap-2">
               <button
                 disabled={page === 1}
                 onClick={() => setPage(p => p - 1)}
-                className="px-3 py-1 border border-slate-300 rounded hover:bg-white disabled:opacity-50"
+                className="px-3 py-1 border border-[#D9D9D2] rounded-lg hover:bg-[#FAFAFA] disabled:opacity-50 text-[#3F3F3F] font-bold text-xs"
               >
                 Anterior
               </button>
               <button
                 disabled={page * 10 >= total}
                 onClick={() => setPage(p => p + 1)}
-                className="px-3 py-1 border border-slate-300 rounded hover:bg-white disabled:opacity-50"
+                className="px-3 py-1 border border-[#D9D9D2] rounded-lg hover:bg-[#FAFAFA] disabled:opacity-50 text-[#3F3F3F] font-bold text-xs"
               >
                 Siguiente
               </button>
@@ -269,19 +269,19 @@ export const EmployeesPage: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-slate-100">
-              <h2 className="text-xl font-bold text-slate-900">
+            <div className="p-6 border-b border-[#D9D9D2]/40">
+              <h2 className="text-xl font-bold text-[#3F3F3F]">
                 {editingEmployee ? 'Editar Empleado' : 'Nuevo Empleado'}
               </h2>
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Nombre Completo</label>
+                <label className="text-sm font-bold text-[#3F3F3F]">Nombre Completo</label>
                 <input
                   type="text"
                   required
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 border border-[#D9D9D2] rounded-xl outline-none focus:border-[#3F3F3F] transition-colors"
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                 />
@@ -289,11 +289,11 @@ export const EmployeesPage: React.FC = () => {
 
               {!editingEmployee && (
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-700">DNI</label>
+                  <label className="text-sm font-bold text-[#3F3F3F]">DNI</label>
                   <input
                     type="text"
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 border border-[#D9D9D2] rounded-xl outline-none focus:border-[#3F3F3F] transition-colors"
                     value={formData.dni}
                     onChange={e => setFormData({ ...formData, dni: e.target.value })}
                   />
@@ -301,10 +301,10 @@ export const EmployeesPage: React.FC = () => {
               )}
 
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Sucursal</label>
+                <label className="text-sm font-bold text-[#3F3F3F]">Sucursal</label>
                 <select
                   required
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                  className="w-full px-4 py-2 border border-[#D9D9D2] rounded-xl outline-none focus:border-[#3F3F3F] transition-colors bg-white"
                   value={formData.branchId}
                   onChange={e => setFormData({ ...formData, branchId: e.target.value })}
                 >
@@ -315,32 +315,42 @@ export const EmployeesPage: React.FC = () => {
                 </select>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Rol asignado (opcional)</label>
-                <select
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                  value={formData.roleId}
-                  onChange={e => setFormData({ ...formData, roleId: e.target.value })}
-                >
-                  <option value="">Sin rol asignado</option>
-                  {roles.map(role => (
-                    <option key={role.id} value={role.id}>{role.name}</option>
-                  ))}
-                </select>
-              </div>
+              {editingEmployee && editingEmployee.userId && (
+                <div className="space-y-1">
+                  <label className="text-sm font-bold text-[#3F3F3F]">Rol asignado (opcional)</label>
+                  <select
+                    className="w-full px-4 py-2 border border-[#D9D9D2] rounded-xl outline-none focus:border-[#3F3F3F] transition-colors bg-white"
+                    value={formData.roleId}
+                    onChange={e => setFormData({ ...formData, roleId: e.target.value })}
+                  >
+                    <option value="">Sin rol asignado</option>
+                    {roles.map(role => (
+                      <option key={role.id} value={role.id}>{role.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              {editingEmployee && !editingEmployee.userId && (
+                <div className="p-3 bg-[#FAFAFA] border border-[#D9D9D2]/40 rounded-xl">
+                  <p className="text-xs text-[#6B6B6B]">
+                    ⚠️ No se puede asignar un rol administrativo porque el empleado no tiene una cuenta de usuario vinculada en el sistema.
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-3 mt-8">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-2 text-slate-600 font-medium hover:bg-slate-50 rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2 text-[#3F3F3F] font-bold hover:bg-[#FAFAFA] rounded-xl transition-colors border border-[#D9D9D2]/40"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-[#3F3F3F] hover:bg-[#3F3F3F]/90 text-[#F7F7F5] font-bold py-2 rounded-xl transition-all shadow-md hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingEmployee ? 'Actualizar' : 'Crear Empleado'}
