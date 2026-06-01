@@ -448,10 +448,11 @@ export const AdminShell: React.FC = () => {
 
                   <div className="p-1.5 space-y-0.5">
                     <Link
-                      to="/profile"
+                      to="/admin/profile"
                       onClick={() => setIsUserDropdownOpen(false)}
                       className="w-full flex items-center gap-2 text-left p-2.5 hover:bg-[#FAFAFA] text-xs font-bold text-[#3F3F3F] rounded-lg transition-colors"
                     >
+
                       <User className="w-4 h-4 text-[#6B6B6B]" />
                       <span>Mi Perfil</span>
                     </Link>

@@ -148,7 +148,11 @@ export const AppRouter = () => {
 
         {/* HU-030 */}
         <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN']}><RotationReportPage /></ProtectedRoute>} />
+
+        {/* User Profile */}
+        <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><ProfilePage /></ProtectedRoute>} />
       </Route>
+
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

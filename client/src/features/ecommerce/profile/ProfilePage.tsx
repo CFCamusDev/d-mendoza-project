@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Sparkles, Shield, User as UserIcon, Loader2 } from 'lucide-react';
 
 import { useProfile } from './hooks/useProfile';
 import { profileSchema, type ProfileFormData } from './schemas/profile.schema';
@@ -12,6 +13,8 @@ export const ProfilePage = () => {
   const { profile, isLoading, isUpdating, fetchProfile, updateProfile } = useProfile();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
 
   const {
     register,
@@ -57,45 +60,72 @@ export const ProfilePage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-brand-bg flex items-center justify-center">
+      <div className={`flex items-center justify-center ${isAdmin ? 'py-20' : 'min-h-screen bg-[#FAFAFA]'}`}>
         <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 border-4 border-brand-primary border-t-brand-accent rounded-full animate-spin"></div>
-          <span className="text-sm font-semibold text-brand-text animate-pulse">Cargando perfil...</span>
+          <div className="w-12 h-12 border-4 border-[#3F3F3F] border-t-[#D9D9D2] rounded-full animate-spin"></div>
+          <span className="text-sm font-bold text-[#3F3F3F] animate-pulse">Cargando perfil...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-brand-bg py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+    <div className={isAdmin ? 'p-6 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300' : 'min-h-screen bg-brand-bg py-12 px-4 sm:px-6 lg:px-8'}>
+      <div className={isAdmin ? 'space-y-6' : 'max-w-4xl mx-auto'}>
+        
         {/* Navigation / Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-extrabold text-brand-accent tracking-tight">Mi Perfil</h1>
-            <p className="mt-1 text-sm text-brand-text">Administra tu información personal y foto de perfil</p>
-          </div>
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 px-4 py-2 border border-brand-primary rounded-lg text-brand-text hover:bg-brand-primary/20 hover:text-brand-accent transition-all duration-300 font-medium text-sm"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
+        {isAdmin ? (
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#D9D9D2]/40 pb-6">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-bold text-[#3F3F3F]/80 uppercase tracking-widest mb-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Panel de Control</span>
+              </div>
+              <h1 className="text-3xl font-extrabold text-[#3F3F3F] tracking-tight">
+                Mi Perfil
+              </h1>
+              <p className="text-sm text-[#6B6B6B] mt-1 max-w-xl">
+                Administra tu información personal y foto de perfil dentro del portal administrativo de D'Mendoza.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/admin')}
+              className="flex items-center gap-2 px-4 py-2 border border-[#D9D9D2] bg-white text-[#3F3F3F] hover:bg-[#FAFAFA] rounded-xl transition-all duration-300 font-bold text-xs"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Volver a la Tienda
-          </button>
-        </div>
+              Volver al Panel
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-extrabold text-brand-accent tracking-tight">Mi Perfil</h1>
+              <p className="mt-1 text-sm text-brand-text">Administra tu información personal y foto de perfil</p>
+            </div>
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 px-4 py-2 border border-brand-primary rounded-lg text-brand-text hover:bg-brand-primary/20 hover:text-brand-accent transition-all duration-300 font-medium text-sm"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Volver a la Tienda
+            </button>
+          </div>
+        )}
 
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
           {/* Left Column: Avatar upload */}
-          <div className="md:col-span-1 bg-white p-6 rounded-2xl border border-brand-primary/40 shadow-sm flex flex-col justify-center items-center h-fit">
+          <div className={`md:col-span-1 p-6 rounded-2xl flex flex-col justify-center items-center h-fit bg-white ${
+            isAdmin ? 'border border-[#D9D9D2]/30 shadow-sm' : 'border border-brand-primary/40 shadow-sm'
+          }`}>
             <AvatarUpload
               currentAvatarUrl={profile?.avatarUrl ?? null}
               name={profile?.name || ''}
@@ -106,30 +136,35 @@ export const ProfilePage = () => {
           </div>
 
           {/* Right Column: Editable Profile Fields Form */}
-          <div className="md:col-span-2 bg-white rounded-2xl border border-brand-primary/40 shadow-sm p-6 sm:p-8">
+          <div className={`md:col-span-2 rounded-2xl p-6 sm:p-8 bg-white ${
+            isAdmin ? 'border border-[#D9D9D2]/30 shadow-sm' : 'border border-brand-primary/40 shadow-sm'
+          }`}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               
               {/* Visual Organizer Section 1 */}
               <div>
-                <h3 className="text-md font-bold text-brand-accent uppercase tracking-wider mb-1">
+                <h3 className={`text-sm font-bold uppercase tracking-wider mb-1 ${isAdmin ? 'text-[#3F3F3F]' : 'text-brand-accent'}`}>
                   Información Personal
                 </h3>
-                <p className="text-xs text-brand-text mb-4">
-                  Esta información se utilizará para personalizar tu experiencia.
+                <p className="text-xs text-[#6B6B6B] mb-4">
+                  Esta información se utilizará para personalizar tu firma y experiencia.
                 </p>
-                <div className="h-[1px] bg-brand-primary/40 mb-6"></div>
+                <div className={`h-[1px] mb-6 ${isAdmin ? 'bg-[#D9D9D2]/40' : 'bg-brand-primary/40'}`}></div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Name Input */}
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="name" className="text-xs font-semibold text-brand-accent uppercase tracking-wider">
+                    <label htmlFor="name" className={`text-xs font-bold uppercase tracking-wider ${isAdmin ? 'text-[#3F3F3F]' : 'text-brand-accent'}`}>
                       Nombre
                     </label>
                     <input
                       id="name"
                       type="text"
-                      className={`w-full px-4 py-2.5 rounded-lg border text-sm font-medium bg-brand-bg/10 text-brand-accent focus:ring-2 focus:ring-brand-accent focus:outline-none transition-all duration-300
-                        ${errors.name ? 'border-red-400 focus:ring-red-400' : 'border-brand-primary/60 focus:border-brand-accent'}`}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-300 focus:outline-none focus:ring-2
+                        ${isAdmin 
+                          ? `bg-[#FAFAFA] text-[#3F3F3F] placeholder-[#6B6B6B]/40 focus:bg-white focus:ring-[#3F3F3F]/20 focus:border-[#3F3F3F] ${errors.name ? 'border-red-400 focus:ring-red-400/20' : 'border-[#D9D9D2]/70'}`
+                          : `bg-brand-bg/10 text-brand-accent ${errors.name ? 'border-red-400 focus:ring-red-400' : 'border-brand-primary/60 focus:border-brand-accent'}`
+                        }`}
                       placeholder="Ingresa tu nombre"
                       {...register('name')}
                     />
@@ -140,14 +175,17 @@ export const ProfilePage = () => {
 
                   {/* Last Name Input */}
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="lastName" className="text-xs font-semibold text-brand-accent uppercase tracking-wider">
+                    <label htmlFor="lastName" className={`text-xs font-bold uppercase tracking-wider ${isAdmin ? 'text-[#3F3F3F]' : 'text-brand-accent'}`}>
                       Apellido
                     </label>
                     <input
                       id="lastName"
                       type="text"
-                      className={`w-full px-4 py-2.5 rounded-lg border text-sm font-medium bg-brand-bg/10 text-brand-accent focus:ring-2 focus:ring-brand-accent focus:outline-none transition-all duration-300
-                        ${errors.lastName ? 'border-red-400 focus:ring-red-400' : 'border-brand-primary/60 focus:border-brand-accent'}`}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-300 focus:outline-none focus:ring-2
+                        ${isAdmin 
+                          ? `bg-[#FAFAFA] text-[#3F3F3F] placeholder-[#6B6B6B]/40 focus:bg-white focus:ring-[#3F3F3F]/20 focus:border-[#3F3F3F] ${errors.lastName ? 'border-red-400 focus:ring-red-400/20' : 'border-[#D9D9D2]/70'}`
+                          : `bg-brand-bg/10 text-brand-accent ${errors.lastName ? 'border-red-400 focus:ring-red-400' : 'border-brand-primary/60 focus:border-brand-accent'}`
+                        }`}
                       placeholder="Ingresa tu apellido"
                       {...register('lastName')}
                     />
@@ -160,25 +198,28 @@ export const ProfilePage = () => {
 
               {/* Visual Organizer Section 2 */}
               <div className="pt-4">
-                <h3 className="text-md font-bold text-brand-accent uppercase tracking-wider mb-1">
+                <h3 className={`text-sm font-bold uppercase tracking-wider mb-1 ${isAdmin ? 'text-[#3F3F3F]' : 'text-brand-accent'}`}>
                   Contacto y Seguridad
                 </h3>
-                <p className="text-xs text-brand-text mb-4">
-                  Detalles de seguridad de tu cuenta e-commerce.
+                <p className="text-xs text-[#6B6B6B] mb-4">
+                  Credenciales de acceso y contacto registradas en D'Mendoza.
                 </p>
-                <div className="h-[1px] bg-brand-primary/40 mb-6"></div>
+                <div className={`h-[1px] mb-6 ${isAdmin ? 'bg-[#D9D9D2]/40' : 'bg-brand-primary/40'}`}></div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Phone Input */}
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="phone" className="text-xs font-semibold text-brand-accent uppercase tracking-wider">
+                    <label htmlFor="phone" className={`text-xs font-bold uppercase tracking-wider ${isAdmin ? 'text-[#3F3F3F]' : 'text-brand-accent'}`}>
                       Teléfono
                     </label>
                     <input
                       id="phone"
                       type="text"
-                      className={`w-full px-4 py-2.5 rounded-lg border text-sm font-medium bg-brand-bg/10 text-brand-accent focus:ring-2 focus:ring-brand-accent focus:outline-none transition-all duration-300
-                        ${errors.phone ? 'border-red-400 focus:ring-red-400' : 'border-brand-primary/60 focus:border-brand-accent'}`}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-300 focus:outline-none focus:ring-2
+                        ${isAdmin 
+                          ? `bg-[#FAFAFA] text-[#3F3F3F] placeholder-[#6B6B6B]/40 focus:bg-white focus:ring-[#3F3F3F]/20 focus:border-[#3F3F3F] ${errors.phone ? 'border-red-400 focus:ring-red-400/20' : 'border-[#D9D9D2]/70'}`
+                          : `bg-brand-bg/10 text-brand-accent ${errors.phone ? 'border-red-400 focus:ring-red-400' : 'border-brand-primary/60 focus:border-brand-accent'}`
+                        }`}
                       placeholder="+51999888777"
                       {...register('phone')}
                     />
@@ -189,38 +230,29 @@ export const ProfilePage = () => {
 
                   {/* Email Input (Disabled / Safe Lock) */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-brand-accent uppercase tracking-wider flex items-center gap-1.5">
+                    <label className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isAdmin ? 'text-[#3F3F3F]' : 'text-brand-accent'}`}>
                       Correo Electrónico
-                      <svg
-                        className="w-3.5 h-3.5 text-brand-text/60"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2.5"
-                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                        />
-                      </svg>
+                      <Shield className="w-3.5 h-3.5 text-[#6B6B6B]" />
                     </label>
                     <input
                       type="email"
                       disabled
                       value={profile?.email || ''}
-                      className="w-full px-4 py-2.5 rounded-lg border border-brand-primary/40 text-sm font-medium bg-brand-bg/60 text-brand-text cursor-not-allowed select-none"
+                      className={`w-full px-4 py-2.5 rounded-xl border text-sm font-semibold cursor-not-allowed select-none
+                        ${isAdmin 
+                          ? 'border-[#D9D9D2]/40 bg-[#F7F7F5] text-[#6B6B6B]'
+                          : 'border-brand-primary/40 bg-brand-bg/60 text-brand-text'
+                        }`}
                     />
-                    <span className="text-[10px] text-brand-text/60">
-                      El correo electrónico no puede ser modificado por seguridad.
+                    <span className="text-[10px] text-[#6B6B6B]">
+                      El correo electrónico no puede ser modificado por seguridad de la cuenta.
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Action buttons */}
-              <div className="h-[1px] bg-brand-primary/40 pt-4"></div>
+              <div className={`h-[1px] pt-4 ${isAdmin ? 'bg-[#D9D9D2]/40' : 'bg-brand-primary/40'}`}></div>
               
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
@@ -237,7 +269,11 @@ export const ProfilePage = () => {
                     }
                   }}
                   disabled={!isDirty && !selectedFile}
-                  className="px-5 py-2.5 border border-brand-primary text-sm font-semibold rounded-lg text-brand-text hover:bg-brand-primary/20 hover:text-brand-accent disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-brand-text transition-all duration-300"
+                  className={`px-5 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 border disabled:opacity-40 disabled:cursor-not-allowed
+                    ${isAdmin 
+                      ? 'border-[#D9D9D2] hover:bg-[#FAFAFA] text-[#3F3F3F]' 
+                      : 'border-brand-primary text-brand-text hover:bg-brand-primary/20 hover:text-brand-accent'
+                    }`}
                 >
                   Cancelar
                 </button>
@@ -245,15 +281,22 @@ export const ProfilePage = () => {
                 <button
                   type="submit"
                   disabled={isUpdating || (!isDirty && !selectedFile)}
-                  className="px-5 py-2.5 text-sm font-semibold rounded-lg text-white bg-brand-accent hover:bg-brand-accent/90 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2 shadow-sm"
+                  className={`px-5 py-2.5 text-xs font-bold rounded-xl focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2 shadow-sm
+                    ${isAdmin 
+                      ? 'text-white bg-[#3F3F3F] hover:bg-[#3F3F3F]/90 focus:ring-[#3F3F3F]/20' 
+                      : 'text-white bg-brand-accent hover:bg-brand-accent/90 focus:ring-brand-accent focus:ring-offset-2'
+                    }`}
                 >
                   {isUpdating ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       <span>Guardando...</span>
                     </>
                   ) : (
-                    <span>Guardar Cambios</span>
+                    <>
+                      <UserIcon className="w-4 h-4" />
+                      <span>Guardar Cambios</span>
+                    </>
                   )}
                 </button>
               </div>
@@ -264,4 +307,6 @@ export const ProfilePage = () => {
     </div>
   );
 };
+
 export default ProfilePage;
+
