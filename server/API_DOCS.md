@@ -36,6 +36,8 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [GET /api/v1/stock](#get-apiv1stock)
 - [Auditoría de Inventario Físico — HU-029](#auditoría-de-inventario-físico--hu-029)
   - [POST /api/v1/inventory-audits](#post-apiv1inventoryaudits)
+- [Apertura de Caja y Turnos — HU-032](#apertura-de-caja-y-turnos--hu-032)
+  - [POST /api/v1/cash-turns/open](#post-apiv1cashturnsopen)
 
 ---
 
@@ -1812,5 +1814,107 @@ Si faltan parámetros o no corresponden con las especificaciones.
   "error": "Acceso denegado: Se requiere el permiso 'inventory:write'"
 }
 ```
+
+---
+
+## Apertura de Caja y Turnos — HU-032
+
+Este módulo permite a los vendedores y administradores aperturar turnos de caja para registrar las operaciones del punto de venta (POS) vinculados a un monto de apertura.
+
+### POST /api/v1/cash-turns/open
+
+Apertura el turno de caja vinculándolo al vendedor autenticado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/cash-turns/open` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "registerId": 1,
+  "openAmount": 150.00
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro | Tipo | Requerido | Reglas de Validación |
+| :--- | :--- | :--- | :--- |
+| `registerId` | `number` | Sí | ID entero positivo de la caja registradora. Debe existir y estar disponible (sin turnos abiertos activos). |
+| `openAmount` | `number` | Sí | Monto inicial de apertura. Debe ser un número mayor o igual a 0. |
+
+#### 3. Respuestas (Responses)
+
+##### Apertura Exitosa (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "registerId": 1,
+    "userId": 2,
+    "openAmount": 150.00,
+    "status": "OPEN",
+    "openedAt": "2026-06-01T11:45:00.000Z",
+    "closedAt": null,
+    "createdAt": "2026-06-01T11:45:00.000Z",
+    "updatedAt": "2026-06-01T11:45:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Si faltan parámetros o no corresponden con las especificaciones.
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "registerId",
+      "message": "El ID de la caja debe ser un entero positivo"
+    }
+  ]
+}
+```
+
+##### Caja No Encontrada (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "La caja registradora con ID 99 no existe"
+}
+```
+
+##### Caja Ocupada o Usuario con Turno Abierto (HTTP 409 Conflict)
+
+Retornado si el vendedor ya tiene un turno abierto o si la caja seleccionada ya está ocupada por otro turno activo.
+
+```json
+{
+  "success": false,
+  "error": "La caja registradora 'Caja Principal' ya tiene un turno abierto activo"
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+- **HTTP 401 Unauthorized**: Si falta el Token o es inválido.
+- **HTTP 403 Forbidden**: Si el usuario autenticado posee un rol diferente a `ADMIN` o `SELLER`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Solo los roles Administrador o Vendedor están autorizados para abrir caja"
+}
+```
+
 
 
