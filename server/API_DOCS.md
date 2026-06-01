@@ -2138,3 +2138,66 @@ Realiza la eliminación lógica (`isActive: false`) de una caja registradora.
   "error": "No se puede desactivar la caja registradora porque tiene un turno abierto actualmente"
 }
 ```
+
+---
+
+### GET /api/v1/pos/products
+
+Busca productos/variantes para el POS por SKU o nombre de producto, retornando el stock correspondiente a la sucursal del turno activo del usuario.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/products` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `sku` | `string` | Sí | SKU exacto (para lector de código de barras) o coincidencia parcial del nombre del producto. |
+
+#### 3. Respuestas (Responses)
+
+##### Búsqueda Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "variantId": 12,
+      "productId": 5,
+      "sku": "CAM-M-BLUE",
+      "name": "Camisa Denim - M - Blue",
+      "baseName": "Camisa Denim",
+      "price": 89.90,
+      "stock": 25,
+      "attributes": {
+        "Talla": "M",
+        "Color": "Blue"
+      }
+    }
+  ]
+}
+```
+
+##### Error - Parámetro Requerido Faltante (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "El parámetro de búsqueda (sku) es requerido y no puede estar vacío"
+}
+```
+
+##### Error - Turno Cerrado o Sin Apertura de Caja (HTTP 400 Bad Request)
+
+Retornado cuando el vendedor autenticado no ha realizado la apertura de caja para su sesión y por ende no se tiene una sucursal activa.
+
+```json
+{
+  "success": false,
+  "error": "No tienes un turno de caja abierto. Por favor, abre caja antes de realizar búsquedas o ventas en el POS."
+}
+```
