@@ -81,7 +81,7 @@ const fakeLinkedClient: Client = { ...fakeClient, userId: 10 };
 
 const fakeNewUser: User = {
   id: 99,
-  email: fakeClient.email,
+  email: fakeClient.email!,
   name: fakeClient.name,
   password: 'hashed_password',
   authProvider: 'local',
@@ -142,7 +142,7 @@ describe('LinkClientUseCase (HU-008)', () => {
     expect(roleRepo.assignRoleToUser).toHaveBeenCalledWith(fakeNewUser.id, fakeClientRole.id, null);
     expect(clientRepo.linkUser).toHaveBeenCalledWith(fakeClient.id, fakeNewUser.id, null);
     expect(emailService.sendEmail).toHaveBeenCalledWith(
-      fakeClient.email,
+      fakeClient.email!,
       expect.stringContaining('credenciales'),
       expect.stringContaining(fakeClient.name),
     );

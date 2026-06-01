@@ -1,0 +1,22 @@
+import { Router } from 'express';
+import { PosClientController } from '@infrastructure/http/controllers/PosClientController';
+import { requireAuth } from '@infrastructure/http/middlewares/auth.middleware';
+
+const router = Router();
+const controller = new PosClientController();
+
+// POST /api/v1/pos/clients/quick-register — Registro rápido de cliente desde el POS (HU-007)
+router.post(
+  '/pos/clients/quick-register',
+  requireAuth,
+  controller.quickRegister.bind(controller)
+);
+
+// GET /api/v1/pos/clients/lookup — Consulta predictiva de DNI/RUC en Factiliza (HU-007)
+router.get(
+  '/pos/clients/lookup',
+  requireAuth,
+  controller.lookup.bind(controller)
+);
+
+export default router;
