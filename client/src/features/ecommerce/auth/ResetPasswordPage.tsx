@@ -3,7 +3,7 @@ import { toast } from 'react-hot-toast';
 import { ResetPasswordForm } from './components/ResetPasswordForm';
 import { useResetPassword } from './hooks/useResetPassword';
 import type { ResetPasswordFormData } from './schemas/resetPassword.schema';
-import logoVertical from '@/assets/logo-vertical.png';
+import { useBrand } from '@/shared/context/BrandContext';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { AlertCircle } from 'lucide-react';
 
@@ -13,6 +13,7 @@ export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const token = searchParams.get('token');
   const { resetPassword, isLoading } = useResetPassword();
+  const { brandConfig } = useBrand();
 
   const handleSubmit = async (data: ResetPasswordFormData) => {
     if (!token) {
@@ -34,7 +35,13 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-brand-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
-        <img src={logoVertical} alt="Logo" className="h-32 w-auto object-contain mb-4" />
+        {brandConfig?.logoVerticalUrl ? (
+          <img src={brandConfig.logoVerticalUrl} alt={brandConfig?.brandName || "Logo"} className="h-32 w-auto object-contain mb-4" />
+        ) : (
+          <div className="h-32 w-auto mb-4 flex items-center justify-center">
+            <span className="text-4xl font-extrabold text-brand-accent">{brandConfig?.brandName || "D'Mendoza"}</span>
+          </div>
+        )}
         <h2 className="mt-2 text-center text-3xl font-extrabold text-brand-accent">
           Establecer Nueva Contraseña
         </h2>

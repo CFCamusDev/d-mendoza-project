@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
 import { Palette, Globe, Save, Loader2, Image as ImageIcon, UploadCloud, Plus, Trash2, Link as LinkIcon } from 'lucide-react';
+import { useBrand } from '@/shared/context/BrandContext';
 
 const DynamicIcon = ({ name, className }: { name: string; className?: string }) => {
   switch (name.toLowerCase()) {
@@ -121,6 +122,7 @@ export const BrandingPage: React.FC = () => {
   const [socialLinks, setSocialLinks] = useState<{platform: string, url: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { refreshBrandConfig } = useBrand();
 
   useEffect(() => {
     fetchConfig();
@@ -161,6 +163,10 @@ export const BrandingPage: React.FC = () => {
       
       await axiosInstance.put('/v1/config/brand', payload);
       setConfig(payload);
+      
+      // Update global context so the whole app updates immediately
+      await refreshBrandConfig();
+      
       toast.success('Configuración actualizada correctamente');
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Error al guardar');
