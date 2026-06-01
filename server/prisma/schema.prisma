@@ -118,12 +118,17 @@ model AuditLog {
 // ─────────────────────────────────────────────
 
 model BrandConfig {
-  id              Int      @id @default(1)
-  brandName       String   @default("D'Mendoza")
-  logoUrl         String?
-  primaryColor    String   @default("#4F46E5")
-  socialLinksJson Json?
-  updatedAt       DateTime @updatedAt
+  id                Int      @id @default(1)
+  brandName         String   @default("D'Mendoza")
+  faviconUrl        String?
+  logoHorizontalUrl String?
+  logoVerticalUrl   String?
+  colorBrandBg      String   @default("#F7F7F5")
+  colorBrandPrimary String   @default("#D9D9D2")
+  colorBrandText    String   @default("#6B6B6B")
+  colorBrandAccent  String   @default("#3F3F3F")
+  socialLinksJson   Json?
+  updatedAt         DateTime @updatedAt
 }
 
 // ─────────────────────────────────────────────
