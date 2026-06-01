@@ -33,8 +33,9 @@ export const PossScreen: React.FC = () => {
   const [paymentAmount, setPaymentAmount] = useState<string>('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  // References for barcode scanner (T-119 foundation)
+  // References for barcode scanner (T-119)
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const keyTimesRef = useRef<number[]>([]);
 
   // Fetch some initial popular products in this branch when page loads
   useEffect(() => {
@@ -56,20 +57,23 @@ export const PossScreen: React.FC = () => {
     fetchInitialProducts();
   }, [branchId]);
 
-  // Main search function
-  const handleSearch = async (queryStr: string) => {
+  // Main search function returning matching items
+  const handleSearch = async (queryStr: string): Promise<PosProduct[]> => {
     if (!queryStr.trim()) {
       setSearchResults([]);
-      return;
+      return [];
     }
     setSearching(true);
     try {
       const { data } = await axiosInstance.get(`/v1/pos/products?sku=${encodeURIComponent(queryStr)}`);
       if (data.success) {
         setSearchResults(data.data);
+        return data.data;
       }
+      return [];
     } catch {
       toast.error('Error al buscar productos');
+      return [];
     } finally {
       setSearching(false);
     }
@@ -111,19 +115,81 @@ export const PossScreen: React.FC = () => {
     }, 1200);
   };
 
-  // Keyboard shortcut listener to focus search input
+  // Keyboard shortcut & automatic fast barcode scanner listener (T-119)
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
       // F2 focuses the search box instantly
       if (e.key === 'F2') {
         e.preventDefault();
         searchInputRef.current?.focus();
         toast.success('Buscador enfocado (Modo lector listo)', { duration: 1500 });
+        return;
+      }
+
+      // Barcode Scanner detection logic:
+      // Scanners input characters very rapidly and finish with "Enter"
+      const now = performance.now();
+      keyTimesRef.current.push(now);
+
+      // Keep only the last 5 keypress times to calculate running average
+      if (keyTimesRef.current.length > 5) {
+        keyTimesRef.current.shift();
+      }
+
+      // If user presses Enter in search box, check if it was entered rapidly (automatic scanner)
+      if (e.key === 'Enter' && document.activeElement === searchInputRef.current) {
+        e.preventDefault();
+        
+        // Calculate average time between keypresses
+        let isScanner = false;
+        if (keyTimesRef.current.length >= 2) {
+          const intervals = [];
+          for (let i = 1; i < keyTimesRef.current.length; i++) {
+            intervals.push(keyTimesRef.current[i] - keyTimesRef.current[i - 1]);
+          }
+          const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+          // Standard typing speed is > 150ms per key. Scanners are typically < 30ms.
+          // Requirement: auto-submit on Enter after rapid read (< 200ms between characters).
+          if (avgInterval < 200) {
+            isScanner = true;
+          }
+        }
+
+        const scanQuery = searchQuery.trim();
+        if (scanQuery) {
+          // Instantly query server for the exact SKU
+          const results = await handleSearch(scanQuery);
+          
+          if (results.length > 0) {
+            // Find an exact SKU match to prevent adding wrong products on generic text
+            const exactMatch = results.find(
+              (p) => p.sku.toLowerCase() === scanQuery.toLowerCase()
+            );
+
+            if (exactMatch) {
+              addItem(exactMatch, 1);
+              setSearchQuery(''); // Clean instantly for the next scan
+              
+              if (isScanner) {
+                toast.success(`Código de barras leído: ${exactMatch.sku}`, { icon: '🏷️' });
+              }
+            } else if (results.length === 1) {
+              // If only one product returned (even if not exact match) we can add it for fast flow
+              addItem(results[0], 1);
+              setSearchQuery('');
+            } else {
+              toast.error('Múltiples coincidencias. Selecciona manualmente.', { icon: '🔍' });
+            }
+          } else {
+            toast.error(`No se encontró ningún producto con SKU: "${scanQuery}"`, { icon: '❌' });
+          }
+        }
       }
     };
+    
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [searchQuery, addItem]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
