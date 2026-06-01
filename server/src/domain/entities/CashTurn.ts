@@ -4,6 +4,7 @@ export interface CashRegister {
   id?: number;
   branchId: number;
   name: string;
+  isActive?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

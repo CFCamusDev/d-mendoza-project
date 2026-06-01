@@ -2018,6 +2018,123 @@ Retornado cuando el usuario no tiene ningún turno de caja abierto en sesión.
 }
 ```
 
+---
 
+### POST /api/v1/cash-registers
 
+Crea una nueva caja registradora.
 
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/cash-registers` | JWT `Bearer Token` | Administrador (`ADMIN`) |
+
+#### 2. Cuerpo de la Solicitud (Request Body)
+
+```json
+{
+  "branchId": 1,
+  "name": "Caja Principal - Sede Larco"
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Creación Exitosa (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 4,
+    "branchId": 1,
+    "name": "Caja Principal - Sede Larco",
+    "createdAt": "2026-06-01T21:54:00.000Z",
+    "updatedAt": "2026-06-01T21:54:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "name",
+      "message": "El nombre debe tener al menos 3 caracteres"
+    }
+  ]
+}
+```
+
+---
+
+### PATCH /api/v1/cash-registers/:id
+
+Actualiza la información de una caja registradora existente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `PATCH` | `/api/v1/cash-registers/:id` | JWT `Bearer Token` | Administrador (`ADMIN`) |
+
+#### 2. Cuerpo de la Solicitud (Request Body)
+
+```json
+{
+  "name": "Caja Principal Renovada"
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Actualización Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 4,
+    "branchId": 1,
+    "name": "Caja Principal Renovada",
+    "createdAt": "2026-06-01T21:54:00.000Z",
+    "updatedAt": "2026-06-01T21:55:00.000Z"
+  }
+}
+```
+
+---
+
+### DELETE /api/v1/cash-registers/:id
+
+Realiza la eliminación lógica (`isActive: false`) de una caja registradora.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `DELETE` | `/api/v1/cash-registers/:id` | JWT `Bearer Token` | Administrador (`ADMIN`) |
+
+#### 2. Respuestas (Responses)
+
+##### Eliminación Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Caja registradora eliminada lógicamente con éxito"
+}
+```
+
+##### Conflicto - Turno Abierto (HTTP 409 Conflict)
+
+```json
+{
+  "success": false,
+  "error": "No se puede desactivar la caja registradora porque tiene un turno abierto actualmente"
+}
+```
