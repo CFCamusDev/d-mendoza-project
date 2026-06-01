@@ -12,13 +12,15 @@ datasource db {
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  email     String     @unique
-  name      String?
-  password  String
-  googleId      String?    @unique
-  avatarUrl     String?
-  authProvider  String     @default("local") // "local" | "google"
+  id              Int        @id @default(autoincrement())
+  email           String     @unique
+  name            String?
+  password        String
+  googleId        String?    @unique
+  avatarUrl       String?
+  lastName        String?
+  phone           String?
+  authProvider    String     @default("local") // "local" | "google"
   lastLogin       DateTime?
   isActive        Boolean    @default(false)
   verificationPin String?
@@ -27,6 +29,58 @@ model User {
   updatedAt       DateTime   @updatedAt
   auditLogs       AuditLog[]
   roles           Role[] // RBAC many-to-many relationship (HU-004)
+  employee        Employee?
+  client          Client?
+}
+
+model Client {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  name       String
+  phone      String?
+  documentId String?  @unique // DNI/RUC
+  userId     Int?     @unique
+  user       User?    @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Employee {
+  id        Int      @id @default(autoincrement())
+  name      String
+  dni       String   @unique
+  isActive  Boolean  @default(true)
+  userId    Int?     @unique
+  user      User?    @relation(fields: [userId], references: [id])
+  branchId  Int
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Branch {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  address       String?
+  phone         String?
+  isActive      Boolean       @default(true)
+  employees     Employee[]
+  branchStock   BranchStock[]
+  kardexEntries KardexEntry[]
+  stockEntries  StockEntry[] // HU-051
+  warehouse     Warehouse?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  stockAlerts   StockAlert[]
+  inventoryAudits InventoryAudit[] // HU-029
+}
+
+model Warehouse {
+  id        Int      @id @default(autoincrement())
+  branchId  Int      @unique
+  branch    Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Role {
@@ -57,3 +111,257 @@ model AuditLog {
   user      User?    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }
+
+// ─────────────────────────────────────────────
+// HU-014: Gestión de Variantes SKU (T-076)
+// HU-015: Inactivación Lógica de Productos
+// ─────────────────────────────────────────────
+
+model BrandConfig {
+  id                Int      @id @default(1)
+  brandName         String   @default("D'Mendoza")
+  faviconUrl        String?
+  logoHorizontalUrl String?
+  logoVerticalUrl   String?
+  colorBrandBg      String   @default("#F7F7F5")
+  colorBrandPrimary String   @default("#D9D9D2")
+  colorBrandText    String   @default("#6B6B6B")
+  colorBrandAccent  String   @default("#3F3F3F")
+  socialLinksJson   Json?
+  updatedAt         DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// HU-019: Gestión de Banners y Sliders (T-083)
+// ─────────────────────────────────────────────
+model Banner {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String   @db.Text
+  linkUrl   String?  @db.Text
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── HU-011 ───────────────────────────────────────────────────────────────────
+
+model Category {
+  id        Int        @id @default(autoincrement())
+  name      String
+  parentId  Int?
+  parent    Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryChildren")
+  isActive  Boolean    @default(true)
+  products  Product[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Brand {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  logoUrl   String?
+  isActive  Boolean   @default(true)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// ─── HU-012 ───────────────────────────────────────────────────────────────────
+
+model Attribute {
+  id        Int              @id @default(autoincrement())
+  name      String           @unique
+  isActive  Boolean          @default(true)
+  values    AttributeValue[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model AttributeValue {
+  id          Int       @id @default(autoincrement())
+  value       String
+  isActive    Boolean   @default(true)
+  attributeId Int
+  attribute   Attribute @relation(fields: [attributeId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([attributeId, value])
+}
+
+// ─── HU-013 ───────────────────────────────────────────────────────────────────
+
+model Product {
+  id          Int              @id @default(autoincrement())
+  code        String           @unique // Código base para auto-generación de SKU (ej. "CAM")
+  name        String
+  description String?          @db.Text
+  categoryId  Int?
+  category    Category?        @relation(fields: [categoryId], references: [id])
+  brandId     Int?
+  brand       Brand?           @relation(fields: [brandId], references: [id])
+  gender      String?
+  isActive    Boolean          @default(true)
+  images      ProductImage[]
+  variants    ProductVariant[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model ProductImage {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  url       String
+  isMain    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ─── HU-026 (dependencies: ProductVariant + BranchStock) ─────────────────────
+
+model ProductVariant {
+  id              Int              @id @default(autoincrement())
+  productId       Int
+  product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku             String           @unique // SKU único auto-generado: código_producto-talla-color
+  price           Decimal          @default(0) @db.Decimal(10, 2)
+  attributesJson  Json? // JSON con los atributos de la variante
+  isActive        Boolean          @default(true)
+  minStock        Int              @default(5)
+  branchStock     BranchStock[]
+  kardexEntries   KardexEntry[]
+  stockEntryItems StockEntryItem[] // HU-051
+  stockAlerts     StockAlert[]
+  auditItems      AuditItem[]      // HU-029
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([productId])
+}
+
+model BranchStock {
+  id        Int            @id @default(autoincrement())
+  variantId Int
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  branchId  Int
+  branch    Branch         @relation(fields: [branchId], references: [id])
+  quantity  Float          @default(0)
+  updatedAt DateTime       @updatedAt
+
+  @@unique([variantId, branchId])
+}
+
+// ─── HU-026 ───────────────────────────────────────────────────────────────────
+
+enum KardexType {
+  ENTRADA
+  SALIDA
+  AJUSTE
+}
+
+model KardexEntry {
+  id          Int            @id @default(autoincrement())
+  variantId   Int
+  variant     ProductVariant @relation(fields: [variantId], references: [id])
+  branchId    Int
+  branch      Branch         @relation(fields: [branchId], references: [id])
+  type        KardexType
+  quantity    Float
+  unitCost    Float
+  balanceQty  Float
+  balanceCost Float
+  createdAt   DateTime       @default(now())
+}
+
+// ─── HU-051: Gestión de Proveedores y Registro de Ingreso de Mercadería ─────────
+
+model Supplier {
+  id           Int          @id @default(autoincrement())
+  ruc          String       @unique
+  razonSocial  String
+  contacto     String
+  direccion    String?
+  isActive     Boolean      @default(true)
+  stockEntries StockEntry[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model StockEntry {
+  id            Int              @id @default(autoincrement())
+  supplierId    Int
+  supplier      Supplier         @relation(fields: [supplierId], references: [id])
+  invoiceNumber String
+  branchId      Int
+  branch        Branch           @relation(fields: [branchId], references: [id])
+  items         StockEntryItem[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([supplierId])
+  @@index([branchId])
+}
+
+model StockEntryItem {
+  id           Int            @id @default(autoincrement())
+  stockEntryId Int
+  stockEntry   StockEntry     @relation(fields: [stockEntryId], references: [id], onDelete: Cascade)
+  variantId    Int
+  variant      ProductVariant @relation(fields: [variantId], references: [id])
+  quantity     Float
+  unitCost     Float
+
+  @@index([stockEntryId])
+  @@index([variantId])
+}
+
+// ─── HU-027: Alertas de Stock Crítico ─────────────────────────────────────────
+
+model StockAlert {
+  id        Int            @id @default(autoincrement())
+  variantId Int
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  branchId  Int
+  branch    Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  isActive  Boolean        @default(true) // Turns false when stock is replenished or manually dismissed
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([variantId, branchId])
+}
+
+// ─── HU-029: Auditoría de Inventario Físico (Toma de Inventario) ──────────────
+
+enum AuditStatus {
+  PENDING
+  CONFIRMED
+}
+
+model InventoryAudit {
+  id        Int         @id @default(autoincrement())
+  branchId  Int
+  branch    Branch      @relation(fields: [branchId], references: [id])
+  status    AuditStatus @default(PENDING)
+  items     AuditItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([branchId])
+}
+
+model AuditItem {
+  id          Int            @id @default(autoincrement())
+  auditId     Int
+  audit       InventoryAudit @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  variantId   Int
+  variant     ProductVariant @relation(fields: [variantId], references: [id])
+  physicalQty Float
+  systemQty   Float
+  difference  Float
+
+  @@index([auditId])
+  @@index([variantId])
+}
+

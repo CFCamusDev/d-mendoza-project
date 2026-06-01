@@ -19,6 +19,8 @@ const mockUserRepository: jest.Mocked<IUserRepository> = {
   activateUser: jest.fn<IUserRepository['activateUser']>(),
   updatePassword: jest.fn<IUserRepository['updatePassword']>(),
   updateGoogleId: jest.fn<IUserRepository['updateGoogleId']>(),
+  updateStatus: jest.fn<IUserRepository['updateStatus']>(),
+  updateProfile: jest.fn<IUserRepository['updateProfile']>(),
 };
 
 const mockAuditService: jest.Mocked<IAuditService> = {

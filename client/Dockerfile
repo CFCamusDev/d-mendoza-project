@@ -7,14 +7,17 @@ WORKDIR /app
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
+# Instalar pnpm globalmente
+RUN npm install -g pnpm
+
 # Copiar configuración e instalar dependencias
 # Usamos --ignore-scripts para evitar problemas mencionados en la guía
-COPY package*.json ./
-RUN npm ci --ignore-scripts
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copiar el resto del código y compilar
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # Stage 2: Serve
 FROM nginx:alpine

@@ -71,12 +71,25 @@ export class LoginUseCase {
       });
     }
 
-    // Step 6: Generate JWT tokens (role hardcoded as 'customer' until
-    // RBAC module is implemented in HU-004)
+    // Step 6: Generate JWT tokens (dynamically resolving role according to RBAC HU-004)
+    let userRole = 'CLIENT';
+    if (user.roles && user.roles.length > 0) {
+      const primaryRole = user.roles[0];
+      if (primaryRole === 'SUPERADMIN') {
+        userRole = 'ADMIN';
+      } else if (primaryRole === 'SELLER') {
+        userRole = 'SELLER';
+      } else if (primaryRole === 'CLIENT') {
+        userRole = 'CLIENT';
+      } else {
+        userRole = primaryRole;
+      }
+    }
+
     const tokens = this.jwtService.generateTokens({
       userId: user.id,
       email: user.email,
-      role: 'customer',
+      role: userRole,
     });
 
     // Step 7: Return user data (without password) + tokens

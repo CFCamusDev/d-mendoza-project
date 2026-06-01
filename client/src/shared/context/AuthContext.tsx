@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import type { AuthContextType, AuthUser, AuthTokens, JwtPayload } from '../types/auth.types';
+import type { AuthContextType, AuthUser, AuthTokens } from '../types/auth.types';
+import { setupAxiosInterceptors } from '../api/axiosInstance';
 
 const STORAGE_ACCESS_KEY = 'auth_access_token';
 const STORAGE_REFRESH_KEY = 'auth_refresh_token';
@@ -19,17 +20,18 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isHydrating, setIsHydrating] = useState(true);
 
   // On mount: hydrate session from localStorage if a valid token exists
   useEffect(() => {
     const storedToken = localStorage.getItem(STORAGE_ACCESS_KEY);
     if (storedToken) {
       try {
-        const decoded = jwtDecode<JwtPayload>(storedToken);
+        const decoded = jwtDecode<any>(storedToken);
         // Check token expiry (exp is in seconds)
         if (decoded.exp * 1000 > Date.now()) {
           setUser({
-            id: decoded.sub,
+            id: String(decoded.sub ?? decoded.userId ?? ''),
             email: decoded.email,
             role: decoded.role,
           });
@@ -44,6 +46,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         localStorage.removeItem(STORAGE_REFRESH_KEY);
       }
     }
+    setIsHydrating(false);
   }, []);
 
   // Save tokens, decode payload and update user state
@@ -51,23 +54,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.setItem(STORAGE_ACCESS_KEY, tokens.accessToken);
     localStorage.setItem(STORAGE_REFRESH_KEY, tokens.refreshToken);
 
-    const decoded = jwtDecode<JwtPayload>(tokens.accessToken);
+    const decoded = jwtDecode<any>(tokens.accessToken);
     setUser({
-      id: decoded.sub,
+      id: String(decoded.sub ?? decoded.userId ?? ''),
       email: decoded.email,
       role: decoded.role,
     });
   };
 
   // Clear everything and reset state
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_ACCESS_KEY);
     localStorage.removeItem(STORAGE_REFRESH_KEY);
     setUser(null);
-  };
+  }, []);
+
+  // RSK-001 / T-044: Wire Axios interceptors once so the logout callback is stable
+  useEffect(() => {
+    setupAxiosInterceptors(logout);
+  }, [logout]);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: user !== null, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: user !== null, isHydrating, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

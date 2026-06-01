@@ -32,28 +32,85 @@ async function main() {
     },
   });
 
+  const permissionUsersWrite = await prisma.permission.upsert({
+    where: { name: 'users:write' },
+    update: {},
+    create: {
+      name: 'users:write',
+      description: 'Capacidad para activar/desactivar y modificar cuentas de usuario.',
+    },
+  });
+
+  // HU-014: Permisos para gestión de productos y variantes SKU
+  const permissionProductsRead = await prisma.permission.upsert({
+    where: { name: 'products:read' },
+    update: {},
+    create: {
+      name: 'products:read',
+      description: 'Capacidad para listar y visualizar productos y sus variantes SKU.',
+    },
+  });
+
+  const permissionProductsWrite = await prisma.permission.upsert({
+    where: { name: 'products:write' },
+    update: {},
+    create: {
+      name: 'products:write',
+      description: 'Capacidad para crear, editar y gestionar productos y variantes SKU.',
+    },
+  });
+
+  // HU-051: Permisos para gestión de inventario, proveedores e ingreso de mercadería
+  const permissionInventoryRead = await prisma.permission.upsert({
+    where: { name: 'inventory:read' },
+    update: {},
+    create: {
+      name: 'inventory:read',
+      description: 'Capacidad para visualizar proveedores e ingreso de mercadería.',
+    },
+  });
+
+  const permissionInventoryWrite = await prisma.permission.upsert({
+    where: { name: 'inventory:write' },
+    update: {},
+    create: {
+      name: 'inventory:write',
+      description: 'Capacidad para crear y modificar proveedores e ingresar mercadería.',
+    },
+  });
+
   console.log('✅ Master permissions registered.');
 
   // ------------------------------------------------------------------
   // 2. Standard System Roles Aggregation
   // ------------------------------------------------------------------
   const adminRole = await prisma.role.upsert({
-    where: { name: 'SUPERADMIN' },
+    where: { name: 'ADMIN' },
     update: {
       permissions: {
         connect: [
           { id: permissionRolesManage.id },
           { id: permissionUsersRead.id },
+          { id: permissionUsersWrite.id },
+          { id: permissionProductsRead.id },   // HU-014
+          { id: permissionProductsWrite.id },  // HU-014
+          { id: permissionInventoryRead.id },  // HU-051
+          { id: permissionInventoryWrite.id }, // HU-051
         ],
       },
     },
     create: {
-      name: 'SUPERADMIN',
+      name: 'ADMIN',
       description: 'Acceso total irrestricto a toda la plataforma.',
       permissions: {
         connect: [
           { id: permissionRolesManage.id },
           { id: permissionUsersRead.id },
+          { id: permissionUsersWrite.id },
+          { id: permissionProductsRead.id },   // HU-014
+          { id: permissionProductsWrite.id },  // HU-014
+          { id: permissionInventoryRead.id },  // HU-051
+          { id: permissionInventoryWrite.id }, // HU-051
         ],
       },
     },

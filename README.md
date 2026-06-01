@@ -162,3 +162,27 @@ docker compose down -v
 ```
 
 ---
+
+## 🔀 Flujo de Pull Requests
+
+El proyecto usa **GitFlow**. Antes de abrir un PR, selecciona el template que corresponde según el tipo de cambio. GitHub no muestra un selector automático, por lo que usa los enlaces directos de abajo — cargan el formulario con el template correcto ya aplicado.
+
+> ⚠️ Reemplaza `<rama-origen>` en la URL por el nombre real de tu rama antes de abrir el enlace.
+
+| Tipo de PR | Rama origen → destino | Template | Enlace directo |
+| --- | --- | --- | --- |
+| Feature / HU / TT / RSK | `feature/xxx` → `develop` | `feature_develop.md` | [Abrir PR →](https://github.com/CFCamusDev/d-mendoza-project/compare/develop...<rama-origen>?template=feature_develop.md) |
+| Release a producción | `release/x.x.x` → `main` | `release_main.md` | [Abrir PR →](https://github.com/CFCamusDev/d-mendoza-project/compare/main...<rama-origen>?template=release_main.md) |
+| Hotfix crítico | `hotfix/xxx` → `main` | `hotfix_main.md` | [Abrir PR →](https://github.com/CFCamusDev/d-mendoza-project/compare/main...<rama-origen>?template=hotfix_main.md) |
+
+### Estructura de templates
+
+```
+.github/
+└── PULL_REQUEST_TEMPLATE/
+    ├── feature_develop.md   ← HU / TT / RSK → develop  (DoD-DM-001 completo)
+    ├── release_main.md      ← release/x.x.x → main     (Release Readiness)
+    └── hotfix_main.md       ← hotfix/xxx    → main      (Hotfix Readiness)
+```
+
+> ⚠️ No debe existir un archivo `.github/pull_request_template.md` suelto en la raíz. Si existe, GitHub lo usa como default ignorando la carpeta y los templates no funcionarán.

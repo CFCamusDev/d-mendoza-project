@@ -45,6 +45,13 @@ export const ResetPasswordDTOSchema = z.object({
 
 export type ResetPasswordDTO = z.infer<typeof ResetPasswordDTOSchema>;
 
+// RSK-001 / T-043: Sliding-window token renewal
+export const RefreshTokenDTOSchema = z.object({
+  refreshToken: z.string().min(1, { message: 'El refresh token es requerido' }),
+});
+
+export type RefreshTokenDTO = z.infer<typeof RefreshTokenDTOSchema>;
+
 /**
  * DTO para el perfil recibido desde Google OAuth 2.0 (HU-001 / T-033).
  * Se construye a partir del profile de Passport, no del request body.
