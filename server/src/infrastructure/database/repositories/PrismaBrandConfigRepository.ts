@@ -12,8 +12,13 @@ export class PrismaBrandConfigRepository implements IBrandConfigRepository {
     return {
       id: config.id,
       brandName: config.brandName,
-      logoUrl: config.logoUrl,
-      primaryColor: config.primaryColor,
+      faviconUrl: config.faviconUrl,
+      logoHorizontalUrl: config.logoHorizontalUrl,
+      logoVerticalUrl: config.logoVerticalUrl,
+      colorBrandBg: config.colorBrandBg,
+      colorBrandPrimary: config.colorBrandPrimary,
+      colorBrandText: config.colorBrandText,
+      colorBrandAccent: config.colorBrandAccent,
       socialLinksJson: (config.socialLinksJson as Record<string, string>) || {},
       updatedAt: config.updatedAt,
     };
@@ -21,23 +26,38 @@ export class PrismaBrandConfigRepository implements IBrandConfigRepository {
 
   async upsert(data: {
     brandName: string;
-    logoUrl?: string | null;
-    primaryColor: string;
+    faviconUrl?: string | null;
+    logoHorizontalUrl?: string | null;
+    logoVerticalUrl?: string | null;
+    colorBrandBg: string;
+    colorBrandPrimary: string;
+    colorBrandText: string;
+    colorBrandAccent: string;
     socialLinksJson?: any;
   }): Promise<BrandConfig> {
     const config = await prisma.brandConfig.upsert({
       where: { id: 1 },
       update: {
         brandName: data.brandName,
-        logoUrl: data.logoUrl,
-        primaryColor: data.primaryColor,
+        faviconUrl: data.faviconUrl,
+        logoHorizontalUrl: data.logoHorizontalUrl,
+        logoVerticalUrl: data.logoVerticalUrl,
+        colorBrandBg: data.colorBrandBg,
+        colorBrandPrimary: data.colorBrandPrimary,
+        colorBrandText: data.colorBrandText,
+        colorBrandAccent: data.colorBrandAccent,
         socialLinksJson: data.socialLinksJson || {},
       },
       create: {
         id: 1,
         brandName: data.brandName,
-        logoUrl: data.logoUrl,
-        primaryColor: data.primaryColor,
+        faviconUrl: data.faviconUrl,
+        logoHorizontalUrl: data.logoHorizontalUrl,
+        logoVerticalUrl: data.logoVerticalUrl,
+        colorBrandBg: data.colorBrandBg,
+        colorBrandPrimary: data.colorBrandPrimary,
+        colorBrandText: data.colorBrandText,
+        colorBrandAccent: data.colorBrandAccent,
         socialLinksJson: data.socialLinksJson || {},
       },
     });
@@ -45,8 +65,13 @@ export class PrismaBrandConfigRepository implements IBrandConfigRepository {
     return {
       id: config.id,
       brandName: config.brandName,
-      logoUrl: config.logoUrl,
-      primaryColor: config.primaryColor,
+      faviconUrl: config.faviconUrl,
+      logoHorizontalUrl: config.logoHorizontalUrl,
+      logoVerticalUrl: config.logoVerticalUrl,
+      colorBrandBg: config.colorBrandBg,
+      colorBrandPrimary: config.colorBrandPrimary,
+      colorBrandText: config.colorBrandText,
+      colorBrandAccent: config.colorBrandAccent,
       socialLinksJson: (config.socialLinksJson as Record<string, string>) || {},
       updatedAt: config.updatedAt,
     };
