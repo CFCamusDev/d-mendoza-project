@@ -28,7 +28,7 @@ const AdjustmentPage: React.FC = () => {
     setSearching(true);
     setResult(null);
     try {
-      const { data } = await axiosInstance.get(`/api/v1/stock/by-sku?sku=${encodeURIComponent(sku.trim())}`);
+      const { data } = await axiosInstance.get(`/v1/stock/by-sku?sku=${encodeURIComponent(sku.trim())}`);
       setResult(data.data);
       setNewQuantity(String(data.data.currentQty));
     } catch {
@@ -48,7 +48,7 @@ const AdjustmentPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await axiosInstance.post('/api/v1/stock/adjustments', {
+      await axiosInstance.post('/v1/stock/adjustments', {
         variantId: result.variantId,
         branchId: result.branchId,
         newQuantity: qty,

@@ -35,7 +35,7 @@ const AttributesPage: React.FC = () => {
 
   const fetch = async () => {
     try {
-      const { data } = await axiosInstance.get('/api/v1/attributes');
+      const { data } = await axiosInstance.get('/v1/attributes');
       setAttributes(data.data);
     } catch { 
       toast.error('Error al cargar atributos'); 
@@ -62,10 +62,10 @@ const AttributesPage: React.FC = () => {
     setSubmitting(true);
     try {
       if (editingAttr) {
-        await axiosInstance.patch(`/api/v1/attributes/${editingAttr.id}`, { name: attrName });
+        await axiosInstance.patch(`/v1/attributes/${editingAttr.id}`, { name: attrName });
         toast.success('Atributo actualizado');
       } else {
-        await axiosInstance.post('/api/v1/attributes', { name: attrName });
+        await axiosInstance.post('/v1/attributes', { name: attrName });
         toast.success('Atributo creado');
       }
       setShowAttrModal(false);
@@ -80,7 +80,7 @@ const AttributesPage: React.FC = () => {
   const handleDeactivateAttr = async (id: number) => {
     if (!confirm('¿Inactivar este atributo?')) return;
     try {
-      await axiosInstance.delete(`/api/v1/attributes/${id}`);
+      await axiosInstance.delete(`/v1/attributes/${id}`);
       toast.success('Atributo inactivado');
       fetch();
     } catch { 
@@ -92,7 +92,7 @@ const AttributesPage: React.FC = () => {
     const val = (newValueInputs[attrId] ?? '').trim();
     if (!val) return;
     try {
-      await axiosInstance.post(`/api/v1/attributes/${attrId}/values`, { value: val });
+      await axiosInstance.post(`/v1/attributes/${attrId}/values`, { value: val });
       toast.success('Valor agregado');
       setNewValueInputs(s => ({ ...s, [attrId]: '' }));
       fetch();
@@ -103,7 +103,7 @@ const AttributesPage: React.FC = () => {
 
   const handleDeactivateValue = async (attrId: number, valueId: number) => {
     try {
-      await axiosInstance.delete(`/api/v1/attributes/${attrId}/values/${valueId}`);
+      await axiosInstance.delete(`/v1/attributes/${attrId}/values/${valueId}`);
       toast.success('Valor inactivado');
       fetch();
     } catch { 
