@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
-import { Palette, Globe, Save, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Palette, Globe, Save, Loader2, Image as ImageIcon, UploadCloud } from 'lucide-react';
 
-// Componentes locales para iconos sociales para evitar dependencias faltantes
 const FacebookIcon = ({ className }: { className?: string }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
 );
@@ -16,16 +15,102 @@ const TwitterIcon = ({ className }: { className?: string }) => (
 
 interface BrandConfig {
   brandName: string;
-  logoUrl: string | null;
-  primaryColor: string;
+  faviconUrl: string | null;
+  logoHorizontalUrl: string | null;
+  logoVerticalUrl: string | null;
+  colorBrandBg: string;
+  colorBrandPrimary: string;
+  colorBrandText: string;
+  colorBrandAccent: string;
   socialLinksJson: Record<string, string> | null;
 }
+
+const LogoUploader = ({ 
+  label, 
+  url, 
+  onUpload 
+}: { 
+  label: string; 
+  url: string | null; 
+  onUpload: (file: File) => Promise<void> 
+}) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Solo se admiten imágenes');
+      return;
+    }
+    setIsUploading(true);
+    try {
+      await onUpload(file);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-slate-700">{label}</label>
+      <div 
+        className={`relative flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg transition-colors overflow-hidden
+          ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'}
+          ${url ? 'h-32' : 'h-32'}`}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={onDrop}
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+        />
+        {isUploading ? (
+          <div className="flex flex-col items-center text-slate-500">
+            <Loader2 className="w-6 h-6 animate-spin mb-2 text-indigo-500" />
+            <span className="text-xs font-medium">Subiendo...</span>
+          </div>
+        ) : url ? (
+          <div className="relative w-full h-full flex items-center justify-center group cursor-pointer">
+            <img src={url} alt={label} className="max-w-full max-h-full object-contain" />
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded">
+              <span className="text-white text-xs font-medium">Cambiar imagen</span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center text-slate-500 cursor-pointer">
+            <UploadCloud className="w-8 h-8 mb-2 text-slate-400" />
+            <span className="text-sm font-medium">Clic o arrastra aquí</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const BrandingPage: React.FC = () => {
   const [config, setConfig] = useState<BrandConfig>({
     brandName: '',
-    logoUrl: '',
-    primaryColor: '#4F46E5',
+    faviconUrl: null,
+    logoHorizontalUrl: null,
+    logoVerticalUrl: null,
+    colorBrandBg: '#F7F7F5',
+    colorBrandPrimary: '#D9D9D2',
+    colorBrandText: '#6B6B6B',
+    colorBrandAccent: '#3F3F3F',
     socialLinksJson: {
       facebook: '',
       instagram: '',
@@ -81,6 +166,23 @@ export const BrandingPage: React.FC = () => {
     }));
   };
 
+  const handleLogoUpload = async (file: File, key: keyof Pick<BrandConfig, 'faviconUrl' | 'logoHorizontalUrl' | 'logoVerticalUrl'>) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const { data } = await axiosInstance.post('/v1/config/brand/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (data.success) {
+        setConfig(prev => ({ ...prev, [key]: data.data.url }));
+        toast.success('Logo subido correctamente');
+      }
+    } catch (error) {
+      toast.error('Error al subir el logo');
+      throw error;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -90,11 +192,11 @@ export const BrandingPage: React.FC = () => {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Identidad Visual</h1>
-          <p className="text-slate-500">Configura el branding y redes sociales de tu plataforma.</p>
+          <p className="text-slate-500">Configura el branding, colores y redes sociales de tu plataforma.</p>
         </div>
         <button
           onClick={handleSave}
@@ -108,10 +210,12 @@ export const BrandingPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
-              <Palette className="w-5 h-5 text-indigo-500" />
-              Apariencia General
+          
+          {/* SECCIÓN: NOMBRES Y LOGOS */}
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+            <h2 className="text-lg font-semibold flex items-center gap-2 border-b border-slate-100 pb-4">
+              <ImageIcon className="w-5 h-5 text-indigo-500" />
+              Marca y Logos
             </h2>
             
             <div className="space-y-2">
@@ -125,38 +229,63 @@ export const BrandingPage: React.FC = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">URL del Logo</label>
-              <input
-                type="text"
-                value={config.logoUrl || ''}
-                onChange={(e) => setConfig({ ...config, logoUrl: e.target.value })}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                placeholder="https://ejemplo.com/logo.png"
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <LogoUploader 
+                label="Favicon" 
+                url={config.faviconUrl} 
+                onUpload={(f) => handleLogoUpload(f, 'faviconUrl')} 
               />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Color Primario</label>
-              <div className="flex gap-4 items-center">
-                <input
-                  type="color"
-                  value={config.primaryColor}
-                  onChange={(e) => setConfig({ ...config, primaryColor: e.target.value })}
-                  className="w-12 h-12 rounded cursor-pointer border-none"
-                />
-                <input
-                  type="text"
-                  value={config.primaryColor}
-                  onChange={(e) => setConfig({ ...config, primaryColor: e.target.value })}
-                  className="flex-1 px-4 py-2 border border-slate-300 rounded-lg outline-none uppercase"
-                />
-              </div>
+              <LogoUploader 
+                label="Logo Horizontal" 
+                url={config.logoHorizontalUrl} 
+                onUpload={(f) => handleLogoUpload(f, 'logoHorizontalUrl')} 
+              />
+              <LogoUploader 
+                label="Logo Vertical" 
+                url={config.logoVerticalUrl} 
+                onUpload={(f) => handleLogoUpload(f, 'logoVerticalUrl')} 
+              />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
+          {/* SECCIÓN: COLORES */}
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+            <h2 className="text-lg font-semibold flex items-center gap-2 border-b border-slate-100 pb-4">
+              <Palette className="w-5 h-5 text-indigo-500" />
+              Colores Principales
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { label: 'Color de Fondo (Bg)', key: 'colorBrandBg' },
+                { label: 'Color Primario', key: 'colorBrandPrimary' },
+                { label: 'Color de Texto', key: 'colorBrandText' },
+                { label: 'Color de Acento', key: 'colorBrandAccent' },
+              ].map((colorField) => (
+                <div key={colorField.key} className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">{colorField.label}</label>
+                  <div className="flex gap-4 items-center">
+                    <input
+                      type="color"
+                      value={config[colorField.key as keyof BrandConfig] as string}
+                      onChange={(e) => setConfig({ ...config, [colorField.key]: e.target.value })}
+                      className="w-12 h-12 rounded cursor-pointer border-none bg-transparent p-0"
+                    />
+                    <input
+                      type="text"
+                      value={config[colorField.key as keyof BrandConfig] as string}
+                      onChange={(e) => setConfig({ ...config, [colorField.key]: e.target.value })}
+                      className="flex-1 px-4 py-2 border border-slate-300 rounded-lg outline-none uppercase font-mono text-sm"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* SECCIÓN: REDES SOCIALES */}
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+            <h2 className="text-lg font-semibold flex items-center gap-2 border-b border-slate-100 pb-4">
               <Globe className="w-5 h-5 text-indigo-500" />
               Redes Sociales
             </h2>
@@ -196,39 +325,71 @@ export const BrandingPage: React.FC = () => {
           </div>
         </div>
 
+        {/* VISTA PREVIA (AISLADA) */}
         <div className="space-y-6">
-          <h2 className="text-lg font-semibold text-slate-900">Vista Previa</h2>
-          <div className="bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden sticky top-6">
-            <div className="h-16 border-b border-slate-100 flex items-center px-6 justify-between" style={{ borderTop: `4px solid ${config.primaryColor}` }}>
-              {config.logoUrl ? (
-                <img src={config.logoUrl} alt="Logo" className="h-8 max-w-[120px] object-contain" />
+          <h2 className="text-lg font-semibold text-slate-900">Vista Previa Ecommerce</h2>
+          <div 
+            className="rounded-xl border border-slate-200 shadow-lg overflow-hidden sticky top-6"
+            style={{ 
+              backgroundColor: config.colorBrandBg,
+              color: config.colorBrandText,
+            }}
+          >
+            {/* Header Preview */}
+            <div className="h-16 flex items-center px-6 justify-between shadow-sm" style={{ backgroundColor: '#ffffff' }}>
+              {config.logoHorizontalUrl ? (
+                <img src={config.logoHorizontalUrl} alt="Logo" className="h-8 max-w-[120px] object-contain" />
               ) : (
-                <span className="font-bold text-lg">{config.brandName || 'Tu Marca'}</span>
+                <span className="font-bold text-lg" style={{ color: config.colorBrandAccent }}>
+                  {config.brandName || 'Tu Marca'}
+                </span>
               )}
-              <div className="w-8 h-8 rounded-full bg-slate-100" />
+              <div className="flex gap-4">
+                <span className="text-sm font-medium cursor-pointer hover:opacity-80">Inicio</span>
+                <span className="text-sm font-medium cursor-pointer hover:opacity-80">Catálogo</span>
+              </div>
             </div>
             
-            <div className="p-8 space-y-4">
-              <div className="h-4 bg-slate-100 rounded w-3/4" />
-              <div className="h-32 bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-200">
-                <ImageIcon className="w-8 h-8 text-slate-300" />
+            {/* Body Preview */}
+            <div className="p-8 space-y-6">
+              <div className="space-y-2 text-center">
+                <h3 className="text-2xl font-bold" style={{ color: config.colorBrandAccent }}>
+                  Descubre la nueva colección
+                </h3>
+                <p className="text-sm opacity-80">Encuentra los mejores productos seleccionados para ti.</p>
               </div>
+
+              {/* Fake Banner */}
+              <div className="h-40 rounded-xl flex items-center justify-center border-2 border-dashed border-opacity-30 relative overflow-hidden"
+                   style={{ borderColor: config.colorBrandPrimary, backgroundColor: `${config.colorBrandPrimary}20` }}>
+                <ImageIcon className="w-10 h-10 opacity-30" />
+              </div>
+              
+              {/* Fake Button */}
               <button 
-                className="w-full py-3 rounded-lg text-white font-medium shadow-sm transition-opacity"
-                style={{ backgroundColor: config.primaryColor }}
+                className="w-full py-3 rounded-lg font-medium shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                style={{ backgroundColor: config.colorBrandPrimary, color: config.colorBrandBg }}
               >
-                Botón de Acción
+                Comprar Ahora
               </button>
             </div>
 
-            <div className="p-6 bg-slate-900 text-white space-y-4">
-              <div className="flex gap-4">
-                {config.socialLinksJson?.facebook && <FacebookIcon />}
-                {config.socialLinksJson?.instagram && <InstagramIcon />}
-                {config.socialLinksJson?.twitter && <TwitterIcon />}
+            {/* Footer Preview */}
+            <div className="p-6 space-y-4" style={{ backgroundColor: config.colorBrandAccent, color: config.colorBrandBg }}>
+              <div className="flex justify-between items-center">
+                {config.logoVerticalUrl ? (
+                  <img src={config.logoVerticalUrl} alt="Logo" className="h-10 max-w-[100px] object-contain brightness-0 invert" />
+                ) : (
+                  <span className="font-bold">{config.brandName || 'Tu Marca'}</span>
+                )}
+                <div className="flex gap-4">
+                  {config.socialLinksJson?.facebook && <FacebookIcon className="w-5 h-5 opacity-80 hover:opacity-100 cursor-pointer" />}
+                  {config.socialLinksJson?.instagram && <InstagramIcon className="w-5 h-5 opacity-80 hover:opacity-100 cursor-pointer" />}
+                  {config.socialLinksJson?.twitter && <TwitterIcon className="w-5 h-5 opacity-80 hover:opacity-100 cursor-pointer" />}
+                </div>
               </div>
-              <div className="text-xs opacity-50">
-                © {new Date().getFullYear()} {config.brandName || 'Tu Marca'}.
+              <div className="text-xs opacity-60 text-center border-t pt-4" style={{ borderColor: `${config.colorBrandBg}30` }}>
+                © {new Date().getFullYear()} {config.brandName || 'Tu Marca'}. Todos los derechos reservados.
               </div>
             </div>
           </div>
