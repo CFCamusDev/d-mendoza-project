@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import RegisterPage from '../features/ecommerce/auth/RegisterPage';
 import VerifyPage from '../features/ecommerce/auth/VerifyPage';
 import LoginPage from '../features/ecommerce/auth/LoginPage';
@@ -17,6 +17,7 @@ import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
 import { AppShell } from '../components/layout/AppShell';
 import { AdminShell } from '../components/layout/AdminShell';
+import { PosShell } from '../components/layout/PosShell';
 import CategoriesPage from '../features/admin/CategoriesPage';
 import BrandsPage from '../features/admin/BrandsPage';
 import AttributesPage from '../features/admin/AttributesPage';
@@ -51,32 +52,33 @@ export const AppRouter = () => {
         {/* Google OAuth Success Redirect (HU-001 / T-036) */}
         <Route path="/auth/google/success" element={<GoogleAuthSuccessPage />} />
 
-        {/* POS Routes with Cash Register Opening Shift verification */}
-        <Route
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
-              <PosProvider>
-                <Outlet />
-              </PosProvider>
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/pos/open-cash" element={<OpenCashPage />} />
-          <Route
-            path="/pos"
-            element={
-              <PosGuard>
-                <HomePage />
-              </PosGuard>
-            }
-          />
-        </Route>
         <Route
           path="/profile"
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'SELLER', 'CLIENT']}>
               <ProfilePage />
             </ProtectedRoute>
+          }
+        />
+      </Route>
+
+      {/* POS Routes with Cash Register Opening Shift verification (standalone container) */}
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
+            <PosProvider>
+              <PosShell />
+            </PosProvider>
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/pos/open-cash" element={<OpenCashPage />} />
+        <Route
+          path="/pos"
+          element={
+            <PosGuard>
+              <HomePage />
+            </PosGuard>
           }
         />
       </Route>
