@@ -1,21 +1,39 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/context/AuthContext';
-import logoHorizontal from '@/assets/logo-horizontal.png';
+
 import { 
   Menu, 
   X, 
   User, 
   LogOut, 
   Shield, 
-  Home
+  Home,
+  Link as LinkIcon
 } from 'lucide-react';
+import { useBrand } from '@/shared/context/BrandContext';
 
 export const AppShell: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const { brandConfig } = useBrand();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Helper for dynamic social icons using inline SVGs
+  const getSocialIcon = (key: string) => {
+    const className = "w-5 h-5";
+    switch (key.toLowerCase()) {
+      case 'facebook': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
+      case 'instagram': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>;
+      case 'twitter':
+      case 'x': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>;
+      case 'tiktok': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>;
+      case 'youtube': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>;
+      case 'linkedin': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>;
+      default: return <LinkIcon className={className} />;
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -39,7 +57,11 @@ export const AppShell: React.FC = () => {
         <div className="max-w-[1280px] mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <img src={logoHorizontal} alt="D'Mendoza Logo" className="h-9 md:h-11 object-contain transition-transform hover:scale-[1.02]" />
+            {brandConfig?.logoHorizontalUrl ? (
+              <img src={brandConfig.logoHorizontalUrl} alt={brandConfig?.brandName || "D'Mendoza Logo"} className="h-9 md:h-11 object-contain transition-transform hover:scale-[1.02]" />
+            ) : (
+              <span className="text-xl font-bold tracking-tight text-brand-accent">{brandConfig?.brandName || "D'Mendoza"}</span>
+            )}
           </Link>
 
           {/* Menú de Navegación - Pantallas Medianas (Tablet) y Grandes (Desktop) */}
@@ -229,9 +251,13 @@ export const AppShell: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             {/* Columna 1: Branding y Descripción */}
             <div className="space-y-4">
-              <img src={logoHorizontal} alt="D'Mendoza" className="h-10 brightness-[10] object-contain" />
+              {brandConfig?.logoHorizontalUrl ? (
+                <img src={brandConfig.logoHorizontalUrl} alt={brandConfig?.brandName || "D'Mendoza"} className="h-10 brightness-[10] object-contain" />
+              ) : (
+                <span className="text-2xl font-bold tracking-tight text-white">{brandConfig?.brandName || "D'Mendoza"}</span>
+              )}
               <p className="text-xs text-slate-300 leading-relaxed max-w-sm">
-                Plataforma e-commerce premium D'Mendoza. Redefiniendo la elegancia y experiencia de compra digital con diseño de vanguardia.
+                Plataforma e-commerce premium {brandConfig?.brandName || "D'Mendoza"}. Redefiniendo la elegancia y experiencia de compra digital con diseño de vanguardia.
               </p>
             </div>
 
@@ -253,20 +279,18 @@ export const AppShell: React.FC = () => {
                 Escríbenos a: <span className="text-brand-primary font-semibold">soporte@dmendoza.com</span>
               </p>
               <div className="flex gap-4 pt-2">
-                {/* Iconos Redes Sociales genéricos con SVG */}
-                <a href="https://facebook.com" className="text-slate-300 hover:text-brand-primary transition-colors" target="_blank" rel="noreferrer">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-                </a>
-                <a href="https://instagram.com" className="text-slate-300 hover:text-brand-primary transition-colors" target="_blank" rel="noreferrer">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
-                </a>
+                {brandConfig?.socialLinksJson && Object.entries(brandConfig.socialLinksJson).map(([platform, url]) => (
+                  <a key={platform} href={url as string} className="text-slate-300 hover:text-brand-primary transition-colors" target="_blank" rel="noreferrer" title={platform}>
+                    {getSocialIcon(platform)}
+                  </a>
+                ))}
               </div>
             </div>
           </div>
 
           {/* Divisor & Copyright */}
           <div className="border-t border-brand-primary/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400">
-            <p>© {new Date().getFullYear()} D'Mendoza E-Commerce. Todos los derechos reservados.</p>
+            <p>© {new Date().getFullYear()} {brandConfig?.brandName || "D'Mendoza"} E-Commerce. Todos los derechos reservados.</p>
             <div className="flex gap-6">
               <a href="#terminos" className="hover:text-white transition-colors">Términos de Servicio</a>
               <a href="#privacidad" className="hover:text-white transition-colors">Política de Privacidad</a>

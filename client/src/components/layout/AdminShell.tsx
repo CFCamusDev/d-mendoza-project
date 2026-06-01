@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/context/AuthContext';
 import { useStockAlerts } from '@/features/admin/hooks/useStockAlerts';
-import logoHorizontal from '@/assets/logo-horizontal.png';
+import { useBrand } from '@/shared/context/BrandContext';
 import { 
   Menu, 
   User, 
@@ -31,6 +31,7 @@ import {
 
 export const AdminShell: React.FC = () => {
   const { user, logout } = useAuth();
+  const { brandConfig } = useBrand();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -84,13 +85,17 @@ export const AdminShell: React.FC = () => {
         {/* Top Branding/Logo Area */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-[#D9D9D2]/10 bg-[#151512]">
           {!isCollapsed ? (
-            <Link to="/admin/inventory/stock" className="flex items-center gap-2">
-              <img src={logoHorizontal} alt="Logo" className="h-8 brightness-[10] object-contain" />
-              <span className="text-[10px] bg-[#3F3F3F] text-[#FAFAFA] font-extrabold px-1.5 py-0.5 rounded tracking-widest uppercase">Admin</span>
+            <Link to="/admin/inventory/stock" className="flex items-center gap-2 overflow-hidden">
+              {brandConfig?.logoHorizontalUrl ? (
+                <img src={brandConfig.logoHorizontalUrl} alt="Logo" className="h-8 brightness-[10] object-contain" />
+              ) : (
+                <span className="text-[#FAFAFA] font-bold text-sm truncate max-w-[120px]">{brandConfig?.brandName || "D'Mendoza"}</span>
+              )}
+              <span className="text-[10px] bg-[#3F3F3F] text-[#FAFAFA] font-extrabold px-1.5 py-0.5 rounded tracking-widest uppercase shrink-0">Admin</span>
             </Link>
           ) : (
             <div className="mx-auto text-center font-extrabold text-white text-lg tracking-widest bg-[#3F3F3F] h-8 w-8 rounded-lg flex items-center justify-center">
-              D'
+              {brandConfig?.brandName ? brandConfig.brandName.charAt(0).toUpperCase() : "D'"}
             </div>
           )}
         </div>
