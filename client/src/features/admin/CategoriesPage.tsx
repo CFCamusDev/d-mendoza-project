@@ -118,7 +118,7 @@ const CategoriesPage: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
-      const { data } = await axiosInstance.get('/api/v1/categories');
+      const { data } = await axiosInstance.get('/v1/categories');
       setCategories(data.data);
     } catch { 
       toast.error('Error al cargar categorías'); 
@@ -139,10 +139,10 @@ const CategoriesPage: React.FC = () => {
     setSubmitting(true);
     try {
       if (editing) {
-        await axiosInstance.patch(`/api/v1/categories/${editing.id}`, form);
+        await axiosInstance.patch(`/v1/categories/${editing.id}`, form);
         toast.success('Categoría actualizada');
       } else {
-        await axiosInstance.post('/api/v1/categories', form);
+        await axiosInstance.post('/v1/categories', form);
         toast.success('Categoría creada');
       }
       setShowModal(false);
@@ -157,7 +157,7 @@ const CategoriesPage: React.FC = () => {
   const handleDeactivate = async (id: number) => {
     if (!confirm('¿Inactivar esta categoría y todas sus subcategorías descendentes?')) return;
     try {
-      await axiosInstance.delete(`/api/v1/categories/${id}`);
+      await axiosInstance.delete(`/v1/categories/${id}`);
       toast.success('Categoría inactivada');
       fetchCategories();
     } catch { 

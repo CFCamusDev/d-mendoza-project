@@ -39,7 +39,7 @@ const RotationReportPage: React.FC = () => {
         to: new Date(to).toISOString(),
         ...(branchId ? { branchId } : {}),
       });
-      const { data: res } = await axiosInstance.get(`/api/v1/reports/inventory-rotation?${params}`);
+      const { data: res } = await axiosInstance.get(`/v1/reports/inventory-rotation?${params}`);
       setData(res.data);
       if (res.data.length === 0) {
         toast('Sin movimientos en el período seleccionado', { icon: 'ℹ️' });

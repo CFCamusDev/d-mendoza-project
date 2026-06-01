@@ -33,7 +33,7 @@ const BrandsPage: React.FC = () => {
 
   const fetchBrands = async () => {
     try {
-      const { data } = await axiosInstance.get('/api/v1/brands');
+      const { data } = await axiosInstance.get('/v1/brands');
       setBrands(data.data);
     } catch { 
       toast.error('Error al cargar marcas'); 
@@ -78,10 +78,10 @@ const BrandsPage: React.FC = () => {
     try {
       const payload = { name: form.name, logoUrl: form.logoUrl || null };
       if (editing) {
-        await axiosInstance.patch(`/api/v1/brands/${editing.id}`, payload);
+        await axiosInstance.patch(`/v1/brands/${editing.id}`, payload);
         toast.success('Marca actualizada');
       } else {
-        await axiosInstance.post('/api/v1/brands', payload);
+        await axiosInstance.post('/v1/brands', payload);
         toast.success('Marca creada');
       }
       setShowModal(false);
@@ -96,7 +96,7 @@ const BrandsPage: React.FC = () => {
   const handleDeactivate = async (id: number) => {
     if (!confirm('¿Inactivar esta marca?')) return;
     try {
-      await axiosInstance.delete(`/api/v1/brands/${id}`);
+      await axiosInstance.delete(`/v1/brands/${id}`);
       toast.success('Marca inactivada');
       fetchBrands();
     } catch { 

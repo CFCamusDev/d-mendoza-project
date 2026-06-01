@@ -41,15 +41,15 @@ const ProductFormPage: React.FC = () => {
 
   useEffect(() => {
     Promise.all([
-      axiosInstance.get('/api/v1/categories'),
-      axiosInstance.get('/api/v1/brands'),
+      axiosInstance.get('/v1/categories'),
+      axiosInstance.get('/v1/brands'),
     ]).then(([cats, brnds]) => {
       setCategories(cats.data.data);
       setBrands(brnds.data.data);
     }).catch(() => toast.error('Error al cargar datos'));
 
     if (isEdit) {
-      axiosInstance.get(`/api/v1/products/${id}`)
+      axiosInstance.get(`/v1/products/${id}`)
         .then(({ data }) => reset(data.data))
         .catch(() => toast.error('Error al cargar producto'));
     }
@@ -87,11 +87,11 @@ const ProductFormPage: React.FC = () => {
     try {
       let productId: number;
       if (isEdit) {
-        await axiosInstance.patch(`/api/v1/products/${id}`, data);
+        await axiosInstance.patch(`/v1/products/${id}`, data);
         productId = Number(id);
         toast.success('Producto actualizado');
       } else {
-        const { data: res } = await axiosInstance.post('/api/v1/products', data);
+        const { data: res } = await axiosInstance.post('/v1/products', data);
         productId = res.data.id;
         toast.success('Producto creado');
       }
@@ -101,7 +101,7 @@ const ProductFormPage: React.FC = () => {
         images.forEach(img => formData.append('images', img.file));
         const mainIndex = images.findIndex(img => img.isMain);
         formData.append('isMain', String(mainIndex >= 0 ? mainIndex : 0));
-        await axiosInstance.post(`/api/v1/products/${productId}/images`, formData, {
+        await axiosInstance.post(`/v1/products/${productId}/images`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       }
