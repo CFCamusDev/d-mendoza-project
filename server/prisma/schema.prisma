@@ -377,6 +377,14 @@ model AuditItem {
 }
 
 // ─── HU-034: Aplicación de Descuentos en el POS ───────────────────────────────
+// ─── HU-035: Pago con Múltiples Métodos Combinados ────────────────────────────
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  YAPE
+}
 
 enum PosOrderStatus {
   OPEN
@@ -395,6 +403,7 @@ model PosOrder {
   branchId      Int
   branch        Branch         @relation(fields: [branchId], references: [id])
   items         PosOrderItem[]
+  payments      Payment[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -418,6 +427,19 @@ model PosOrderItem {
   @@index([posOrderId])
   @@index([variantId])
 }
+
+/// Pagos asociados a una venta POS.
+model Payment {
+  id         Int          @id @default(autoincrement())
+  posOrderId Int
+  posOrder   PosOrder     @relation(fields: [posOrderId], references: [id], onDelete: Cascade)
+  method     PaymentMethod
+  amount     Decimal      @db.Decimal(10, 2)
+  createdAt  DateTime     @default(now())
+
+  @@index([posOrderId])
+}
+
 // ─── HU-032: Apertura de Caja y Vinculación al Turno del Vendedor ─────────────
 
 enum TurnStatus {

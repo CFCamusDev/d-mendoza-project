@@ -1,0 +1,142 @@
+import { Request, Response } from 'express';
+import prisma from '@infrastructure/database/prisma';
+
+export class SaleController {
+  async processSale(req: Request, res: Response) {
+    try {
+      const { items, subtotal, discountTotal, total, payments, branchId } = req.body;
+      const userId = req.auth?.userId;
+
+      // 1. Validaciones básicas
+      if (!items || !items.length || !payments || !payments.length || !branchId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Faltan datos obligatorios (items, payments, branchId).',
+        });
+      }
+
+      // Validar que la suma de pagos cubra el total
+      const paymentsSum = payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+      if (paymentsSum < total) {
+        return res.status(400).json({
+          success: false,
+          error: `El pago (S/. ${paymentsSum.toFixed(2)}) no cubre el total (S/. ${total.toFixed(2)}).`,
+        });
+      }
+
+      // 2. Transacción
+      const result = await prisma.$transaction(async (tx) => {
+        // A) Validar Stock
+        for (const item of items) {
+          const branchStock = await tx.branchStock.findUnique({
+            where: {
+              variantId_branchId: {
+                variantId: item.variantId,
+                branchId,
+              },
+            },
+          });
+
+          if (!branchStock || branchStock.quantity < item.quantity) {
+            throw new Error(`Stock insuficiente para el producto/variante ID ${item.variantId}. Disponible: ${branchStock?.quantity || 0}, Requerido: ${item.quantity}.`);
+          }
+        }
+
+        // B) Crear Venta (PosOrder) y sus Ítems
+        const order = await tx.posOrder.create({
+          data: {
+            branchId,
+            userId,
+            subtotal,
+            discountTotal,
+            total,
+            status: 'COMPLETED',
+            items: {
+              create: items.map((item: any) => ({
+                variantId: item.variantId,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                discountAmount: item.discountAmount || 0,
+                lineTotal: (item.unitPrice * item.quantity) - (item.discountAmount || 0),
+              })),
+            },
+          },
+        });
+
+        // C) Crear Pagos (Solo guardamos el monto exacto cobrado a la deuda)
+        let remainingTotal = total;
+        const paymentsToCreate = [];
+
+        for (const p of payments) {
+          if (remainingTotal <= 0) break;
+
+          const amountToCharge = Math.min(Number(p.amount), remainingTotal);
+          paymentsToCreate.push({
+            posOrderId: order.id,
+            method: p.method, // 'CASH', 'CARD', 'TRANSFER', 'YAPE'
+            amount: amountToCharge,
+          });
+          remainingTotal -= amountToCharge;
+        }
+
+        await tx.payment.createMany({
+          data: paymentsToCreate,
+        });
+
+        // D) Descontar Stock y Generar Kardex
+        for (const item of items) {
+          // Descontar
+          await tx.branchStock.update({
+            where: {
+              variantId_branchId: {
+                variantId: item.variantId,
+                branchId,
+              },
+            },
+            data: {
+              quantity: {
+                decrement: item.quantity,
+              },
+            },
+          });
+
+          // Kardex
+          const lastKardex = await tx.kardexEntry.findFirst({
+            where: { variantId: item.variantId, branchId },
+            orderBy: { id: 'desc' },
+          });
+
+          const currentUnitCost = lastKardex ? lastKardex.balanceCost : 0;
+          const currentBalanceQty = lastKardex ? lastKardex.balanceQty : 0;
+          const newBalanceQty = currentBalanceQty - item.quantity;
+
+          await tx.kardexEntry.create({
+            data: {
+              variantId: item.variantId,
+              branchId,
+              type: 'SALIDA',
+              quantity: item.quantity,
+              unitCost: currentUnitCost,
+              balanceQty: newBalanceQty,
+              balanceCost: currentUnitCost,
+            },
+          });
+        }
+
+        return order;
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: result,
+      });
+
+    } catch (error: any) {
+      console.error('[SaleController] Error procesando venta:', error);
+      return res.status(400).json({
+        success: false,
+        error: error.message || 'Error procesando la venta.',
+      });
+    }
+  }
+}

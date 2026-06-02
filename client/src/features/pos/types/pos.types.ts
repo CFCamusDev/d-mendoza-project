@@ -1,3 +1,5 @@
+export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER' | 'YAPE';
+
 export interface PosProduct {
   variantId: number;
   productId: number;

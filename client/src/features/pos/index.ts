@@ -4,3 +4,4 @@
  */
 export { default as DiscountPanel } from './components/DiscountPanel';
 export type { CartItem, DiscountResult } from './components/DiscountPanel';
+export { PaymentPanel } from './components/PaymentPanel';

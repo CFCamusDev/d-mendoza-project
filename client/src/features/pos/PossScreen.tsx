@@ -5,20 +5,19 @@ import { usePos } from './context/PosContext';
 import { usePosCart } from './hooks/usePosCart';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import type { PosProduct } from './types/pos.types';
-import { DiscountPanel } from '@/features/pos';
+import { DiscountPanel, PaymentPanel } from '@/features/pos';
 import type { DiscountResult } from '@/features/pos';
+import type { PaymentItem } from './components/PaymentPanel';
 import { 
   Search, 
   ShoppingCart, 
   Trash2, 
   Plus,
   Minus, 
-  Coins, 
   Sparkles, 
   PlusCircle, 
   Loader2, 
-  Scan,
-  CheckCircle2
+  Scan
 } from 'lucide-react';
 
 import { ClientSearchBar } from './components/ClientSearchBar';
@@ -34,7 +33,6 @@ export const PossScreen: React.FC = () => {
   const [searchResults, setSearchResults] = useState<PosProduct[]>([]);
   const [searching, setSearching] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState<string>('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   // Discount State (HU-034)
@@ -115,27 +113,59 @@ export const PossScreen: React.FC = () => {
     return () => clearTimeout(delayDebounce);
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (payments: PaymentItem[]) => {
     if (cartItems.length === 0) {
       toast.error('El carrito de ventas está vacío');
       return;
     }
 
-    const payValue = parseFloat(paymentAmount);
-    if (isNaN(payValue) || payValue < finalTotal) {
-      toast.error(`Monto de pago inválido. Debe cubrir el total de S/. ${finalTotal.toFixed(2)}`);
-      return;
-    }
-
     setCheckoutLoading(true);
-    // Simulate payment transaction
-    setTimeout(() => {
-      const change = payValue - finalTotal;
-      toast.success(`¡Venta procesada con éxito! Vuelto: S/. ${change.toFixed(2)}`);
-      clearCart();
-      setPaymentAmount('');
+    try {
+      // Build items array matching backend expected format
+      const itemsForBackend = cartItems.map(item => ({
+        variantId: item.variantId,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        // Calculate proportional discount if needed, or pass 0.
+        // For HU-035 we simplify to 0 unless it's handled properly by the backend.
+        // Since we are overriding discountAmount in the controller if needed, we'll send it as 0 here,
+        // or apply the discountResult.discountAmount to the first item (just a mockup for now).
+        discountAmount: discountResult?.discountAmount ? Number((discountResult.discountAmount / cartItems.length).toFixed(2)) : 0
+      }));
+
+      const res = await axiosInstance.post('/v1/pos/sales', {
+        branchId: activeRegister?.branchId,
+        subtotal: totals.subtotal,
+        discountTotal: discountResult?.discountAmount || 0,
+        total: finalTotal,
+        items: itemsForBackend,
+        payments: payments.map(p => ({
+          method: p.method,
+          amount: p.amount
+        }))
+      });
+
+      if (res.data.success) {
+        // Calculate change if paid with cash more than final total
+        const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+        const change = totalPaid - finalTotal;
+
+        if (change > 0) {
+          toast.success(`¡Venta procesada con éxito! Vuelto: S/. ${change.toFixed(2)}`);
+        } else {
+          toast.success('¡Venta procesada con éxito!');
+        }
+
+        clearCart();
+        setDiscountResult(null);
+      }
+    } catch (error: any) {
+      console.error(error);
+      const msg = error.response?.data?.error || 'Error procesando la venta';
+      toast.error(msg);
+    } finally {
       setCheckoutLoading(false);
-    }, 1200);
+    }
   };
 
   // Keyboard shortcut & automatic fast barcode scanner listener (T-119)
@@ -493,40 +523,14 @@ export const PossScreen: React.FC = () => {
                 />
               </div>
 
-              {/* Checkout fast module */}
-              {cartItems.length > 0 && (
-                <div className="pt-2 flex flex-col sm:flex-row gap-3">
-                  <div className="flex-1 relative">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.10"
-                      value={paymentAmount}
-                      onChange={(e) => setPaymentAmount(e.target.value)}
-                      placeholder="Monto entregado (Efectivo)..."
-                      className="w-full pl-9 pr-3 py-3 rounded-xl border border-[#D9D9D2] bg-white text-sm text-[#3F3F3F] font-extrabold focus:outline-none focus:ring-1 focus:ring-[#3F3F3F] focus:border-[#3F3F3F]"
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                      <Coins className="w-4 h-4" />
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleCheckout}
-                    disabled={checkoutLoading}
-                    className="w-full sm:w-auto px-6 py-3 bg-[#3F3F3F] hover:bg-[#3F3F3F]/90 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {checkoutLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Procesar Pago</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
+              {/* Payment Panel */}
+              <div className="pt-2">
+                <PaymentPanel
+                  totalAmount={finalTotal}
+                  onConfirm={handleCheckout}
+                  isLoading={checkoutLoading}
+                />
+              </div>
             </div>
 
           </div>
