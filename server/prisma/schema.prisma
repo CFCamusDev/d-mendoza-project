@@ -376,7 +376,6 @@ model AuditItem {
   @@index([variantId])
 }
 
-<<<<<<< HEAD
 // ─── HU-034: Aplicación de Descuentos en el POS ───────────────────────────────
 
 enum PosOrderStatus {
@@ -419,7 +418,6 @@ model PosOrderItem {
   @@index([posOrderId])
   @@index([variantId])
 }
-=======
 // ─── HU-032: Apertura de Caja y Vinculación al Turno del Vendedor ─────────────
 
 enum TurnStatus {
@@ -458,4 +456,4 @@ model CashTurn {
 }
 
 
->>>>>>> origin/develop
+

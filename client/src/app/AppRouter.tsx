@@ -28,7 +28,6 @@ import SuppliersPage from '../features/admin/suppliers/SuppliersPage';
 import StockEntriesPage from '../features/admin/entries/StockEntriesPage';
 import StockPage from '../features/admin/stock/StockPage';
 import InventoryAuditPage from '../features/admin/audits/InventoryAuditPage';
-import PosPage from '../features/pos/PosPage'; // HU-034
 import { PosProvider, PosGuard } from '../features/pos/context/PosContext';
 import OpenCashPage from '../features/pos/OpenCashPage';
 import CashRegistersPage from '../features/admin/branches/CashRegistersPage';
@@ -176,15 +175,7 @@ export const AppRouter = () => {
         {/* HU-030 */}
         <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN']}><RotationReportPage /></ProtectedRoute>} />
 
-        {/* HU-034 — Punto de Venta (POS) */}
-        <Route
-          path="/admin/pos"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
-              <PosPage />
-            </ProtectedRoute>
-          }
-        />
+
 
         {/* User Profile */}
         <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><ProfilePage /></ProtectedRoute>} />
