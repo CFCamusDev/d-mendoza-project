@@ -16,11 +16,10 @@ import {
   PlusCircle, 
   Loader2, 
   Scan,
-  CheckCircle2,
-  UserPlus
+  CheckCircle2
 } from 'lucide-react';
 
-import { QuickRegisterModal } from './components/QuickRegisterModal';
+import { ClientSearchBar } from './components/ClientSearchBar';
 
 export const PossScreen: React.FC = () => {
   useDocumentTitle('Punto de Venta (POS) - D\'Mendoza');
@@ -36,8 +35,7 @@ export const PossScreen: React.FC = () => {
   const [paymentAmount, setPaymentAmount] = useState<string>('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  // Client Quick Register Modal State
-  const [isClientRegisterOpen, setIsClientRegisterOpen] = useState(false);
+  // Client Link State (HU-033)
   const [linkedClient, setLinkedClient] = useState<{ id: number; name: string; documentId: string } | null>(null);
 
   // References for barcode scanner (T-119)
@@ -259,38 +257,12 @@ export const PossScreen: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Client Selection / Registration Action (HU-007) */}
-            <div className="pt-2 border-t border-[#D9D9D2]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              {linkedClient ? (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200/50 rounded-xl max-w-xs shrink">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Cliente Vinculado</div>
-                    <div className="text-xs font-bold text-emerald-950 truncate" title={linkedClient.name}>
-                      {linkedClient.name} ({linkedClient.documentId})
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setLinkedClient(null)}
-                    className="text-[10px] text-emerald-700 hover:text-emerald-950 font-bold ml-1 cursor-pointer"
-                  >
-                    Quitar
-                  </button>
-                </div>
-              ) : (
-                <div className="text-[11px] text-[#6B6B6B] italic font-semibold">
-                  Ningún cliente vinculado a la venta
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setIsClientRegisterOpen(true)}
-                className="text-xs font-bold text-[#3F3F3F] hover:bg-[#F7F7F5] bg-white border border-[#D9D9D2] hover:border-[#3F3F3F] px-3.5 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>Alta Rápida Cliente</span>
-              </button>
+            {/* Client Search and Registration Area (HU-033 / T-123) */}
+            <div className="pt-3 border-t border-[#D9D9D2]/30">
+              <ClientSearchBar 
+                linkedClient={linkedClient} 
+                onSelectClient={setLinkedClient} 
+              />
             </div>
           </div>
 
@@ -525,15 +497,6 @@ export const PossScreen: React.FC = () => {
         </div>
 
       </div>
-
-      {/* Client Quick Registration Modal (HU-007) */}
-      <QuickRegisterModal
-        isOpen={isClientRegisterOpen}
-        onClose={() => setIsClientRegisterOpen(false)}
-        onSuccess={(client) => {
-          setLinkedClient(client);
-        }}
-      />
 
     </div>
   );
