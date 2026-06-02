@@ -25,8 +25,15 @@ export class PrismaClientRepository implements IClientRepository {
       data: {
         email: data.email,
         name: data.name,
+        lastName: data.lastName,
         phone: data.phone,
+        documentType: data.documentType,
         documentId: data.documentId,
+        address: data.address,
+        department: data.department,
+        province: data.province,
+        district: data.district,
+        ubigeo: data.ubigeo,
       },
     });
     return this.toDomain(record);
@@ -40,22 +47,20 @@ export class PrismaClientRepository implements IClientRepository {
     });
   }
 
-  private toDomain(record: {
-    id: number;
-    email: string;
-    name: string;
-    phone: string | null;
-    documentId: string | null;
-    userId: number | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }): Client {
+  private toDomain(record: any): Client {
     return {
       id: record.id,
       email: record.email,
       name: record.name,
+      lastName: record.lastName,
       phone: record.phone,
+      documentType: record.documentType,
       documentId: record.documentId,
+      address: record.address,
+      department: record.department,
+      province: record.province,
+      district: record.district,
+      ubigeo: record.ubigeo,
       userId: record.userId,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,

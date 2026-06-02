@@ -2201,3 +2201,120 @@ Retornado cuando el vendedor autenticado no ha realizado la apertura de caja par
   "error": "No tienes un turno de caja abierto. Por favor, abre caja antes de realizar búsquedas o ventas en el POS."
 }
 ```
+
+---
+
+### GET /api/v1/pos/clients/lookup
+
+Consulta de forma predictiva los datos de DNI o RUC desde la API externa de Factiliza.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/clients/lookup` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `type` | `string` | Sí | Tipo de documento, debe ser exactamente `DNI` o `RUC`. |
+| `number` | `string` | Sí | Número de documento (8 dígitos para DNI, 11 dígitos para RUC). |
+
+#### 3. Respuestas (Responses)
+
+##### Búsqueda Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "success": true,
+    "documentNumber": "73614169",
+    "name": "JOSE PEDRO",
+    "lastName": "CASTILLO TERRONES",
+    "address": "CASERIO PUÑA",
+    "department": "CAJAMARCA",
+    "province": "CHOTA",
+    "district": "TACABAMBA",
+    "ubigeo": "060417"
+  }
+}
+```
+
+##### Documento no Encontrado o Inválido (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "Documento no encontrado en el padrón o inválido"
+}
+```
+
+---
+
+### POST /api/v1/pos/clients/quick-register
+
+Realiza el registro rápido de un cliente en el POS utilizando datos de la API de Factiliza.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/pos/clients/quick-register` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Cuerpo de la Solicitud (Request Body)
+
+```json
+{
+  "documentType": "DNI",
+  "documentId": "73614169",
+  "phone": "987654321",
+  "email": "cliente@correo.com"
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Registro Exitoso (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 15,
+    "documentType": "DNI",
+    "documentId": "73614169",
+    "name": "JOSE PEDRO",
+    "lastName": "CASTILLO TERRONES",
+    "phone": "987654321",
+    "email": "cliente@correo.com",
+    "address": "CASERIO PUÑA",
+    "department": "CAJAMARCA",
+    "province": "CHOTA",
+    "district": "TACABAMBA",
+    "ubigeo": "060417",
+    "userId": null,
+    "createdAt": "2026-06-01T23:28:00.000Z",
+    "updatedAt": "2026-06-01T23:28:00.000Z"
+  }
+}
+```
+
+##### Conflicto - Cliente ya existe en BD (HTTP 409 Conflict)
+
+```json
+{
+  "success": false,
+  "error": "El cliente con documento 73614169 ya se encuentra registrado en el sistema"
+}
+```
+
+##### Error - Documento Inválido o No Existe en Factiliza (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Cliente no encontrado o documento inválido (DNI: 00000000)"
+}
+```
