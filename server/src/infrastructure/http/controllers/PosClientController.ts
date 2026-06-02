@@ -2,9 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { QuickRegisterClientUseCase } from '@application/use-cases/pos/QuickRegisterClientUseCase';
 import { FactilizaService } from '@infrastructure/services/FactilizaService';
+import { PrismaClientRepository } from '@infrastructure/database/repositories/PrismaClientRepository';
+import { SearchPosClientsUseCase } from '@application/use-cases/pos/SearchPosClientsUseCase';
 
 const quickRegisterUseCase = new QuickRegisterClientUseCase();
 const factilizaService = new FactilizaService();
+const clientRepository = new PrismaClientRepository();
+const searchUseCase = new SearchPosClientsUseCase(clientRepository);
 
 const QuickRegisterSchema = z.object({
   documentType: z.enum(['DNI', 'RUC']),
@@ -83,6 +87,27 @@ export class PosClientController {
       }
 
       return res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/v1/pos/clients/search?q=...
+   * Busca clientes locales por DNI, RUC o Nombre/Apellido con paginación máxima de 10 registros.
+   */
+  async search(req: Request, res: Response, next: NextFunction) {
+    try {
+      const q = String(req.query.q || '').trim();
+      if (!q) {
+        return res.status(400).json({ success: false, error: 'El parámetro de búsqueda q es obligatorio' });
+      }
+
+      const page = parseInt(String(req.query.page || '1'), 10);
+      const parsedPage = isNaN(page) || page < 1 ? 1 : page;
+
+      const result = await searchUseCase.execute(q, parsedPage);
+      return res.status(200).json({ success: true, ...result });
     } catch (error: any) {
       next(error);
     }
