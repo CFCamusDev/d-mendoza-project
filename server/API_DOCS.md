@@ -2549,3 +2549,55 @@ Se espera un objeto JSON con la siguiente estructura:
   "error": "Acceso denegado: Se requiere el permiso 'pos:discounts'"
 }
 ```
+
+---
+
+### 3. Emisión de Comprobante (Receipt)
+
+**`GET /api/v1/pos/sales/:id/receipt`**
+
+Devuelve los datos completos y estructurados de una venta específica, optimizados para la impresión del ticket en el POS (comprobante térmico de 58/80mm).
+
+- **Permisos requeridos:** `pos:sales:read` o `pos:sales`
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "orderId": 1,
+    "date": "2026-06-02T12:00:00.000Z",
+    "seller": "Carlos Mendoza",
+    "branch": {
+      "id": 1,
+      "name": "Sede Principal",
+      "address": "Av. Central 123",
+      "phone": "999888777"
+    },
+    "items": [
+      {
+        "id": 1,
+        "name": "Aceite Motor 5W30",
+        "sku": "LUB-001",
+        "quantity": 2,
+        "unitPrice": 45.00,
+        "discountAmount": 0.00,
+        "lineTotal": 90.00,
+        "isCrossBranch": false
+      }
+    ],
+    "totals": {
+      "subtotal": 90.00,
+      "discountTotal": 0.00,
+      "total": 90.00,
+      "paid": 100.00,
+      "change": 10.00
+    },
+    "payments": [
+      {
+        "method": "CASH",
+        "amount": 100.00
+      }
+    ]
+  }
+}
+```

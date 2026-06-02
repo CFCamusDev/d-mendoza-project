@@ -20,10 +20,10 @@ export const PosShell: React.FC = () => {
   const isAdmin = user?.role === 'ADMIN';
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex flex-col font-sans antialiased text-[#3F3F3F]">
+    <div className="min-h-screen bg-[#FAFAFA] print:bg-white flex flex-col font-sans antialiased text-[#3F3F3F]">
       
       {/* POS Topbar Header */}
-      <header className="bg-white border-b border-[#D9D9D2]/40 h-16 shrink-0 flex items-center justify-between px-6 shadow-sm sticky top-0 z-40">
+      <header className="bg-white border-b border-[#D9D9D2]/40 h-16 shrink-0 flex items-center justify-between px-6 shadow-sm sticky top-0 z-40 print:hidden">
         
         {/* Left Section: Logo & Quick Active Session Badge */}
         <div className="flex items-center gap-4">

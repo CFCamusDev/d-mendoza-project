@@ -8,6 +8,7 @@ import type { PosProduct } from './types/pos.types';
 import { DiscountPanel, PaymentPanel } from '@/features/pos';
 import type { DiscountResult } from '@/features/pos';
 import type { PaymentItem } from './components/PaymentPanel';
+import { Receipt, type ReceiptData } from './components/Receipt';
 import { 
   Search, 
   ShoppingCart, 
@@ -17,7 +18,8 @@ import {
   Sparkles, 
   PlusCircle, 
   Loader2, 
-  Scan
+  Scan,
+  CheckCircle2
 } from 'lucide-react';
 
 import { ClientSearchBar } from './components/ClientSearchBar';
@@ -37,6 +39,7 @@ export const PossScreen: React.FC = () => {
 
   // Discount State (HU-034)
   const [discountResult, setDiscountResult] = useState<DiscountResult | null>(null);
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
 
   // Reset discount if cart changes
   useEffect(() => {
@@ -134,7 +137,7 @@ export const PossScreen: React.FC = () => {
       }));
 
       const res = await axiosInstance.post('/v1/pos/sales', {
-        branchId: activeRegister?.branchId,
+        branchId: activeRegister?.branchId || branchId || 1, // Fallback to branch 1 if undefined
         subtotal: totals.subtotal,
         discountTotal: discountResult?.discountAmount || 0,
         total: finalTotal,
@@ -146,6 +149,18 @@ export const PossScreen: React.FC = () => {
       });
 
       if (res.data.success) {
+        // Fetch receipt
+        if (res.data.data?.id) {
+          try {
+            const receiptRes = await axiosInstance.get(`/v1/pos/sales/${res.data.data.id}/receipt`);
+            if (receiptRes.data.success) {
+              setReceiptData(receiptRes.data.data);
+            }
+          } catch (e) {
+            console.error('Error fetching receipt:', e);
+          }
+        }
+
         // Calculate change if paid with cash more than final total
         const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
         const change = totalPaid - finalTotal;
@@ -245,7 +260,8 @@ export const PossScreen: React.FC = () => {
   }, [searchQuery, addItem]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+    <>
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300 print:hidden">
       
       {/* POS Top Title / Meta Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#D9D9D2]/40 pb-5">
@@ -536,10 +552,44 @@ export const PossScreen: React.FC = () => {
           </div>
 
         </div>
-
       </div>
-
     </div>
+
+      {receiptData && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 print:hidden">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl">
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 size={32} />
+              </div>
+              <h2 className="text-2xl font-extrabold text-[#3F3F3F]">¡Venta Exitosa!</h2>
+              <p className="text-[#6B6B6B]">El comprobante ha sido generado correctamente.</p>
+              {receiptData.totals.change > 0 && (
+                <div className="mt-4 p-4 bg-[#F7F7F5] rounded-xl border-2 border-green-500 text-green-700 font-bold text-xl">
+                  VUELTO: S/. {receiptData.totals.change.toFixed(2)}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setReceiptData(null)}
+                className="flex-1 py-3 bg-[#F7F7F5] text-[#3F3F3F] font-bold rounded-xl hover:bg-[#EBEBE8] transition-colors"
+              >
+                Nueva Venta
+              </button>
+              <button 
+                onClick={() => window.print()}
+                className="flex-1 py-3 bg-black text-white font-bold rounded-xl hover:bg-gray-900 transition-colors"
+              >
+                Imprimir Ticket
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Receipt data={receiptData} />
+    </>
   );
 };
 
