@@ -79,6 +79,16 @@ async function main() {
     },
   });
 
+  // HU-034: Permisos para Punto de Venta (POS)
+  const permissionPosDiscounts = await prisma.permission.upsert({
+    where: { name: 'pos:discounts' },
+    update: {},
+    create: {
+      name: 'pos:discounts',
+      description: 'Capacidad para aplicar descuentos en el Punto de Venta (POS).',
+    },
+  });
+
   console.log('✅ Master permissions registered.');
 
   // ------------------------------------------------------------------
@@ -96,6 +106,7 @@ async function main() {
           { id: permissionProductsWrite.id },  // HU-014
           { id: permissionInventoryRead.id },  // HU-051
           { id: permissionInventoryWrite.id }, // HU-051
+          { id: permissionPosDiscounts.id },   // HU-034
         ],
       },
     },
@@ -111,6 +122,7 @@ async function main() {
           { id: permissionProductsWrite.id },  // HU-014
           { id: permissionInventoryRead.id },  // HU-051
           { id: permissionInventoryWrite.id }, // HU-051
+          { id: permissionPosDiscounts.id },   // HU-034
         ],
       },
     },
