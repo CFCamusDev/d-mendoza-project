@@ -75,6 +75,50 @@ Se espera un objeto JSON con la siguiente estructura:
 | `email`    | `string` | Sí        | Debe ser un formato de email válido (`ejemplo@correo.com`).                           |
 | `password` | `string` | Sí        | Mínimo 8 caracteres. Debe contener al menos una letra mayúscula y al menos un número. |
 
+## 9. Módulo de POS (Punto de Venta)
+
+### 9.1 Procesar Venta con Múltiples Pagos
+- **URL:** `/api/v1/pos/sales`
+- **Method:** `POST`
+- **Auth Required:** Yes (Role: `ADMIN`, `SELLER`) + (Permission: `pos:sales`)
+- **Body:**
+```json
+{
+  "branchId": 1,
+  "subtotal": 100.00,
+  "discountTotal": 10.00,
+  "total": 90.00,
+  "items": [
+    { "variantId": 5, "quantity": 2, "unitPrice": 50.00, "discountAmount": 10.00 }
+  ],
+  "payments": [
+    { "method": "CASH", "amount": 50.00 },
+    { "method": "YAPE", "amount": 40.00 }
+  ]
+}
+```
+- **Success Response:**
+  - **Code:** 201 Created
+  - **Content:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "status": "COMPLETED",
+    "subtotal": "100.00",
+    "discountTotal": "10.00",
+    "total": "90.00",
+    "userId": 2,
+    "branchId": 1,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### 9.2 Validar Descuentos (HU-034)
+
 #### 3. Respuestas (Responses)
 
 ##### Exito (HTTP 201 Created)
