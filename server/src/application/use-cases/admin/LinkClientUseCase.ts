@@ -25,6 +25,10 @@ export class LinkClientUseCase {
       throw new Error('El cliente ya tiene una cuenta vinculada');
     }
 
+    if (!client.email) {
+      throw new Error('El cliente debe tener un correo electrónico registrado para poder vincular su cuenta');
+    }
+
     // Verificar si el email ya existe en User (por si acaso no está vinculado pero existe)
     const existingUser = await this.userRepository.findByEmail(client.email);
     if (existingUser) {
@@ -38,10 +42,11 @@ export class LinkClientUseCase {
     // Crear cuenta nueva con contraseña temporal
     const tempPassword = crypto.randomBytes(8).toString('hex');
     const hashedPassword = await Encryption.hashPassword(tempPassword);
+    const clientEmail = client.email;
 
     await this.transactionManager.run(async (tx) => {
       const newUser = await this.userRepository.create({
-        email: client.email,
+        email: clientEmail,
         name: client.name,
         password: hashedPassword,
         isActive: true, // Activamos la cuenta directamente

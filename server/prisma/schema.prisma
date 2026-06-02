@@ -31,18 +31,26 @@ model User {
   roles           Role[] // RBAC many-to-many relationship (HU-004)
   employee        Employee?
   client          Client?
+  cashTurns       CashTurn[] // HU-032
 }
 
 model Client {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  name       String
-  phone      String?
-  documentId String?  @unique // DNI/RUC
-  userId     Int?     @unique
-  user       User?    @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  email        String?  @unique
+  name         String   // Nombres o Razón Social
+  lastName     String?  // Apellidos
+  phone        String?
+  documentType String?  // DNI o RUC
+  documentId   String?  @unique // DNI/RUC número
+  address      String?
+  department   String?
+  province     String?
+  district     String?
+  ubigeo       String?
+  userId       Int?     @unique
+  user         User?    @relation(fields: [userId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Employee {
@@ -74,6 +82,7 @@ model Branch {
   stockAlerts     StockAlert[]
   inventoryAudits InventoryAudit[] // HU-029
   posOrders       PosOrder[]       // HU-034
+  cashRegisters   CashRegister[]   // HU-032
 }
 
 model Warehouse {
@@ -367,6 +376,7 @@ model AuditItem {
   @@index([variantId])
 }
 
+<<<<<<< HEAD
 // ─── HU-034: Aplicación de Descuentos en el POS ───────────────────────────────
 
 enum PosOrderStatus {
@@ -409,3 +419,43 @@ model PosOrderItem {
   @@index([posOrderId])
   @@index([variantId])
 }
+=======
+// ─── HU-032: Apertura de Caja y Vinculación al Turno del Vendedor ─────────────
+
+enum TurnStatus {
+  OPEN
+  CLOSED
+}
+
+model CashRegister {
+  id        Int        @id @default(autoincrement())
+  branchId  Int
+  branch    Branch     @relation(fields: [branchId], references: [id])
+  name      String
+  isActive  Boolean    @default(true)
+  cashTurns CashTurn[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([branchId])
+}
+
+model CashTurn {
+  id         Int          @id @default(autoincrement())
+  registerId Int
+  register   CashRegister @relation(fields: [registerId], references: [id])
+  userId     Int
+  user       User         @relation(fields: [userId], references: [id])
+  openAmount Float
+  status     TurnStatus   @default(OPEN)
+  openedAt   DateTime     @default(now())
+  closedAt   DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([registerId])
+  @@index([userId])
+}
+
+
+>>>>>>> origin/develop

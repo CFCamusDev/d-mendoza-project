@@ -38,6 +38,10 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/inventory-audits](#post-apiv1inventoryaudits)
 - [Punto de Venta (POS) — HU-034](#punto-de-venta-pos--hu-034)
   - [POST /api/v1/pos/discounts/validate](#post-apiv1posdiscountsvalidate)
+- [Apertura de Caja y Turnos — HU-032](#apertura-de-caja-y-turnos--hu-032)
+  - [POST /api/v1/cash-turns/open](#post-apiv1cashturnsopen)
+  - [GET /api/v1/cash-registers](#get-apiv1cashregisters)
+  - [GET /api/v1/cash-turns/active](#get-apiv1cashturnsactive)
 
 ---
 
@@ -1816,6 +1820,571 @@ Si faltan parámetros o no corresponden con las especificaciones.
 ```
 
 ---
+<<<<<<< HEAD
+=======
+
+## Apertura de Caja y Turnos — HU-032
+
+Este módulo permite a los vendedores y administradores aperturar turnos de caja para registrar las operaciones del punto de venta (POS) vinculados a un monto de apertura.
+
+### POST /api/v1/cash-turns/open
+
+Apertura el turno de caja vinculándolo al vendedor autenticado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/cash-turns/open` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "registerId": 1,
+  "openAmount": 150.00
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro | Tipo | Requerido | Reglas de Validación |
+| :--- | :--- | :--- | :--- |
+| `registerId` | `number` | Sí | ID entero positivo de la caja registradora. Debe existir y estar disponible (sin turnos abiertos activos). |
+| `openAmount` | `number` | Sí | Monto inicial de apertura. Debe ser un número mayor o igual a 0. |
+
+#### 3. Respuestas (Responses)
+
+##### Apertura Exitosa (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "registerId": 1,
+    "userId": 2,
+    "openAmount": 150.00,
+    "status": "OPEN",
+    "openedAt": "2026-06-01T11:45:00.000Z",
+    "closedAt": null,
+    "createdAt": "2026-06-01T11:45:00.000Z",
+    "updatedAt": "2026-06-01T11:45:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Si faltan parámetros o no corresponden con las especificaciones.
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "registerId",
+      "message": "El ID de la caja debe ser un entero positivo"
+    }
+  ]
+}
+```
+
+##### Caja No Encontrada (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "La caja registradora con ID 99 no existe"
+}
+```
+
+##### Caja Ocupada o Usuario con Turno Abierto (HTTP 409 Conflict)
+
+Retornado si el vendedor ya tiene un turno abierto o si la caja seleccionada ya está ocupada por otro turno activo.
+
+```json
+{
+  "success": false,
+  "error": "La caja registradora 'Caja Principal' ya tiene un turno abierto activo"
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+- **HTTP 401 Unauthorized**: Si falta el Token o es inválido.
+- **HTTP 403 Forbidden**: Si el usuario autenticado posee un rol diferente a `ADMIN` o `SELLER`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Solo los roles Administrador o Vendedor están autorizados para abrir caja"
+}
+```
+
+---
+
+### GET /api/v1/cash-registers
+
+Obtiene la lista de todas las cajas registradoras asociadas a una sucursal específica.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/cash-registers` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `branchId` | `number` | Sí | ID de la sucursal de la cual se desean obtener las cajas registradoras. |
+
+#### 3. Respuestas (Responses)
+
+##### Listado Exitoso (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "branchId": 1,
+      "name": "Caja Principal - Sede Sur",
+      "createdAt": "2026-06-01T11:00:00.000Z",
+      "updatedAt": "2026-06-01T11:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "branchId": 1,
+      "name": "Caja Secundaria - Sede Sur",
+      "createdAt": "2026-06-01T11:00:00.000Z",
+      "updatedAt": "2026-06-01T11:00:00.000Z"
+    }
+  ]
+}
+```
+
+##### Error de Parámetros (HTTP 400 Bad Request)
+
+Retornado si falta el parámetro `branchId` o si es inválido.
+
+```json
+{
+  "success": false,
+  "error": "El parámetro branchId es obligatorio y debe ser un número entero"
+}
+```
+
+---
+
+### GET /api/v1/cash-turns/active
+
+Obtiene el turno de caja abierto del usuario autenticado si es que existe. Utilizado para hidratar el estado de caja al cargar la aplicación.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/cash-turns/active` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Respuestas (Responses)
+
+##### Turno Activo Encontrado (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "registerId": 1,
+    "userId": 2,
+    "openAmount": 150.00,
+    "status": "OPEN",
+    "openedAt": "2026-06-01T11:45:00.000Z",
+    "closedAt": null,
+    "createdAt": "2026-06-01T11:45:00.000Z",
+    "updatedAt": "2026-06-01T11:45:00.000Z"
+  }
+}
+```
+
+##### Sin Turno Activo (HTTP 200 OK)
+
+Retornado cuando el usuario no tiene ningún turno de caja abierto en sesión.
+
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+---
+
+### POST /api/v1/cash-registers
+
+Crea una nueva caja registradora.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/cash-registers` | JWT `Bearer Token` | Administrador (`ADMIN`) |
+
+#### 2. Cuerpo de la Solicitud (Request Body)
+
+```json
+{
+  "branchId": 1,
+  "name": "Caja Principal - Sede Larco"
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Creación Exitosa (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 4,
+    "branchId": 1,
+    "name": "Caja Principal - Sede Larco",
+    "createdAt": "2026-06-01T21:54:00.000Z",
+    "updatedAt": "2026-06-01T21:54:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "name",
+      "message": "El nombre debe tener al menos 3 caracteres"
+    }
+  ]
+}
+```
+
+---
+
+### PATCH /api/v1/cash-registers/:id
+
+Actualiza la información de una caja registradora existente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `PATCH` | `/api/v1/cash-registers/:id` | JWT `Bearer Token` | Administrador (`ADMIN`) |
+
+#### 2. Cuerpo de la Solicitud (Request Body)
+
+```json
+{
+  "name": "Caja Principal Renovada"
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Actualización Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 4,
+    "branchId": 1,
+    "name": "Caja Principal Renovada",
+    "createdAt": "2026-06-01T21:54:00.000Z",
+    "updatedAt": "2026-06-01T21:55:00.000Z"
+  }
+}
+```
+
+---
+
+### DELETE /api/v1/cash-registers/:id
+
+Realiza la eliminación lógica (`isActive: false`) de una caja registradora.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `DELETE` | `/api/v1/cash-registers/:id` | JWT `Bearer Token` | Administrador (`ADMIN`) |
+
+#### 2. Respuestas (Responses)
+
+##### Eliminación Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Caja registradora eliminada lógicamente con éxito"
+}
+```
+
+##### Conflicto - Turno Abierto (HTTP 409 Conflict)
+
+```json
+{
+  "success": false,
+  "error": "No se puede desactivar la caja registradora porque tiene un turno abierto actualmente"
+}
+```
+
+---
+
+### GET /api/v1/pos/products
+
+Busca productos/variantes para el POS por SKU o nombre de producto, retornando el stock correspondiente a la sucursal del turno activo del usuario.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/products` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `sku` | `string` | Sí | SKU exacto (para lector de código de barras) o coincidencia parcial del nombre del producto. |
+
+#### 3. Respuestas (Responses)
+
+##### Búsqueda Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "variantId": 12,
+      "productId": 5,
+      "sku": "CAM-M-BLUE",
+      "name": "Camisa Denim - M - Blue",
+      "baseName": "Camisa Denim",
+      "price": 89.90,
+      "stock": 25,
+      "attributes": {
+        "Talla": "M",
+        "Color": "Blue"
+      }
+    }
+  ]
+}
+```
+
+##### Error - Parámetro Requerido Faltante (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "El parámetro de búsqueda (sku) es requerido y no puede estar vacío"
+}
+```
+
+##### Error - Turno Cerrado o Sin Apertura de Caja (HTTP 400 Bad Request)
+
+Retornado cuando el vendedor autenticado no ha realizado la apertura de caja para su sesión y por ende no se tiene una sucursal activa.
+
+```json
+{
+  "success": false,
+  "error": "No tienes un turno de caja abierto. Por favor, abre caja antes de realizar búsquedas o ventas en el POS."
+}
+```
+
+---
+
+### GET /api/v1/pos/clients/lookup
+
+Consulta de forma predictiva los datos de DNI o RUC desde la API externa de Factiliza.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/clients/lookup` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `type` | `string` | Sí | Tipo de documento, debe ser exactamente `DNI` o `RUC`. |
+| `number` | `string` | Sí | Número de documento (8 dígitos para DNI, 11 dígitos para RUC). |
+
+#### 3. Respuestas (Responses)
+
+##### Búsqueda Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "success": true,
+    "documentNumber": "73614169",
+    "name": "JOSE PEDRO",
+    "lastName": "CASTILLO TERRONES",
+    "address": "CASERIO PUÑA",
+    "department": "CAJAMARCA",
+    "province": "CHOTA",
+    "district": "TACABAMBA",
+    "ubigeo": "060417"
+  }
+}
+```
+
+##### Documento no Encontrado o Inválido (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "Documento no encontrado en el padrón o inválido"
+}
+```
+
+---
+
+### POST /api/v1/pos/clients/quick-register
+
+Realiza el registro rápido de un cliente en el POS utilizando datos de la API de Factiliza.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/pos/clients/quick-register` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Cuerpo de la Solicitud (Request Body)
+
+```json
+{
+  "documentType": "DNI",
+  "documentId": "73614169",
+  "phone": "987654321",
+  "email": "cliente@correo.com"
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Registro Exitoso (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 15,
+    "documentType": "DNI",
+    "documentId": "73614169",
+    "name": "JOSE PEDRO",
+    "lastName": "CASTILLO TERRONES",
+    "phone": "987654321",
+    "email": "cliente@correo.com",
+    "address": "CASERIO PUÑA",
+    "department": "CAJAMARCA",
+    "province": "CHOTA",
+    "district": "TACABAMBA",
+    "ubigeo": "060417",
+    "userId": null,
+    "createdAt": "2026-06-01T23:28:00.000Z",
+    "updatedAt": "2026-06-01T23:28:00.000Z"
+  }
+}
+```
+
+##### Conflicto - Cliente ya existe en BD (HTTP 409 Conflict)
+
+```json
+{
+  "success": false,
+  "error": "El cliente con documento 73614169 ya se encuentra registrado en el sistema"
+}
+```
+
+##### Error - Documento Inválido o No Existe en Factiliza (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Cliente no encontrado o documento inválido (DNI: 00000000)"
+}
+```
+
+---
+
+### GET /api/v1/pos/clients/search
+
+Realiza una búsqueda express de clientes locales registrados en el sistema por DNI, RUC o Nombre/Apellido con paginación máxima de 10 registros.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/clients/search` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `q` | `string` | Sí | El término de búsqueda (coincide parcialmente por DNI, RUC, nombre o apellido). |
+| `page` | `number` | No | Número de página para la paginación (por defecto es 1). |
+
+#### 3. Respuestas (Responses)
+
+##### Búsqueda Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "clients": [
+    {
+      "id": 15,
+      "documentType": "DNI",
+      "documentId": "73614169",
+      "name": "JOSE PEDRO",
+      "lastName": "CASTILLO TERRONES",
+      "phone": "987654321",
+      "email": "cliente@correo.com",
+      "address": "CASERIO PUÑA",
+      "department": "CAJAMARCA",
+      "province": "CHOTA",
+      "district": "TACABAMBA",
+      "ubigeo": "060417",
+      "userId": null,
+      "createdAt": "2026-06-01T23:28:00.000Z",
+      "updatedAt": "2026-06-01T23:28:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "totalPages": 1,
+    "limit": 10
+  }
+}
+```
+
+##### Error - Parámetro q Faltante (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "El parámetro de búsqueda q es obligatorio"
+}
+```
+>>>>>>> origin/develop
 
 ## Punto de Venta (POS) — HU-034
 
