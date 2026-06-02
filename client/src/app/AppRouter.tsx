@@ -32,6 +32,7 @@ import { PosProvider, PosGuard } from '../features/pos/context/PosContext';
 import OpenCashPage from '../features/pos/OpenCashPage';
 import CashRegistersPage from '../features/admin/branches/CashRegistersPage';
 import PossScreen from '../features/pos/PossScreen';
+import TurnSalesPage from '../features/pos/TurnSalesPage';
 
 export const AppRouter = () => {
   return (
@@ -80,6 +81,14 @@ export const AppRouter = () => {
           element={
             <PosGuard>
               <PossScreen />
+            </PosGuard>
+          }
+        />
+        <Route
+          path="/pos/turn/sales"
+          element={
+            <PosGuard>
+              <TurnSalesPage />
             </PosGuard>
           }
         />

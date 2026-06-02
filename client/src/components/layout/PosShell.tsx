@@ -36,11 +36,19 @@ export const PosShell: React.FC = () => {
 
           {/* Active Shift Indicator */}
           {isOpen && activeRegister && (
-            <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-200/50 rounded-xl">
-              <Landmark className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-xs font-bold text-emerald-800">
-                {activeRegister.name} (Abierta)
-              </span>
+            <div className="hidden md:flex items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-200/50 rounded-xl">
+                <Landmark className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-xs font-bold text-emerald-800">
+                  {activeRegister.name} (Abierta)
+                </span>
+              </div>
+              <Link 
+                to="/pos/turn/sales" 
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#D9D9D2] hover:bg-[#FAFAFA] text-[#3F3F3F] text-xs font-bold rounded-xl transition-all shadow-sm"
+              >
+                Ventas del Turno
+              </Link>
             </div>
           )}
         </div>
