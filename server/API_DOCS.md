@@ -36,11 +36,12 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [GET /api/v1/stock](#get-apiv1stock)
 - [Auditoría de Inventario Físico — HU-029](#auditoría-de-inventario-físico--hu-029)
   - [POST /api/v1/inventory-audits](#post-apiv1inventoryaudits)
+- [Punto de Venta (POS) — HU-034](#punto-de-venta-pos--hu-034)
+  - [POST /api/v1/pos/discounts/validate](#post-apiv1posdiscountsvalidate)
 - [Apertura de Caja y Turnos — HU-032](#apertura-de-caja-y-turnos--hu-032)
   - [POST /api/v1/cash-turns/open](#post-apiv1cashturnsopen)
   - [GET /api/v1/cash-registers](#get-apiv1cashregisters)
   - [GET /api/v1/cash-turns/active](#get-apiv1cashturnsactive)
-
 
 ---
 
@@ -1819,6 +1820,8 @@ Si faltan parámetros o no corresponden con las especificaciones.
 ```
 
 ---
+<<<<<<< HEAD
+=======
 
 ## Apertura de Caja y Turnos — HU-032
 
@@ -2381,4 +2384,124 @@ Realiza una búsqueda express de clientes locales registrados en el sistema por 
   "error": "El parámetro de búsqueda q es obligatorio"
 }
 ```
+>>>>>>> origin/develop
 
+## Punto de Venta (POS) — HU-034
+
+### POST /api/v1/pos/discounts/validate
+
+Valida y calcula la aplicación de un descuento sobre un carrito de compra del POS. Requiere que el rol del usuario autenticado posea el permiso `pos:discounts` (Control RBAC). Devuelve el desglose financiero completo: subtotal, monto de descuento calculado y total final.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso RBAC Requerido |
+| :----- | :--- | :------------ | :--------------------- |
+| `POST` | `/api/v1/pos/discounts/validate` | Bearer JWT | `pos:discounts` |
+
+> **Nota de Seguridad:** Este endpoint está protegido por el middleware `requirePermission('pos:discounts')`. Solo usuarios con roles que tengan este permiso asignado (ej. `ADMIN`, `CAJERO_SENIOR`) podrán acceder. Los intentos sin el permiso correcto retornarán `HTTP 403 Forbidden`.
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+Se espera un objeto JSON con la siguiente estructura:
+
+```json
+{
+  "items": [
+    {
+      "variantId": 12,
+      "quantity": 2,
+      "unitPrice": 49.99
+    },
+    {
+      "variantId": 7,
+      "quantity": 1,
+      "unitPrice": 25.00
+    }
+  ],
+  "discountType": "percentage",
+  "discountValue": 10
+}
+```
+
+#### 3. Campos del Request Body
+
+| Campo | Tipo | Requerido | Descripción |
+| :---- | :--- | :-------- | :---------- |
+| `items` | `Array` | Sí | Lista de ítems del carrito. Debe tener al menos 1 elemento. |
+| `items[].variantId` | `number (int)` | Sí | ID del `ProductVariant` a vender. |
+| `items[].quantity` | `number (int)` | Sí | Cantidad de unidades. Debe ser mayor que 0. |
+| `items[].unitPrice` | `number` | Sí | Precio unitario del ítem en moneda local. No negativo. |
+| `discountType` | `"percentage" \| "fixed"` | Sí | Modalidad del descuento. `"percentage"` aplica un porcentaje sobre el subtotal. `"fixed"` aplica un monto fijo. |
+| `discountValue` | `number` | Sí | Valor del descuento. Para `"percentage"`: valor entre 0.01 y 100. Para `"fixed"`: valor positivo que no supere el subtotal. |
+
+#### 4. Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "subtotal": 124.98,
+    "discountType": "percentage",
+    "discountValue": 10,
+    "discountAmount": 12.50,
+    "total": 112.48,
+    "appliedBy": {
+      "userId": 3,
+      "email": "cajero@dmendoza.com"
+    }
+  }
+}
+```
+
+#### 5. Respuestas de Error
+
+**HTTP 400 — Validación fallida (datos inválidos)**
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "code": "too_small",
+      "message": "Se requiere al menos un ítem para calcular el descuento",
+      "path": ["items"]
+    }
+  ]
+}
+```
+
+**HTTP 400 — Porcentaje superior al 100%**
+
+```json
+{
+  "success": false,
+  "error": "El descuento porcentual no puede superar el 100%"
+}
+```
+
+**HTTP 400 — Descuento fijo mayor que el subtotal**
+
+```json
+{
+  "success": false,
+  "error": "El descuento fijo no puede superar el subtotal de la orden"
+}
+```
+
+**HTTP 401 — Token faltante o inválido**
+
+```json
+{
+  "success": false,
+  "error": "Acceso no autorizado: Token faltante o con formato incorrecto"
+}
+```
+
+**HTTP 403 — Rol sin permiso `pos:discounts`**
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el permiso 'pos:discounts'"
+}
+```

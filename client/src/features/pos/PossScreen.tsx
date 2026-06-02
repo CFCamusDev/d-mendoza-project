@@ -5,6 +5,8 @@ import { usePos } from './context/PosContext';
 import { usePosCart } from './hooks/usePosCart';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import type { PosProduct } from './types/pos.types';
+import { DiscountPanel } from '@/features/pos';
+import type { DiscountResult } from '@/features/pos';
 import { 
   Search, 
   ShoppingCart, 
@@ -34,6 +36,22 @@ export const PossScreen: React.FC = () => {
   const [loadingInitial, setLoadingInitial] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState<string>('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  // Discount State (HU-034)
+  const [discountResult, setDiscountResult] = useState<DiscountResult | null>(null);
+
+  // Reset discount if cart changes
+  useEffect(() => {
+    setDiscountResult(null);
+  }, [cartItems]);
+
+  const finalTotal = Math.max(0, totals.total - (discountResult?.discountAmount || 0));
+
+  const cartForDiscount = cartItems.map(item => ({
+    variantId: item.variantId,
+    quantity: item.quantity,
+    unitPrice: item.price
+  }));
 
   // Client Link State (HU-033)
   const [linkedClient, setLinkedClient] = useState<{ id: number; name: string; documentId: string } | null>(null);
@@ -104,15 +122,15 @@ export const PossScreen: React.FC = () => {
     }
 
     const payValue = parseFloat(paymentAmount);
-    if (isNaN(payValue) || payValue < totals.total) {
-      toast.error(`Monto de pago inválido. Debe cubrir el total de S/. ${totals.total.toFixed(2)}`);
+    if (isNaN(payValue) || payValue < finalTotal) {
+      toast.error(`Monto de pago inválido. Debe cubrir el total de S/. ${finalTotal.toFixed(2)}`);
       return;
     }
 
     setCheckoutLoading(true);
     // Simulate payment transaction
     setTimeout(() => {
-      const change = payValue - totals.total;
+      const change = payValue - finalTotal;
       toast.success(`¡Venta procesada con éxito! Vuelto: S/. ${change.toFixed(2)}`);
       clearCart();
       setPaymentAmount('');
@@ -450,10 +468,29 @@ export const PossScreen: React.FC = () => {
                 <span className="text-[#6B6B6B] font-semibold">IGV (18% Incluido):</span>
                 <span className="text-right text-[#3F3F3F] font-bold">S/. {totals.tax.toFixed(2)}</span>
                 
+                {discountResult && (
+                  <>
+                    <span className="text-[#c0392b] font-semibold">
+                      Descuento ({discountResult.discountType === 'percentage' ? `${discountResult.discountValue}%` : 'Fijo'}):
+                    </span>
+                    <span className="text-right text-[#c0392b] font-bold">
+                      - S/. {discountResult.discountAmount.toFixed(2)}
+                    </span>
+                  </>
+                )}
+
                 <div className="col-span-2 border-t border-[#D9D9D2]/40 my-1"></div>
                 
                 <span className="text-base font-extrabold text-[#3F3F3F] uppercase tracking-wider">Total a Cobrar:</span>
-                <span className="text-right text-xl font-extrabold text-[#3F3F3F]">S/. {totals.total.toFixed(2)}</span>
+                <span className="text-right text-xl font-extrabold text-[#3F3F3F]">S/. {finalTotal.toFixed(2)}</span>
+              </div>
+
+              {/* Discount Panel */}
+              <div className="pt-2 border-t border-[#D9D9D2]/50">
+                <DiscountPanel
+                  items={cartForDiscount}
+                  onDiscountApplied={setDiscountResult}
+                />
               </div>
 
               {/* Checkout fast module */}

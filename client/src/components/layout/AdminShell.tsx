@@ -122,6 +122,7 @@ export const AdminShell: React.FC = () => {
               {!isCollapsed && <span>Control de Stock</span>}
             </Link>
 
+
             <Link
               to="/pos"
               className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
