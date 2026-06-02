@@ -10,6 +10,7 @@ function App() {
       <BrandProvider>
         <Toaster
           position="top-right"
+          containerClassName="print:hidden"
           toastOptions={{
             duration: 4000,
             style: {
