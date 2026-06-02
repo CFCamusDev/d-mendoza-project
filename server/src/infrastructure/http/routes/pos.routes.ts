@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { DiscountController } from '@infrastructure/http/controllers/pos/DiscountController';
+import { SaleController } from '@infrastructure/http/controllers/pos/SaleController';
 import { requirePermission } from '@infrastructure/http/middlewares/auth.middleware';
 
 /**
@@ -11,6 +12,7 @@ import { requirePermission } from '@infrastructure/http/middlewares/auth.middlew
 
 const router = Router();
 const discountController = new DiscountController();
+const saleController = new SaleController();
 
 /**
  * POST /api/v1/pos/discounts/validate
@@ -25,6 +27,20 @@ router.post(
   '/discounts/validate',
   requirePermission('pos:discounts'),
   discountController.validate.bind(discountController)
+);
+
+/**
+ * POST /api/v1/pos/sales
+ *
+ * Registra una venta en el POS, procesando múltiples métodos de pago,
+ * creando el registro de la orden, los pagos y descontando el stock.
+ *
+ * @permission pos:sales — Solo roles con este permiso pueden procesar ventas.
+ */
+router.post(
+  '/sales',
+  requirePermission('pos:sales'),
+  saleController.processSale.bind(saleController)
 );
 
 export default router;
