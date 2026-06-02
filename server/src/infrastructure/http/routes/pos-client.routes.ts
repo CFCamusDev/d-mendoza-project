@@ -19,4 +19,11 @@ router.get(
   controller.lookup.bind(controller)
 );
 
+// GET /api/v1/pos/clients/search — Búsqueda express de cliente con paginación (HU-033)
+router.get(
+  '/pos/clients/search',
+  requireAuth,
+  controller.search.bind(controller)
+);
+
 export default router;

@@ -2318,3 +2318,67 @@ Realiza el registro rápido de un cliente en el POS utilizando datos de la API d
   "error": "Cliente no encontrado o documento inválido (DNI: 00000000)"
 }
 ```
+
+---
+
+### GET /api/v1/pos/clients/search
+
+Realiza una búsqueda express de clientes locales registrados en el sistema por DNI, RUC o Nombre/Apellido con paginación máxima de 10 registros.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/clients/search` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `q` | `string` | Sí | El término de búsqueda (coincide parcialmente por DNI, RUC, nombre o apellido). |
+| `page` | `number` | No | Número de página para la paginación (por defecto es 1). |
+
+#### 3. Respuestas (Responses)
+
+##### Búsqueda Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "clients": [
+    {
+      "id": 15,
+      "documentType": "DNI",
+      "documentId": "73614169",
+      "name": "JOSE PEDRO",
+      "lastName": "CASTILLO TERRONES",
+      "phone": "987654321",
+      "email": "cliente@correo.com",
+      "address": "CASERIO PUÑA",
+      "department": "CAJAMARCA",
+      "province": "CHOTA",
+      "district": "TACABAMBA",
+      "ubigeo": "060417",
+      "userId": null,
+      "createdAt": "2026-06-01T23:28:00.000Z",
+      "updatedAt": "2026-06-01T23:28:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "totalPages": 1,
+    "limit": 10
+  }
+}
+```
+
+##### Error - Parámetro q Faltante (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "El parámetro de búsqueda q es obligatorio"
+}
+```
+

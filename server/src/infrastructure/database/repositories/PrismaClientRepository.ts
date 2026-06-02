@@ -47,6 +47,34 @@ export class PrismaClientRepository implements IClientRepository {
     });
   }
 
+  async search(query: string, skip: number, take: number): Promise<Client[]> {
+    const records = await prisma.client.findMany({
+      where: {
+        OR: [
+          { documentId: { contains: query } },
+          { name: { contains: query } },
+          { lastName: { contains: query } },
+        ],
+      },
+      skip,
+      take,
+      orderBy: { name: 'asc' },
+    });
+    return records.map((r: any) => this.toDomain(r));
+  }
+
+  async countSearch(query: string): Promise<number> {
+    return prisma.client.count({
+      where: {
+        OR: [
+          { documentId: { contains: query } },
+          { name: { contains: query } },
+          { lastName: { contains: query } },
+        ],
+      },
+    });
+  }
+
   private toDomain(record: any): Client {
     return {
       id: record.id,
