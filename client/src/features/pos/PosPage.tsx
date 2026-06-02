@@ -3,14 +3,6 @@ import { ShoppingCart, Tag, Trash2, Plus, Minus } from 'lucide-react';
 import { DiscountPanel } from '@/features/pos';
 import type { CartItem, DiscountResult } from '@/features/pos';
 
-// ─── Datos de demo del carrito ────────────────────────────────────────────────
-// En las HUs siguientes (HU-035, HU-036) este carrito será dinámico.
-// Por ahora se usa un carrito de prueba para validar el DiscountPanel (HU-034).
-const DEMO_ITEMS: CartItem[] = [
-  { variantId: 1, quantity: 2, unitPrice: 49.99 },
-  { variantId: 2, quantity: 1, unitPrice: 25.00 },
-];
-
 // ─── Tipos locales ────────────────────────────────────────────────────────────
 interface CartDisplayItem extends CartItem {
   label: string;
