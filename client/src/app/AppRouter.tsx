@@ -27,6 +27,7 @@ import SuppliersPage from '../features/admin/suppliers/SuppliersPage';
 import StockEntriesPage from '../features/admin/entries/StockEntriesPage';
 import StockPage from '../features/admin/stock/StockPage';
 import InventoryAuditPage from '../features/admin/audits/InventoryAuditPage';
+import PosPage from '../features/pos/PosPage'; // HU-034
 
 export const AppRouter = () => {
   return (
@@ -49,14 +50,6 @@ export const AppRouter = () => {
         {/* Google OAuth Success Redirect (HU-001 / T-036) */}
         <Route path="/auth/google/success" element={<GoogleAuthSuccessPage />} />
 
-        <Route
-          path="/pos"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/profile"
           element={
@@ -148,6 +141,16 @@ export const AppRouter = () => {
 
         {/* HU-030 */}
         <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN']}><RotationReportPage /></ProtectedRoute>} />
+
+        {/* HU-034 — Punto de Venta (POS) */}
+        <Route
+          path="/admin/pos"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
+              <PosPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* User Profile */}
         <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><ProfilePage /></ProtectedRoute>} />
