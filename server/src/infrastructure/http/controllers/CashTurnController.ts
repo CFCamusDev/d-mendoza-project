@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { PrismaCashTurnRepository } from '@infrastructure/database/repositories/PrismaCashTurnRepository';
 import { OpenCashTurnUseCase } from '@application/use-cases/pos/OpenCashTurnUseCase';
+import prisma from '@infrastructure/database/prisma';
 
 // DI Manual
 const cashTurnRepository = new PrismaCashTurnRepository();
@@ -96,6 +97,77 @@ export class CashTurnController {
       const activeTurn = await cashTurnRepository.findActiveByUser(userId);
       return res.status(200).json({ success: true, data: activeTurn });
     } catch (error: any) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/v1/pos/turns/:id/sales
+   * Lista las ventas realizadas durante un turno específico.
+   * Filtros opcionales: ?status=COMPLETED & method=CASH
+   */
+  async getSalesByTurn(req: Request, res: Response, next: NextFunction) {
+    try {
+      const turnId = parseInt(String(req.params.id), 10);
+      const status = req.query.status as string | undefined;
+      const method = req.query.method as string | undefined;
+
+      if (isNaN(turnId)) {
+        return res.status(400).json({ success: false, error: 'El ID del turno debe ser un número entero' });
+      }
+
+      // 1. Obtener el turno
+      const turn = await prisma.cashTurn.findUnique({
+        where: { id: turnId }
+      });
+
+      if (!turn) {
+        return res.status(404).json({ success: false, error: 'Turno de caja no encontrado' });
+      }
+
+      // 2. Construir la consulta de ventas (PosOrder)
+      const whereClause: any = {
+        userId: turn.userId,
+        createdAt: {
+          gte: turn.openedAt,
+        }
+      };
+
+      if (turn.closedAt) {
+        whereClause.createdAt.lte = turn.closedAt;
+      }
+
+      if (status) {
+        whereClause.status = status.toUpperCase();
+      }
+
+      if (method) {
+        whereClause.payments = {
+          some: {
+            method: method.toUpperCase()
+          }
+        };
+      }
+
+      // 3. Ejecutar consulta
+      const sales = await prisma.posOrder.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          payments: true,
+          items: {
+            include: {
+              variant: {
+                include: { product: true }
+              }
+            }
+          }
+        }
+      });
+
+      return res.status(200).json({ success: true, data: sales });
+    } catch (error: any) {
+      console.error('[CashTurnController] Error obteniendo ventas del turno:', error);
       next(error);
     }
   }
