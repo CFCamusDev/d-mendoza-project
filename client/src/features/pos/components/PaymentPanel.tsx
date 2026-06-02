@@ -20,8 +20,12 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ totalAmount, onConfi
   const [currentAmount, setCurrentAmount] = useState<string>('');
 
   const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+  const totalPaidNonCash = payments.filter(p => p.method !== 'CASH').reduce((sum, p) => sum + p.amount, 0);
+  const totalPaidCash = payments.filter(p => p.method === 'CASH').reduce((sum, p) => sum + p.amount, 0);
+  
   const remaining = Math.max(0, totalAmount - totalPaid);
-  const change = Math.max(0, totalPaid - totalAmount);
+  // El vuelto solo se calcula sobre el efectivo, restando lo que faltaba pagar (total - otrosPagos)
+  const change = Math.max(0, totalPaidCash - (totalAmount - totalPaidNonCash));
 
   const canConfirm = totalPaid >= totalAmount && totalAmount > 0;
 
