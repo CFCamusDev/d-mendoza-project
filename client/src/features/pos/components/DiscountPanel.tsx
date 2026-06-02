@@ -81,7 +81,7 @@ const DiscountPanel: React.FC<DiscountPanelProps> = ({ items, onDiscountApplied 
     setIsLoading(true);
     try {
       const response = await axiosInstance.post<{ success: boolean; data: DiscountResult }>(
-        '/pos/discounts/validate',
+        '/v1/pos/discounts/validate',
         {
           items,
           discountType,
