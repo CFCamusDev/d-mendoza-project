@@ -9,9 +9,12 @@ import { requireAuth, requirePermission } from '@infrastructure/http/middlewares
  * Prefijo montado en app.ts: /api/v1/pos
  */
 
+import { CashTurnController } from '@infrastructure/http/controllers/CashTurnController';
+
 const router = Router();
 const discountController = new DiscountController();
 const saleController = new SaleController();
+const cashTurnController = new CashTurnController();
 
 /**
  * POST /api/v1/pos/discounts/validate
@@ -38,6 +41,15 @@ router.get(
   '/sales/:id/receipt',
   requireAuth, // Cambiado a requireAuth por ahora
   saleController.getReceiptData.bind(saleController)
+);
+
+/**
+ * GET /api/v1/pos/turns/:id/sales
+ */
+router.get(
+  '/turns/:id/sales',
+  requireAuth,
+  cashTurnController.getSalesByTurn.bind(cashTurnController)
 );
 
 export default router;
