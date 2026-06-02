@@ -139,4 +139,99 @@ export class SaleController {
       });
     }
   }
+
+  async getReceiptData(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+
+      const order = await prisma.posOrder.findUnique({
+        where: { id: Number(id) },
+        include: {
+          items: {
+            include: {
+              variant: {
+                include: {
+                  product: true,
+                },
+              },
+            },
+          },
+          payments: true,
+          branch: {
+            select: {
+              id: true,
+              name: true,
+              address: true,
+              phone: true,
+            },
+          },
+        },
+      });
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          error: 'Orden de venta no encontrada.',
+        });
+      }
+
+      // Fetch user separately because relation might not be defined in PosOrder schema
+      let sellerName = 'Vendedor';
+      if (order.userId) {
+        const user = await prisma.user.findUnique({
+          where: { id: order.userId },
+          select: { name: true, lastName: true },
+        });
+        if (user) {
+          sellerName = `${user.name} ${user.lastName || ''}`.trim();
+        }
+      }
+
+      // Calculamos totales y organizamos datos para el recibo
+      const totalPagado = order.payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+      const efectivoTotal = order.payments
+        .filter((p: any) => p.method === 'CASH')
+        .reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+      
+      const change = Math.max(0, efectivoTotal - (Number(order.total) - (totalPagado - efectivoTotal)));
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          orderId: order.id,
+          date: order.createdAt,
+          seller: sellerName,
+          branch: order.branch,
+          items: order.items.map((item: any) => ({
+            id: item.id,
+            name: item.variant.product.name,
+            sku: item.variant.sku,
+            quantity: item.quantity,
+            unitPrice: Number(item.unitPrice),
+            discountAmount: Number(item.discountAmount),
+            lineTotal: Number(item.lineTotal),
+            // TODO: Cross-branch logic if needed
+            isCrossBranch: false 
+          })),
+          totals: {
+            subtotal: Number(order.subtotal),
+            discountTotal: Number(order.discountTotal),
+            total: Number(order.total),
+            paid: totalPagado,
+            change: change,
+          },
+          payments: order.payments.map((p: any) => ({
+            method: p.method,
+            amount: Number(p.amount),
+          })),
+        },
+      });
+    } catch (error: any) {
+      console.error('[SaleController] Error obteniendo recibo:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Error al obtener el comprobante de venta.',
+      });
+    }
+  }
 }
