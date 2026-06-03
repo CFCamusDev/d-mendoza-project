@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
 import prisma from '@infrastructure/database/prisma';
+import { CancelSaleUseCase } from '@application/use-cases/pos/CancelSaleUseCase';
+
+const cancelSaleUseCase = new CancelSaleUseCase();
 
 export class SaleController {
   async processSale(req: Request, res: Response) {
@@ -136,6 +139,56 @@ export class SaleController {
       return res.status(400).json({
         success: false,
         error: error.message || 'Error procesando la venta.',
+      });
+    }
+  }
+
+  /**
+   * PATCH /api/v1/pos/sales/:id/cancel
+   * Anula una venta y revierte el stock y kardex.
+   * - ADMIN: puede anular directamente.
+   * - SELLER: requiere credenciales de un administrador (adminEmail + adminPassword).
+   */
+  async cancelSale(req: Request, res: Response) {
+    try {
+      const orderId = parseInt(String(req.params.id), 10);
+      if (isNaN(orderId)) {
+        return res.status(400).json({ success: false, error: 'El ID de la venta debe ser un número entero' });
+      }
+
+      const userId = req.auth?.userId;
+      const userRole = req.auth?.role;
+      if (!userId || !userRole) {
+        return res.status(401).json({ success: false, error: 'Usuario no autenticado' });
+      }
+
+      const { adminEmail, adminPassword } = req.body || {};
+
+      const result = await cancelSaleUseCase.execute({
+        orderId,
+        userId,
+        userRole,
+        adminEmail,
+        adminPassword,
+      });
+
+      return res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+      console.error('[SaleController] Error anulando venta:', error);
+
+      if (error.message?.includes('no existe')) {
+        return res.status(404).json({ success: false, error: error.message });
+      }
+      if (error.message?.includes('autorización') || error.message?.includes('credenciales') || error.message?.includes('administrador')) {
+        return res.status(403).json({ success: false, error: error.message });
+      }
+      if (error.message?.includes('Solo se pueden')) {
+        return res.status(409).json({ success: false, error: error.message });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Error al anular la venta.',
       });
     }
   }
