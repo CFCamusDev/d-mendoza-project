@@ -56,6 +56,24 @@ export class PrismaCashTurnRepository implements ICashTurnRepository {
     }));
   }
 
+  async findById(id: number): Promise<CashTurn | null> {
+    const record = await prisma.cashTurn.findUnique({
+      where: { id },
+    });
+    return record ? this.toDomain(record) : null;
+  }
+
+  async close(id: number, closeAmount: number): Promise<CashTurn> {
+    const record = await prisma.cashTurn.update({
+      where: { id },
+      data: {
+        status: 'CLOSED',
+        closedAt: new Date(),
+        closeAmount,
+      },
+    });
+    return this.toDomain(record);
+  }
 
   private toDomain(record: any): CashTurn {
     return {
@@ -63,6 +81,7 @@ export class PrismaCashTurnRepository implements ICashTurnRepository {
       registerId: record.registerId,
       userId: record.userId,
       openAmount: record.openAmount,
+      closeAmount: record.closeAmount,
       status: record.status as any,
       openedAt: record.openedAt,
       closedAt: record.closedAt,
@@ -71,3 +90,4 @@ export class PrismaCashTurnRepository implements ICashTurnRepository {
     };
   }
 }
+
