@@ -2601,3 +2601,80 @@ Devuelve los datos completos y estructurados de una venta específica, optimizad
   }
 }
 ```
+
+---
+
+## Wishlist (Favoritos) — HU-010
+
+### GET /api/v1/wishlist
+
+Retorna la lista de productos favoritos del usuario autenticado, ordenados del más reciente al más antiguo.
+
+- **Permisos requeridos:** Solo requiere autenticación (`requireAuth`).
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "userId": 3,
+      "variantId": 12,
+      "addedAt": "2026-06-05T12:00:00.000Z",
+      "variant": {
+        "id": 12,
+        "sku": "TSHIRT-001",
+        "price": "29.99",
+        "product": {
+          "id": 5,
+          "name": "Camiseta Básica",
+          "description": "Camiseta de algodón 100%",
+          "images": [
+            {
+              "id": 1,
+              "url": "https://example.com/image.jpg",
+              "isMain": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+### POST /api/v1/wishlist/:variantId
+
+Agrega o elimina una variante de producto (`variantId`) de la lista de favoritos del usuario autenticado (Toggle). Si ya existía, lo elimina. Si no existía, lo agrega.
+
+- **Parámetros de ruta:**
+  - `variantId` (number): ID de la variante de producto.
+- **Permisos requeridos:** Solo requiere autenticación (`requireAuth`).
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Agregado a favoritos",
+  "data": {
+    "id": 2,
+    "userId": 3,
+    "variantId": 12,
+    "addedAt": "2026-06-05T12:05:00.000Z"
+  }
+}
+```
+
+### DELETE /api/v1/wishlist/:variantId
+
+Elimina una variante de producto específica de la lista de favoritos.
+
+- **Parámetros de ruta:**
+  - `variantId` (number): ID de la variante de producto.
+- **Permisos requeridos:** Solo requiere autenticación (`requireAuth`).
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Eliminado de favoritos"
+}
+```
