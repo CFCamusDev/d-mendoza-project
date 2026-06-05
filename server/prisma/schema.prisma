@@ -32,6 +32,7 @@ model User {
   employee        Employee?
   client          Client?
   cashTurns       CashTurn[] // HU-032
+  wishlists       Wishlist[] // HU-010
 }
 
 model Client {
@@ -246,6 +247,7 @@ model ProductVariant {
   stockAlerts     StockAlert[]
   auditItems      AuditItem[]      // HU-029
   posOrderItems   PosOrderItem[]   // HU-034
+  wishlists       Wishlist[]       // HU-010
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
@@ -477,5 +479,17 @@ model CashTurn {
   @@index([userId])
 }
 
+// ─── HU-010: Lista de Favoritos del Cliente (Wishlist) ─────────────────────────
 
+model Wishlist {
+  id        Int            @id @default(autoincrement())
+  userId    Int
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variantId Int
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  addedAt   DateTime       @default(now())
 
+  @@unique([userId, variantId])
+  @@index([userId])
+  @@index([variantId])
+}
