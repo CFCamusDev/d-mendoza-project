@@ -7,7 +7,7 @@ const cancelSaleUseCase = new CancelSaleUseCase();
 export class SaleController {
   async processSale(req: Request, res: Response) {
     try {
-      const { items, subtotal, discountTotal, total, payments, branchId } = req.body;
+      const { items, subtotal, discountTotal, total, payments, branchId, isCrossBranch, sourceBranchId } = req.body;
       const userId = req.auth?.userId;
 
       // 1. Validaciones básicas
@@ -29,13 +29,17 @@ export class SaleController {
 
       // 2. Transacción
       const result = await prisma.$transaction(async (tx) => {
+        const isTransfer = (isCrossBranch && sourceBranchId && sourceBranchId !== branchId);
+        const targetStockBranchId = isTransfer ? sourceBranchId : branchId;
+
         // A) Validar Stock
         for (const item of items) {
           const branchStock = await tx.branchStock.findUnique({
             where: {
-              variantId_branchId: {
+              variantId_branchId_status: {
                 variantId: item.variantId,
-                branchId,
+                branchId: targetStockBranchId,
+                status: 'AVAILABLE',
               },
             },
           });
@@ -54,6 +58,8 @@ export class SaleController {
             discountTotal,
             total,
             status: 'COMPLETED',
+            isCrossBranch: isCrossBranch || false,
+            sourceBranchId: isTransfer ? sourceBranchId : null,
             items: {
               create: items.map((item: any) => ({
                 variantId: item.variantId,
@@ -88,42 +94,87 @@ export class SaleController {
 
         // D) Descontar Stock y Generar Kardex
         for (const item of items) {
-          // Descontar
-          await tx.branchStock.update({
-            where: {
-              variantId_branchId: {
+          if (isTransfer) {
+            // Venta cruzada: Reservar stock en origen
+            // 1. Decrementar AVAILABLE
+            await tx.branchStock.update({
+              where: {
+                variantId_branchId_status: {
+                  variantId: item.variantId,
+                  branchId: targetStockBranchId,
+                  status: 'AVAILABLE',
+                },
+              },
+              data: {
+                quantity: {
+                  decrement: item.quantity,
+                },
+              },
+            });
+
+            // 2. Incrementar RESERVED
+            await tx.branchStock.upsert({
+              where: {
+                variantId_branchId_status: {
+                  variantId: item.variantId,
+                  branchId: targetStockBranchId,
+                  status: 'RESERVED',
+                },
+              },
+              create: {
                 variantId: item.variantId,
-                branchId,
+                branchId: targetStockBranchId,
+                quantity: item.quantity,
+                status: 'RESERVED',
               },
-            },
-            data: {
-              quantity: {
-                decrement: item.quantity,
+              update: {
+                quantity: {
+                  increment: item.quantity,
+                },
               },
-            },
-          });
+            });
 
-          // Kardex
-          const lastKardex = await tx.kardexEntry.findFirst({
-            where: { variantId: item.variantId, branchId },
-            orderBy: { id: 'desc' },
-          });
+            // Nota: No se genera Kardex SALIDA hasta la confirmación física.
+          } else {
+            // Venta normal: Descontar stock disponible y generar Kardex
+            await tx.branchStock.update({
+              where: {
+                variantId_branchId_status: {
+                  variantId: item.variantId,
+                  branchId: targetStockBranchId,
+                  status: 'AVAILABLE',
+                },
+              },
+              data: {
+                quantity: {
+                  decrement: item.quantity,
+                },
+              },
+            });
 
-          const currentUnitCost = lastKardex ? lastKardex.balanceCost : 0;
-          const currentBalanceQty = lastKardex ? lastKardex.balanceQty : 0;
-          const newBalanceQty = currentBalanceQty - item.quantity;
+            // Kardex
+            const lastKardex = await tx.kardexEntry.findFirst({
+              where: { variantId: item.variantId, branchId: targetStockBranchId },
+              orderBy: { id: 'desc' },
+            });
 
-          await tx.kardexEntry.create({
-            data: {
-              variantId: item.variantId,
-              branchId,
-              type: 'SALIDA',
-              quantity: item.quantity,
-              unitCost: currentUnitCost,
-              balanceQty: newBalanceQty,
-              balanceCost: currentUnitCost,
-            },
-          });
+            const currentUnitCost = lastKardex ? lastKardex.unitCost : 0;
+            const currentBalanceQty = lastKardex ? lastKardex.balanceQty : 0;
+            const newBalanceQty = currentBalanceQty - item.quantity;
+            const currentBalanceCost = lastKardex ? lastKardex.balanceCost : 0;
+
+            await tx.kardexEntry.create({
+              data: {
+                variantId: item.variantId,
+                branchId: targetStockBranchId,
+                type: 'SALIDA',
+                quantity: item.quantity,
+                unitCost: currentUnitCost,
+                balanceQty: newBalanceQty,
+                balanceCost: currentBalanceCost - (item.quantity * currentUnitCost),
+              },
+            });
+          }
         }
 
         return order;
