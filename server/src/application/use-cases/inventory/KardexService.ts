@@ -15,7 +15,7 @@ export class KardexService {
     costoEntrada: number
   ): Promise<number> {
     const stock = await prisma.branchStock.findUnique({
-      where: { variantId_branchId: { variantId, branchId } },
+      where: { variantId_branchId_status: { variantId, branchId, status: 'AVAILABLE' } },
     });
 
     const lastEntry = await prisma.kardexEntry.findFirst({
@@ -52,8 +52,8 @@ export class KardexService {
 
     await prisma.$transaction(async tx => {
       const stock = await tx.branchStock.upsert({
-        where: { variantId_branchId: { variantId: args.variantId, branchId: args.branchId } },
-        create: { variantId: args.variantId, branchId: args.branchId, quantity: args.quantity },
+        where: { variantId_branchId_status: { variantId: args.variantId, branchId: args.branchId, status: 'AVAILABLE' } },
+        create: { variantId: args.variantId, branchId: args.branchId, quantity: args.quantity, status: 'AVAILABLE' },
         update: { quantity: { increment: args.quantity } },
       });
 
@@ -86,7 +86,7 @@ export class KardexService {
   }): Promise<void> {
     await prisma.$transaction(async tx => {
       const stock = await tx.branchStock.findUnique({
-        where: { variantId_branchId: { variantId: args.variantId, branchId: args.branchId } },
+        where: { variantId_branchId_status: { variantId: args.variantId, branchId: args.branchId, status: 'AVAILABLE' } },
       });
 
       if (!stock || stock.quantity < args.quantity) {
@@ -102,7 +102,7 @@ export class KardexService {
       const newQty = stock.quantity - args.quantity;
 
       await tx.branchStock.update({
-        where: { variantId_branchId: { variantId: args.variantId, branchId: args.branchId } },
+        where: { variantId_branchId_status: { variantId: args.variantId, branchId: args.branchId, status: 'AVAILABLE' } },
         data: { quantity: newQty },
       });
 

@@ -12,6 +12,12 @@ interface SaleListItem {
   total: string | number;
   subtotal: string | number;
   createdAt: string;
+  isCrossBranch?: boolean;
+  sourceBranchId?: number;
+  sourceBranch?: {
+    id: number;
+    name: string;
+  };
   payments: {
     method: string;
     amount: string | number;
@@ -34,6 +40,9 @@ export const TurnSalesPage: React.FC = () => {
   const [cancellingSaleId, setCancellingSaleId] = useState<number | null>(null);
   const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
   const [saleToCancel, setSaleToCancel] = useState<number | null>(null);
+
+  // State para confirmar entrega cross-branch
+  const [confirmingSaleId, setConfirmingSaleId] = useState<number | null>(null);
 
   const fetchSales = async () => {
     if (!turnId) return;
@@ -123,6 +132,23 @@ export const TurnSalesPage: React.FC = () => {
     }
   };
 
+  const handleConfirmCrossBranch = async (saleId: number) => {
+    if (!window.confirm('¿Confirmar la entrega física de esta venta Cross-Branch?')) return;
+    try {
+      setConfirmingSaleId(saleId);
+      const { data } = await axiosInstance.patch(`/v1/pos/sales/${saleId}/confirm-cross-branch`);
+      if (data.success) {
+        alert('Entrega física confirmada con éxito. Stock actualizado en origen.');
+        void fetchSales();
+      }
+    } catch (error) {
+      const err = error as any;
+      alert(err.response?.data?.error || 'Error al confirmar la entrega.');
+    } finally {
+      setConfirmingSaleId(null);
+    }
+  };
+
   const getPaymentIcon = (method: string) => {
     switch (method) {
       case 'CASH': return <Banknote className="w-3.5 h-3.5 text-green-600" />;
@@ -209,8 +235,13 @@ export const TurnSalesPage: React.FC = () => {
                   <tbody className="divide-y divide-[#D9D9D2]/20">
                     {sales.map((sale) => (
                       <tr key={sale.id} className="hover:bg-[#FAFAFA]/50 transition-colors group">
-                        <td className="px-6 py-4 font-bold text-[#3F3F3F]">
-                          #{sale.id.toString().padStart(6, '0')}
+                        <td className="px-6 py-4 font-bold text-[#3F3F3F] flex flex-col gap-1">
+                          <span>#{sale.id.toString().padStart(6, '0')}</span>
+                          {sale.isCrossBranch && (
+                            <span className="inline-flex items-center gap-1 w-fit text-[9px] bg-indigo-50 border border-indigo-200 text-indigo-700 font-extrabold px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                              Cross-Branch: {sale.sourceBranch?.name || `Sede #${sale.sourceBranchId}`}
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-[#6B6B6B]">
                           {new Date(sale.createdAt).toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' })}
@@ -239,6 +270,18 @@ export const TurnSalesPage: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            {sale.isCrossBranch && sale.status !== 'COMPLETED' && sale.status !== 'CANCELLED' && (
+                              <button
+                                onClick={() => handleConfirmCrossBranch(sale.id)}
+                                disabled={confirmingSaleId === sale.id}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {confirmingSaleId === sale.id ? (
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                ) : null}
+                                Confirmar Entrega
+                              </button>
+                            )}
                             <button
                               onClick={() => handleCancelClick(sale.id)}
                               disabled={cancellingSaleId === sale.id || sale.status !== 'COMPLETED'}

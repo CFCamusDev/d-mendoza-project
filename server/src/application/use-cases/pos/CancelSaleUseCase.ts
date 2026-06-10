@@ -73,12 +73,46 @@ export class CancelSaleUseCase {
 
       // B) Revertir stock y generar Kardex ENTRADA por cada ítem
       for (const item of order.items) {
-        // Incrementar stock
+        const targetBranchId = order.isCrossBranch && order.sourceBranchId ? order.sourceBranchId : order.branchId;
+
+        if (order.isCrossBranch) {
+          // Si es venta cruzada, determinar si revertir de RESERVED o SOLD
+          const reservedStock = await tx.branchStock.findUnique({
+            where: {
+              variantId_branchId_status: {
+                variantId: item.variantId,
+                branchId: targetBranchId,
+                status: 'RESERVED',
+              },
+            },
+          });
+
+          const reservedQty = reservedStock?.quantity ?? 0;
+          const statusToDecrement = reservedQty >= item.quantity ? 'RESERVED' : 'SOLD';
+
+          await tx.branchStock.update({
+            where: {
+              variantId_branchId_status: {
+                variantId: item.variantId,
+                branchId: targetBranchId,
+                status: statusToDecrement,
+              },
+            },
+            data: {
+              quantity: {
+                decrement: item.quantity,
+              },
+            },
+          });
+        }
+
+        // Incrementar stock en AVAILABLE
         await tx.branchStock.update({
           where: {
-            variantId_branchId: {
+            variantId_branchId_status: {
               variantId: item.variantId,
-              branchId: order.branchId,
+              branchId: targetBranchId,
+              status: 'AVAILABLE',
             },
           },
           data: {
@@ -90,7 +124,7 @@ export class CancelSaleUseCase {
 
         // Generar Kardex ENTRADA (reversión)
         const lastKardex = await tx.kardexEntry.findFirst({
-          where: { variantId: item.variantId, branchId: order.branchId },
+          where: { variantId: item.variantId, branchId: targetBranchId },
           orderBy: { id: 'desc' },
         });
 
@@ -101,7 +135,7 @@ export class CancelSaleUseCase {
         await tx.kardexEntry.create({
           data: {
             variantId: item.variantId,
-            branchId: order.branchId,
+            branchId: targetBranchId,
             type: 'ENTRADA',
             quantity: item.quantity,
             unitCost: currentUnitCost,

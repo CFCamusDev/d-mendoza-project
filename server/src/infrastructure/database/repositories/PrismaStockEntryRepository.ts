@@ -91,8 +91,8 @@ export class PrismaStockEntryRepository implements IStockEntryRepository {
 
           // Upsert del stock en la sucursal de asignación
           await tx.branchStock.upsert({
-            where: { variantId_branchId: { variantId: item.variantId, branchId: targetBranchId } },
-            create: { variantId: item.variantId, branchId: targetBranchId, quantity: qty },
+            where: { variantId_branchId_status: { variantId: item.variantId, branchId: targetBranchId, status: 'AVAILABLE' } },
+            create: { variantId: item.variantId, branchId: targetBranchId, quantity: qty, status: 'AVAILABLE' },
             update: { quantity: { increment: qty } },
           });
 

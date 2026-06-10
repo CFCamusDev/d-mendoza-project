@@ -23,7 +23,7 @@ export class CreateInventoryAuditUseCase {
 
       // Obtener el stock actual de la sucursal
       const stock = await prisma.branchStock.findUnique({
-        where: { variantId_branchId: { variantId: item.variantId, branchId: dto.branchId } },
+        where: { variantId_branchId_status: { variantId: item.variantId, branchId: dto.branchId, status: 'AVAILABLE' } },
       });
 
       const systemQty = stock?.quantity ?? 0;

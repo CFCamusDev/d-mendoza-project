@@ -25,7 +25,7 @@ export class StockAdjustmentController {
 
       const result = await prisma.$transaction(async tx => {
         const current = await tx.branchStock.findUnique({
-          where: { variantId_branchId: { variantId, branchId } },
+          where: { variantId_branchId_status: { variantId, branchId, status: 'AVAILABLE' } },
         });
 
         const prevQty = current?.quantity ?? 0;
@@ -40,8 +40,8 @@ export class StockAdjustmentController {
         const prevBalanceCost = lastEntry?.balanceCost ?? 0;
 
         const stock = await tx.branchStock.upsert({
-          where: { variantId_branchId: { variantId, branchId } },
-          create: { variantId, branchId, quantity: newQuantity },
+          where: { variantId_branchId_status: { variantId, branchId, status: 'AVAILABLE' } },
+          create: { variantId, branchId, quantity: newQuantity, status: 'AVAILABLE' },
           update: { quantity: newQuantity },
         });
 

@@ -53,7 +53,7 @@ export class CreateStockTransferUseCase {
     return await prisma.$transaction(async (tx) => {
       // Validar stock disponible en la sucursal de origen
       const sourceStock = await tx.branchStock.findUnique({
-        where: { variantId_branchId: { variantId, branchId: fromBranchId } },
+        where: { variantId_branchId_status: { variantId, branchId: fromBranchId, status: 'AVAILABLE' } },
       });
 
       if (!sourceStock || sourceStock.quantity < quantity) {
@@ -65,7 +65,7 @@ export class CreateStockTransferUseCase {
       // --- SUCURSAL DE ORIGEN (SALIDA) ---
       // Decrementar stock de origen
       const updatedSourceStock = await tx.branchStock.update({
-        where: { variantId_branchId: { variantId, branchId: fromBranchId } },
+        where: { variantId_branchId_status: { variantId, branchId: fromBranchId, status: 'AVAILABLE' } },
         data: { quantity: { decrement: quantity } },
       });
 
@@ -94,7 +94,7 @@ export class CreateStockTransferUseCase {
       // --- SUCURSAL DE DESTINO (ENTRADA) ---
       // Obtener stock actual de destino
       const destStock = await tx.branchStock.findUnique({
-        where: { variantId_branchId: { variantId, branchId: toBranchId } },
+        where: { variantId_branchId_status: { variantId, branchId: toBranchId, status: 'AVAILABLE' } },
       });
 
       const currentDestQty = destStock?.quantity ?? 0;
@@ -119,8 +119,8 @@ export class CreateStockTransferUseCase {
 
       // Incrementar stock en destino
       const updatedDestStock = await tx.branchStock.upsert({
-        where: { variantId_branchId: { variantId, branchId: toBranchId } },
-        create: { variantId, branchId: toBranchId, quantity },
+        where: { variantId_branchId_status: { variantId, branchId: toBranchId, status: 'AVAILABLE' } },
+        create: { variantId, branchId: toBranchId, quantity, status: 'AVAILABLE' },
         update: { quantity: { increment: quantity } },
       });
 
