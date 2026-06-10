@@ -23,6 +23,7 @@ model User {
   authProvider    String     @default("local") // "local" | "google"
   lastLogin       DateTime?
   isActive        Boolean    @default(false)
+  mustChangePassword Boolean   @default(false)
   verificationPin String?
   pinExpiresAt    DateTime?
   createdAt       DateTime   @default(now())
@@ -31,18 +32,27 @@ model User {
   roles           Role[] // RBAC many-to-many relationship (HU-004)
   employee        Employee?
   client          Client?
+  cashTurns       CashTurn[] // HU-032
+  wishlists       Wishlist[] // HU-010
 }
 
 model Client {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  name       String
-  phone      String?
-  documentId String?  @unique // DNI/RUC
-  userId     Int?     @unique
-  user       User?    @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  email        String?  @unique
+  name         String   // Nombres o Razón Social
+  lastName     String?  // Apellidos
+  phone        String?
+  documentType String?  // DNI o RUC
+  documentId   String?  @unique // DNI/RUC número
+  address      String?
+  department   String?
+  province     String?
+  district     String?
+  ubigeo       String?
+  userId       Int?     @unique
+  user         User?    @relation(fields: [userId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Employee {
@@ -59,20 +69,25 @@ model Employee {
 }
 
 model Branch {
-  id            Int           @id @default(autoincrement())
-  name          String        @unique
-  address       String?
-  phone         String?
-  isActive      Boolean       @default(true)
-  employees     Employee[]
-  branchStock   BranchStock[]
-  kardexEntries KardexEntry[]
-  stockEntries  StockEntry[] // HU-051
-  warehouse     Warehouse?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  stockAlerts   StockAlert[]
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  address         String?
+  phone           String?
+  isActive        Boolean          @default(true)
+  employees       Employee[]
+  branchStock     BranchStock[]
+  kardexEntries   KardexEntry[]
+  stockEntries    StockEntry[]     // HU-051
+  warehouse       Warehouse?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  stockAlerts     StockAlert[]
   inventoryAudits InventoryAudit[] // HU-029
+  posOrders       PosOrder[]       // HU-034
+  cashRegisters   CashRegister[]   // HU-032
+  transfersSent     StockTransfer[]  @relation("TransfersSent")
+  transfersReceived StockTransfer[]  @relation("TransfersReceived")
+  sourcePosOrders   PosOrder[]       @relation("SourceBranchOrders")
 }
 
 model Warehouse {
@@ -235,8 +250,11 @@ model ProductVariant {
   stockEntryItems StockEntryItem[] // HU-051
   stockAlerts     StockAlert[]
   auditItems      AuditItem[]      // HU-029
+  posOrderItems   PosOrderItem[]   // HU-034
+  wishlists       Wishlist[]       // HU-010
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  stockTransfers  StockTransfer[]
 
   @@index([productId])
 }
@@ -248,9 +266,10 @@ model BranchStock {
   branchId  Int
   branch    Branch         @relation(fields: [branchId], references: [id])
   quantity  Float          @default(0)
+  status    StockStatus    @default(AVAILABLE)
   updatedAt DateTime       @updatedAt
 
-  @@unique([variantId, branchId])
+  @@unique([variantId, branchId, status])
 }
 
 // ─── HU-026 ───────────────────────────────────────────────────────────────────
@@ -365,3 +384,172 @@ model AuditItem {
   @@index([variantId])
 }
 
+// ─── HU-034: Aplicación de Descuentos en el POS ───────────────────────────────
+// ─── HU-035: Pago con Múltiples Métodos Combinados ────────────────────────────
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  YAPE
+}
+
+enum PosOrderStatus {
+  OPEN
+  COMPLETED
+  CANCELLED
+}
+
+/// Cabecera de una venta en el Punto de Venta (POS).
+model PosOrder {
+  id            Int            @id @default(autoincrement())
+  status        PosOrderStatus @default(OPEN)
+  subtotal      Decimal        @default(0) @db.Decimal(10, 2)
+  discountTotal Decimal        @default(0) @db.Decimal(10, 2) // Suma de todos los descuentos aplicados
+  total         Decimal        @default(0) @db.Decimal(10, 2)
+  userId        Int? // Cajero que abrió la venta
+  branchId      Int
+  branch        Branch         @relation(fields: [branchId], references: [id])
+  isCrossBranch Boolean        @default(false)
+  sourceBranchId Int?
+  sourceBranch  Branch?        @relation("SourceBranchOrders", fields: [sourceBranchId], references: [id])
+  items         PosOrderItem[]
+  payments      Payment[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([branchId])
+  @@index([userId])
+  @@index([sourceBranchId])
+}
+
+/// Ítem de línea dentro de una venta POS.
+/// T-124: Se agrega el campo discountAmount (Decimal, default 0).
+model PosOrderItem {
+  id             Int            @id @default(autoincrement())
+  posOrderId     Int
+  posOrder       PosOrder       @relation(fields: [posOrderId], references: [id], onDelete: Cascade)
+  variantId      Int
+  variant        ProductVariant @relation(fields: [variantId], references: [id])
+  quantity       Int            @default(1)
+  unitPrice      Decimal        @db.Decimal(10, 2)
+  discountAmount Decimal        @default(0) @db.Decimal(10, 2) // T-124: Descuento aplicado al ítem (monto fijo)
+  lineTotal      Decimal        @db.Decimal(10, 2) // (unitPrice * quantity) - discountAmount
+
+  @@index([posOrderId])
+  @@index([variantId])
+}
+
+/// Pagos asociados a una venta POS.
+model Payment {
+  id         Int          @id @default(autoincrement())
+  posOrderId Int
+  posOrder   PosOrder     @relation(fields: [posOrderId], references: [id], onDelete: Cascade)
+  method     PaymentMethod
+  amount     Decimal      @db.Decimal(10, 2)
+  createdAt  DateTime     @default(now())
+
+  @@index([posOrderId])
+}
+
+// ─── HU-032: Apertura de Caja y Vinculación al Turno del Vendedor ─────────────
+
+enum TurnStatus {
+  OPEN
+  CLOSED
+}
+
+model CashRegister {
+  id        Int        @id @default(autoincrement())
+  branchId  Int
+  branch    Branch     @relation(fields: [branchId], references: [id])
+  name      String
+  isActive  Boolean    @default(true)
+  cashTurns CashTurn[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([branchId])
+}
+
+model CashTurn {
+  id          Int            @id @default(autoincrement())
+  registerId  Int
+  register    CashRegister   @relation(fields: [registerId], references: [id])
+  userId      Int
+  user        User           @relation(fields: [userId], references: [id])
+  openAmount  Float
+  closeAmount Float?         // HU-037: Monto físico declarado al cerrar
+  status      TurnStatus     @default(OPEN)
+  openedAt    DateTime       @default(now())
+  closedAt    DateTime?
+  movements   CashMovement[] // HU-037: Movimientos de caja
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([registerId])
+  @@index([userId])
+}
+
+// ─── HU-010: Lista de Favoritos del Cliente (Wishlist) ─────────────────────────
+
+model Wishlist {
+  id        Int            @id @default(autoincrement())
+  userId    Int
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variantId Int
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  addedAt   DateTime       @default(now())
+
+  @@unique([userId, variantId])
+  @@index([userId])
+  @@index([variantId])
+}
+
+// ─── HU-037: Movimientos de Caja y Cierre de Turno ────────────────────────────
+
+enum CashMovementType {
+  INGRESO
+  EGRESO
+}
+
+model CashMovement {
+  id        Int              @id @default(autoincrement())
+  turnId    Int
+  turn      CashTurn         @relation(fields: [turnId], references: [id])
+  type      CashMovementType
+  amount    Float
+  reason    String
+  createdAt DateTime         @default(now())
+
+  @@index([turnId])
+}
+
+enum TransferStatus {
+  PENDING
+  CONFIRMED
+}
+
+enum StockStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+}
+
+model StockTransfer {
+  id           Int            @id @default(autoincrement())
+  fromBranchId Int
+  fromBranch   Branch         @relation("TransfersSent", fields: [fromBranchId], references: [id])
+  toBranchId   Int
+  toBranch     Branch         @relation("TransfersReceived", fields: [toBranchId], references: [id])
+  variantId    Int
+  variant      ProductVariant @relation(fields: [variantId], references: [id])
+  quantity     Float
+  status       TransferStatus @default(PENDING)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([fromBranchId])
+  @@index([toBranchId])
+  @@index([variantId])
+}

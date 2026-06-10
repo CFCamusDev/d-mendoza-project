@@ -79,6 +79,26 @@ async function main() {
     },
   });
 
+  // HU-034: Permisos para Punto de Venta (POS)
+  const permissionPosDiscounts = await prisma.permission.upsert({
+    where: { name: 'pos:discounts' },
+    update: {},
+    create: {
+      name: 'pos:discounts',
+      description: 'Capacidad para aplicar descuentos en el Punto de Venta (POS).',
+    },
+  });
+
+  // HU-055: Permisos para Gestión y Consulta de Comprobantes Electrónicos
+  const permissionSalesRead = await prisma.permission.upsert({
+    where: { name: 'sales:read' },
+    update: {},
+    create: {
+      name: 'sales:read',
+      description: 'Capacidad para visualizar y consultar comprobantes de venta electrónicos.',
+    },
+  });
+
   console.log('✅ Master permissions registered.');
 
   // ------------------------------------------------------------------
@@ -96,6 +116,8 @@ async function main() {
           { id: permissionProductsWrite.id },  // HU-014
           { id: permissionInventoryRead.id },  // HU-051
           { id: permissionInventoryWrite.id }, // HU-051
+          { id: permissionPosDiscounts.id },   // HU-034
+          { id: permissionSalesRead.id },      // HU-055
         ],
       },
     },
@@ -111,6 +133,8 @@ async function main() {
           { id: permissionProductsWrite.id },  // HU-014
           { id: permissionInventoryRead.id },  // HU-051
           { id: permissionInventoryWrite.id }, // HU-051
+          { id: permissionPosDiscounts.id },   // HU-034
+          { id: permissionSalesRead.id },      // HU-055
         ],
       },
     },
@@ -163,6 +187,80 @@ async function main() {
     });
     console.log(`ℹ️ Verified existing administrator promotions.`);
   }
+
+  // ------------------------------------------------------------------
+  // 4. Test Branches and Cash Registers Generation (HU-032 / Local POS Dev)
+  // ------------------------------------------------------------------
+  console.log('🌱 Seeding test branches and cash registers...');
+  
+  // Sede Miraflores
+  let branchMiraflores = await prisma.branch.findFirst({ where: { name: 'Sede Miraflores' } });
+  if (!branchMiraflores) {
+    branchMiraflores = await prisma.branch.create({
+      data: {
+        name: 'Sede Miraflores',
+        address: 'Av. Larco 123, Miraflores',
+        phone: '+511234567',
+        isActive: true,
+      }
+    });
+    await prisma.warehouse.create({
+      data: { branchId: branchMiraflores.id }
+    });
+  }
+
+  // Sede San Isidro
+  let branchSanIsidro = await prisma.branch.findFirst({ where: { name: 'Sede San Isidro' } });
+  if (!branchSanIsidro) {
+    branchSanIsidro = await prisma.branch.create({
+      data: {
+        name: 'Sede San Isidro',
+        address: 'Av. Javier Prado 456, San Isidro',
+        phone: '+511765432',
+        isActive: true,
+      }
+    });
+    await prisma.warehouse.create({
+      data: { branchId: branchSanIsidro.id }
+    });
+  }
+
+  // Seeding Cash Registers for Miraflores
+  const existingRegister1 = await prisma.cashRegister.findUnique({ where: { id: 1 } });
+  if (!existingRegister1) {
+    await prisma.cashRegister.create({
+      data: {
+        id: 1,
+        branchId: branchMiraflores.id,
+        name: 'Caja Principal - Miraflores'
+      }
+    });
+  }
+
+  const existingRegister2 = await prisma.cashRegister.findUnique({ where: { id: 2 } });
+  if (!existingRegister2) {
+    await prisma.cashRegister.create({
+      data: {
+        id: 2,
+        branchId: branchMiraflores.id,
+        name: 'Caja Secundaria - Miraflores'
+      }
+    });
+  }
+
+  // Seeding Cash Registers for San Isidro
+  const existingRegister3 = await prisma.cashRegister.findUnique({ where: { id: 3 } });
+  if (!existingRegister3) {
+    await prisma.cashRegister.create({
+      data: {
+        id: 3,
+        branchId: branchSanIsidro.id,
+        name: 'Caja Principal - San Isidro'
+      }
+    });
+  }
+
+  console.log('✅ Seeded test branches and cash registers successfully.');
 
   console.log('🚀 Seed execution finalized successfully.\n');
 }

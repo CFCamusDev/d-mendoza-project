@@ -4,6 +4,7 @@ import { IRoleRepository } from '@domain/repositories/IRoleRepository';
 import { IEmailService } from '@domain/services/IEmailService';
 import { ITransactionManager } from '@domain/repositories/ITransactionManager';
 import { Encryption } from '@shared/utils/Encryption';
+import { JwtService } from '@infrastructure/services/JwtService';
 import crypto from 'crypto';
 
 export class LinkClientUseCase {
@@ -12,7 +13,8 @@ export class LinkClientUseCase {
     private readonly userRepository: IUserRepository,
     private readonly roleRepository: IRoleRepository,
     private readonly emailService: IEmailService,
-    private readonly transactionManager: ITransactionManager
+    private readonly transactionManager: ITransactionManager,
+    private readonly jwtService: JwtService
   ) {}
 
   async execute(clientId: number): Promise<{ success: boolean; message: string }> {
@@ -23,6 +25,10 @@ export class LinkClientUseCase {
 
     if (client.userId) {
       throw new Error('El cliente ya tiene una cuenta vinculada');
+    }
+
+    if (!client.email) {
+      throw new Error('El cliente debe tener un correo electrónico registrado para poder vincular su cuenta');
     }
 
     // Verificar si el email ya existe en User (por si acaso no está vinculado pero existe)
@@ -38,15 +44,19 @@ export class LinkClientUseCase {
     // Crear cuenta nueva con contraseña temporal
     const tempPassword = crypto.randomBytes(8).toString('hex');
     const hashedPassword = await Encryption.hashPassword(tempPassword);
+    const clientEmail = client.email;
+    let newUserId = 0;
 
     await this.transactionManager.run(async (tx) => {
       const newUser = await this.userRepository.create({
-        email: client.email,
+        email: clientEmail,
         name: client.name,
         password: hashedPassword,
         isActive: true, // Activamos la cuenta directamente
-        authProvider: 'local'
+        authProvider: 'local',
+        mustChangePassword: true // Forzado de cambio en primer inicio
       }, tx);
+      newUserId = newUser.id;
 
       // Asignar rol CLIENT
       const clientRole = await this.roleRepository.findByName('CLIENT');
@@ -63,20 +73,48 @@ export class LinkClientUseCase {
     // already-committed DB transaction. The admin will be notified of partial
     // success and can manually trigger a credential re-send if needed.
     try {
-      await this.emailService.sendEmail(
-        client.email,
-        'Bienvenido a D\'Mendoza - Tus credenciales de acceso',
-        `
-        <h1>Hola ${client.name}</h1>
-        <p>Se ha creado tu cuenta en nuestro portal E-commerce.</p>
-        <p>Tus credenciales de acceso son:</p>
-        <ul>
-          <li><strong>Email:</strong> ${client.email}</li>
-          <li><strong>Contraseña temporal:</strong> ${tempPassword}</li>
-        </ul>
-        <p>Te recomendamos cambiar tu contraseña al iniciar sesión.</p>
-        `
-      );
+      const resetToken = this.jwtService.generatePasswordResetToken(newUserId, clientEmail);
+      const clientUrl = process.env.CORS_ORIGIN ?? 'http://localhost:5173';
+      const resetLink = `${clientUrl}/reset-password?token=${resetToken}`;
+
+      const subject = 'Bienvenido a D\'Mendoza — Activación de cuenta';
+      const html = `
+        <!DOCTYPE html>
+        <html lang="es">
+          <head><meta charset="UTF-8" /></head>
+          <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 24px;">
+            <div style="max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 8px; padding: 32px;">
+              <h2 style="color: #1a1a2e; margin-bottom: 8px;">¡Bienvenido Omnicanal a D'Mendoza!</h2>
+              <p style="color: #555; font-size: 15px; line-height: 1.6;">
+                Tu cuenta física ha sido vinculada exitosamente con nuestra plataforma de E-commerce.
+              </p>
+              <p style="color: #555; font-size: 15px; line-height: 1.6;">
+                Para tu seguridad, hemos generado una contraseña temporal y requerimos que la cambies en tu primer inicio de sesión:
+              </p>
+              <ul style="color: #555; font-size: 14px;">
+                <li><strong>Email:</strong> ${clientEmail}</li>
+                <li><strong>Contraseña temporal:</strong> ${tempPassword}</li>
+              </ul>
+              <p style="color: #555; font-size: 14px;">
+                Puedes usar el enlace seguro a continuación para configurar tu nueva contraseña directamente:
+              </p>
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="${resetLink}"
+                   style="background-color: #1a1a2e; color: #fff; padding: 14px 28px;
+                          border-radius: 6px; text-decoration: none; font-size: 15px;
+                          font-weight: bold; display: inline-block;">
+                  Establecer mi Contraseña
+                </a>
+              </div>
+              <p style="color: #aaa; font-size: 12px; text-align: center;">
+                Este enlace de un solo uso es válido por 15 minutos. Si expira, puedes usar la opción "Olvidé mi contraseña" en la web.
+              </p>
+            </div>
+          </body>
+        </html>
+      `;
+
+      await this.emailService.sendEmail(client.email, subject, html);
     } catch (emailError: any) {
       // Log the warning but do NOT rethrow — the account is already linked.
       // The administrator can trigger a credential re-send from a future endpoint.

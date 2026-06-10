@@ -24,6 +24,12 @@ export const useLogin = () => {
 
       if (!response.ok) {
         // Handle different error formats from the backend
+        if (result.requirePasswordChange) {
+          const forceChangeError = new Error(result.error || 'Cambio de contraseña obligatorio');
+          (forceChangeError as any).requirePasswordChange = true;
+          throw forceChangeError;
+        }
+
         if (Array.isArray(result.error)) {
           // Zod validation error array (HTTP 400)
           throw new Error(result.error[0]?.message || 'Error de validación');
@@ -39,6 +45,9 @@ export const useLogin = () => {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Error al intentar iniciar sesión';
       setError(errorMessage);
+      if (err instanceof Error && (err as any).requirePasswordChange) {
+        throw err;
+      }
       throw new Error(errorMessage, { cause: err });
     } finally {
       setIsLoading(false);

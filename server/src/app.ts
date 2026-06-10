@@ -22,6 +22,16 @@ import reportRoutes from '@infrastructure/http/routes/report.routes';
 import supplierRoutes from '@infrastructure/http/routes/supplier.routes'; // HU-051
 import stockAlertRoutes from '@infrastructure/http/routes/stock-alert.routes'; // HU-027
 import inventoryAuditRoutes from '@infrastructure/http/routes/inventory-audit.routes'; // HU-029
+import posRoutes from '@infrastructure/http/routes/pos.routes'; // HU-034
+import cashTurnRoutes from '@infrastructure/http/routes/cash-turn.routes'; // HU-032
+import cashRegisterRoutes from '@infrastructure/http/routes/cash-register.routes';
+import posProductRoutes from '@infrastructure/http/routes/pos-product.routes';
+import posClientRoutes from '@infrastructure/http/routes/pos-client.routes';
+import wishlistRoutes from '@infrastructure/http/routes/wishlist.routes'; // HU-010
+import posStockRoutes from '@infrastructure/http/routes/pos-stock.routes';
+import stockTransferRoutes from '@infrastructure/http/routes/stock-transfer.routes';
+import adminCrossBranchRoutes from '@infrastructure/http/routes/admin-cross-branch.routes';
+import receiptRoutes from '@infrastructure/http/routes/receipt.routes';
 
 const app = express();
 
@@ -62,6 +72,16 @@ app.use('/api/v1', reportRoutes);
 app.use('/api/v1', supplierRoutes); // HU-051 — Gestión de Proveedores
 app.use('/api/v1/stock-alerts', stockAlertRoutes); // HU-027 — Alertas de Stock Crítico
 app.use('/api/v1', inventoryAuditRoutes); // HU-029 — Auditoría de Inventario Físico
+app.use('/api/v1/pos', posRoutes); // HU-034 — Descuentos en el POS
+app.use('/api/v1', cashTurnRoutes); // HU-032 — Apertura de Caja
+app.use('/api/v1', cashRegisterRoutes);
+app.use('/api/v1', posProductRoutes);
+app.use('/api/v1', posClientRoutes);
+app.use('/api/v1/wishlist', wishlistRoutes); // HU-010 — Wishlist
+app.use('/api/v1', posStockRoutes);
+app.use('/api/v1', stockTransferRoutes);
+app.use('/api/v1', adminCrossBranchRoutes);
+app.use('/api/v1', receiptRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });

@@ -6,6 +6,7 @@ import ForgotPasswordPage from '../features/ecommerce/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../features/ecommerce/auth/ResetPasswordPage';
 import GoogleAuthSuccessPage from '../features/ecommerce/auth/GoogleAuthSuccessPage';
 import HomePage from '../features/ecommerce/HomePage';
+import WishlistPage from '../features/ecommerce/WishlistPage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
 import EmployeesPage from '../features/admin/EmployeesPage';
 import BranchesPage from '../features/admin/branches/BranchesPage';
@@ -17,16 +18,26 @@ import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
 import { AppShell } from '../components/layout/AppShell';
 import { AdminShell } from '../components/layout/AdminShell';
+import { PosShell } from '../components/layout/PosShell';
 import CategoriesPage from '../features/admin/CategoriesPage';
 import BrandsPage from '../features/admin/BrandsPage';
 import AttributesPage from '../features/admin/AttributesPage';
 import ProductFormPage from '../features/admin/ProductFormPage';
 import AdjustmentPage from '../features/admin/AdjustmentPage';
+import TransferPage from '../features/admin/TransferPage';
 import RotationReportPage from '../features/admin/RotationReportPage';
 import SuppliersPage from '../features/admin/suppliers/SuppliersPage';
 import StockEntriesPage from '../features/admin/entries/StockEntriesPage';
 import StockPage from '../features/admin/stock/StockPage';
 import InventoryAuditPage from '../features/admin/audits/InventoryAuditPage';
+import CrossBranchMonitorPage from '../features/admin/stock/CrossBranchMonitorPage';
+import ReceiptsPage from '../features/admin/ReceiptsPage';
+import { PosProvider, PosGuard } from '../features/pos/context/PosContext';
+import OpenCashPage from '../features/pos/OpenCashPage';
+import CashRegistersPage from '../features/admin/branches/CashRegistersPage';
+import PossScreen from '../features/pos/PossScreen';
+import TurnSalesPage from '../features/pos/TurnSalesPage';
+import CloseTurnPage from '../features/pos/CloseTurnPage';
 
 export const AppRouter = () => {
   return (
@@ -35,6 +46,7 @@ export const AppRouter = () => {
       <Route element={<AppShell />}>
         {/* Main Entry Point */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
 
         {/* Public / Unprotected Routes */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -50,19 +62,48 @@ export const AppRouter = () => {
         <Route path="/auth/google/success" element={<GoogleAuthSuccessPage />} />
 
         <Route
-          path="/pos"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/profile"
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'SELLER', 'CLIENT']}>
               <ProfilePage />
             </ProtectedRoute>
+          }
+        />
+      </Route>
+
+      {/* POS Routes with Cash Register Opening Shift verification (standalone container) */}
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}>
+            <PosProvider>
+              <PosShell />
+            </PosProvider>
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/pos/open-cash" element={<OpenCashPage />} />
+        <Route
+          path="/pos"
+          element={
+            <PosGuard>
+              <PossScreen />
+            </PosGuard>
+          }
+        />
+        <Route
+          path="/pos/turn/sales"
+          element={
+            <PosGuard>
+              <TurnSalesPage />
+            </PosGuard>
+          }
+        />
+        <Route
+          path="/pos/turn/close"
+          element={
+            <PosGuard>
+              <CloseTurnPage />
+            </PosGuard>
           }
         />
       </Route>
@@ -121,6 +162,14 @@ export const AppRouter = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/branches/registers"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <CashRegistersPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* HU-011 */}
         <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['ADMIN']}><CategoriesPage /></ProtectedRoute>} />
@@ -136,6 +185,9 @@ export const AppRouter = () => {
         {/* HU-028 */}
         <Route path="/admin/inventory/adjustments" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdjustmentPage /></ProtectedRoute>} />
 
+        {/* HU-024 */}
+        <Route path="/admin/inventory/transfers" element={<ProtectedRoute allowedRoles={['ADMIN']}><TransferPage /></ProtectedRoute>} />
+
         {/* HU-051 */}
         <Route path="/admin/inventory/suppliers" element={<ProtectedRoute allowedRoles={['ADMIN']}><SuppliersPage /></ProtectedRoute>} />
         <Route path="/admin/inventory/entries" element={<ProtectedRoute allowedRoles={['ADMIN']}><StockEntriesPage /></ProtectedRoute>} />
@@ -143,11 +195,19 @@ export const AppRouter = () => {
         {/* HU-021 */}
         <Route path="/admin/inventory/stock" element={<ProtectedRoute allowedRoles={['ADMIN']}><StockPage /></ProtectedRoute>} />
 
+        {/* HU-057 */}
+        <Route path="/admin/inventory/cross-branch/pending" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><CrossBranchMonitorPage /></ProtectedRoute>} />
+
+        {/* HU-055 */}
+        <Route path="/admin/receipts" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><ReceiptsPage /></ProtectedRoute>} />
+
         {/* HU-029 */}
         <Route path="/admin/inventory/audits" element={<ProtectedRoute allowedRoles={['ADMIN']}><InventoryAuditPage /></ProtectedRoute>} />
 
         {/* HU-030 */}
         <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN']}><RotationReportPage /></ProtectedRoute>} />
+
+
 
         {/* User Profile */}
         <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><ProfilePage /></ProtectedRoute>} />

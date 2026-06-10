@@ -57,6 +57,10 @@ export class LoginUseCase {
       throw new Error('Cuenta inactiva o no verificada');
     }
 
+    if (user.mustChangePassword) {
+      throw new Error('Cambio de contraseña obligatorio');
+    }
+
     // Step 4: RF-17 — Update last login timestamp
     const now = new Date();
     await this.userRepository.updateLastLogin(user.id, now);

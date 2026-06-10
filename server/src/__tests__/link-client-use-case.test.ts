@@ -19,6 +19,8 @@ const makeMockClientRepository = (): jest.Mocked<IClientRepository> => ({
   findAllWithoutUser: jest.fn<IClientRepository['findAllWithoutUser']>(),
   create: jest.fn<IClientRepository['create']>(),
   linkUser: jest.fn<IClientRepository['linkUser']>(),
+  search: jest.fn<IClientRepository['search']>(),
+  countSearch: jest.fn<IClientRepository['countSearch']>(),
 });
 
 const makeMockUserRepository = (): jest.Mocked<IUserRepository> => ({
@@ -81,7 +83,7 @@ const fakeLinkedClient: Client = { ...fakeClient, userId: 10 };
 
 const fakeNewUser: User = {
   id: 99,
-  email: fakeClient.email,
+  email: fakeClient.email!,
   name: fakeClient.name,
   password: 'hashed_password',
   authProvider: 'local',
@@ -109,6 +111,7 @@ describe('LinkClientUseCase (HU-008)', () => {
   let roleRepo: jest.Mocked<IRoleRepository>;
   let emailService: jest.Mocked<IEmailService>;
   let txManager: jest.Mocked<ITransactionManager>;
+  let mockJwtService: any;
   let useCase: LinkClientUseCase;
 
   beforeEach(() => {
@@ -117,7 +120,17 @@ describe('LinkClientUseCase (HU-008)', () => {
     roleRepo = makeMockRoleRepository();
     emailService = makeMockEmailService();
     txManager = makeMockTransactionManager();
-    useCase = new LinkClientUseCase(clientRepo, userRepo, roleRepo, emailService, txManager);
+    mockJwtService = {
+      generatePasswordResetToken: jest.fn().mockReturnValue('mock-reset-token'),
+    };
+    useCase = new LinkClientUseCase(
+      clientRepo,
+      userRepo,
+      roleRepo,
+      emailService,
+      txManager,
+      mockJwtService as any
+    );
     jest.clearAllMocks();
     // Restore transaction manager mock after clearAllMocks
     txManager.run.mockImplementation(async (cb: (tx: any) => Promise<any>) => cb(null));
@@ -142,7 +155,7 @@ describe('LinkClientUseCase (HU-008)', () => {
     expect(roleRepo.assignRoleToUser).toHaveBeenCalledWith(fakeNewUser.id, fakeClientRole.id, null);
     expect(clientRepo.linkUser).toHaveBeenCalledWith(fakeClient.id, fakeNewUser.id, null);
     expect(emailService.sendEmail).toHaveBeenCalledWith(
-      fakeClient.email,
+      fakeClient.email!,
       expect.stringContaining('credenciales'),
       expect.stringContaining(fakeClient.name),
     );

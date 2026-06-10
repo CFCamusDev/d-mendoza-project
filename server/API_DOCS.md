@@ -36,6 +36,12 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [GET /api/v1/stock](#get-apiv1stock)
 - [Auditoría de Inventario Físico — HU-029](#auditoría-de-inventario-físico--hu-029)
   - [POST /api/v1/inventory-audits](#post-apiv1inventoryaudits)
+- [Punto de Venta (POS) — HU-034](#punto-de-venta-pos--hu-034)
+  - [POST /api/v1/pos/discounts/validate](#post-apiv1posdiscountsvalidate)
+- [Apertura de Caja y Turnos — HU-032](#apertura-de-caja-y-turnos--hu-032)
+  - [POST /api/v1/cash-turns/open](#post-apiv1cashturnsopen)
+  - [GET /api/v1/cash-registers](#get-apiv1cashregisters)
+  - [GET /api/v1/cash-turns/active](#get-apiv1cashturnsactive)
 
 ---
 
@@ -68,6 +74,50 @@ Se espera un objeto JSON con la siguiente estructura:
 | :--------- | :------- | :-------- | :------------------------------------------------------------------------------------ |
 | `email`    | `string` | Sí        | Debe ser un formato de email válido (`ejemplo@correo.com`).                           |
 | `password` | `string` | Sí        | Mínimo 8 caracteres. Debe contener al menos una letra mayúscula y al menos un número. |
+
+## 9. Módulo de POS (Punto de Venta)
+
+### 9.1 Procesar Venta con Múltiples Pagos
+- **URL:** `/api/v1/pos/sales`
+- **Method:** `POST`
+- **Auth Required:** Yes (Role: `ADMIN`, `SELLER`) + (Permission: `pos:sales`)
+- **Body:**
+```json
+{
+  "branchId": 1,
+  "subtotal": 100.00,
+  "discountTotal": 10.00,
+  "total": 90.00,
+  "items": [
+    { "variantId": 5, "quantity": 2, "unitPrice": 50.00, "discountAmount": 10.00 }
+  ],
+  "payments": [
+    { "method": "CASH", "amount": 50.00 },
+    { "method": "YAPE", "amount": 40.00 }
+  ]
+}
+```
+- **Success Response:**
+  - **Code:** 201 Created
+  - **Content:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "status": "COMPLETED",
+    "subtotal": "100.00",
+    "discountTotal": "10.00",
+    "total": "90.00",
+    "userId": 2,
+    "branchId": 1,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### 9.2 Validar Descuentos (HU-034)
 
 #### 3. Respuestas (Responses)
 
@@ -1813,4 +1863,1160 @@ Si faltan parámetros o no corresponden con las especificaciones.
 }
 ```
 
+---
 
+
+## Apertura de Caja y Turnos — HU-032
+
+Este módulo permite a los vendedores y administradores aperturar turnos de caja para registrar las operaciones del punto de venta (POS) vinculados a un monto de apertura.
+
+### POST /api/v1/cash-turns/open
+
+Apertura el turno de caja vinculándolo al vendedor autenticado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/cash-turns/open` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "registerId": 1,
+  "openAmount": 150.00
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro | Tipo | Requerido | Reglas de Validación |
+| :--- | :--- | :--- | :--- |
+| `registerId` | `number` | Sí | ID entero positivo de la caja registradora. Debe existir y estar disponible (sin turnos abiertos activos). |
+| `openAmount` | `number` | Sí | Monto inicial de apertura. Debe ser un número mayor o igual a 0. |
+
+#### 3. Respuestas (Responses)
+
+##### Apertura Exitosa (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "registerId": 1,
+    "userId": 2,
+    "openAmount": 150.00,
+    "status": "OPEN",
+    "openedAt": "2026-06-01T11:45:00.000Z",
+    "closedAt": null,
+    "createdAt": "2026-06-01T11:45:00.000Z",
+    "updatedAt": "2026-06-01T11:45:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Si faltan parámetros o no corresponden con las especificaciones.
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "registerId",
+      "message": "El ID de la caja debe ser un entero positivo"
+    }
+  ]
+}
+```
+
+##### Caja No Encontrada (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "La caja registradora con ID 99 no existe"
+}
+```
+
+##### Caja Ocupada o Usuario con Turno Abierto (HTTP 409 Conflict)
+
+Retornado si el vendedor ya tiene un turno abierto o si la caja seleccionada ya está ocupada por otro turno activo.
+
+```json
+{
+  "success": false,
+  "error": "La caja registradora 'Caja Principal' ya tiene un turno abierto activo"
+}
+```
+
+##### Acceso Denegado (HTTP 401 / 403)
+
+- **HTTP 401 Unauthorized**: Si falta el Token o es inválido.
+- **HTTP 403 Forbidden**: Si el usuario autenticado posee un rol diferente a `ADMIN` o `SELLER`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Solo los roles Administrador o Vendedor están autorizados para abrir caja"
+}
+```
+
+---
+
+### GET /api/v1/cash-registers
+
+Obtiene la lista de todas las cajas registradoras asociadas a una sucursal específica.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/cash-registers` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `branchId` | `number` | Sí | ID de la sucursal de la cual se desean obtener las cajas registradoras. |
+
+#### 3. Respuestas (Responses)
+
+##### Listado Exitoso (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "branchId": 1,
+      "name": "Caja Principal - Sede Sur",
+      "createdAt": "2026-06-01T11:00:00.000Z",
+      "updatedAt": "2026-06-01T11:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "branchId": 1,
+      "name": "Caja Secundaria - Sede Sur",
+      "createdAt": "2026-06-01T11:00:00.000Z",
+      "updatedAt": "2026-06-01T11:00:00.000Z"
+    }
+  ]
+}
+```
+
+##### Error de Parámetros (HTTP 400 Bad Request)
+
+Retornado si falta el parámetro `branchId` o si es inválido.
+
+```json
+{
+  "success": false,
+  "error": "El parámetro branchId es obligatorio y debe ser un número entero"
+}
+```
+
+---
+
+### GET /api/v1/cash-turns/active
+
+Obtiene el turno de caja abierto del usuario autenticado si es que existe. Utilizado para hidratar el estado de caja al cargar la aplicación.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/cash-turns/active` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Respuestas (Responses)
+
+##### Turno Activo Encontrado (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "registerId": 1,
+    "userId": 2,
+    "openAmount": 150.00,
+    "status": "OPEN",
+    "openedAt": "2026-06-01T11:45:00.000Z",
+    "closedAt": null,
+    "createdAt": "2026-06-01T11:45:00.000Z",
+    "updatedAt": "2026-06-01T11:45:00.000Z"
+  }
+}
+```
+
+##### Sin Turno Activo (HTTP 200 OK)
+
+Retornado cuando el usuario no tiene ningún turno de caja abierto en sesión.
+
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+---
+
+### POST /api/v1/cash-registers
+
+Crea una nueva caja registradora.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/cash-registers` | JWT `Bearer Token` | Administrador (`ADMIN`) |
+
+#### 2. Cuerpo de la Solicitud (Request Body)
+
+```json
+{
+  "branchId": 1,
+  "name": "Caja Principal - Sede Larco"
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Creación Exitosa (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 4,
+    "branchId": 1,
+    "name": "Caja Principal - Sede Larco",
+    "createdAt": "2026-06-01T21:54:00.000Z",
+    "updatedAt": "2026-06-01T21:54:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "name",
+      "message": "El nombre debe tener al menos 3 caracteres"
+    }
+  ]
+}
+```
+
+---
+
+### PATCH /api/v1/cash-registers/:id
+
+Actualiza la información de una caja registradora existente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `PATCH` | `/api/v1/cash-registers/:id` | JWT `Bearer Token` | Administrador (`ADMIN`) |
+
+#### 2. Cuerpo de la Solicitud (Request Body)
+
+```json
+{
+  "name": "Caja Principal Renovada"
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Actualización Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 4,
+    "branchId": 1,
+    "name": "Caja Principal Renovada",
+    "createdAt": "2026-06-01T21:54:00.000Z",
+    "updatedAt": "2026-06-01T21:55:00.000Z"
+  }
+}
+```
+
+---
+
+### DELETE /api/v1/cash-registers/:id
+
+Realiza la eliminación lógica (`isActive: false`) de una caja registradora.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `DELETE` | `/api/v1/cash-registers/:id` | JWT `Bearer Token` | Administrador (`ADMIN`) |
+
+#### 2. Respuestas (Responses)
+
+##### Eliminación Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Caja registradora eliminada lógicamente con éxito"
+}
+```
+
+##### Conflicto - Turno Abierto (HTTP 409 Conflict)
+
+```json
+{
+  "success": false,
+  "error": "No se puede desactivar la caja registradora porque tiene un turno abierto actualmente"
+}
+```
+
+---
+
+### GET /api/v1/pos/products
+
+Busca productos/variantes para el POS por SKU o nombre de producto, retornando el stock correspondiente a la sucursal del turno activo del usuario.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/products` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `sku` | `string` | Sí | SKU exacto (para lector de código de barras) o coincidencia parcial del nombre del producto. |
+
+#### 3. Respuestas (Responses)
+
+##### Búsqueda Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "variantId": 12,
+      "productId": 5,
+      "sku": "CAM-M-BLUE",
+      "name": "Camisa Denim - M - Blue",
+      "baseName": "Camisa Denim",
+      "price": 89.90,
+      "stock": 25,
+      "attributes": {
+        "Talla": "M",
+        "Color": "Blue"
+      }
+    }
+  ]
+}
+```
+
+##### Error - Parámetro Requerido Faltante (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "El parámetro de búsqueda (sku) es requerido y no puede estar vacío"
+}
+```
+
+##### Error - Turno Cerrado o Sin Apertura de Caja (HTTP 400 Bad Request)
+
+Retornado cuando el vendedor autenticado no ha realizado la apertura de caja para su sesión y por ende no se tiene una sucursal activa.
+
+```json
+{
+  "success": false,
+  "error": "No tienes un turno de caja abierto. Por favor, abre caja antes de realizar búsquedas o ventas en el POS."
+}
+```
+
+---
+
+### GET /api/v1/pos/clients/lookup
+
+Consulta de forma predictiva los datos de DNI o RUC desde la API externa de Factiliza.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/clients/lookup` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `type` | `string` | Sí | Tipo de documento, debe ser exactamente `DNI` o `RUC`. |
+| `number` | `string` | Sí | Número de documento (8 dígitos para DNI, 11 dígitos para RUC). |
+
+#### 3. Respuestas (Responses)
+
+##### Búsqueda Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "success": true,
+    "documentNumber": "73614169",
+    "name": "JOSE PEDRO",
+    "lastName": "CASTILLO TERRONES",
+    "address": "CASERIO PUÑA",
+    "department": "CAJAMARCA",
+    "province": "CHOTA",
+    "district": "TACABAMBA",
+    "ubigeo": "060417"
+  }
+}
+```
+
+##### Documento no Encontrado o Inválido (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "Documento no encontrado en el padrón o inválido"
+}
+```
+
+---
+
+### POST /api/v1/pos/clients/quick-register
+
+Realiza el registro rápido de un cliente en el POS utilizando datos de la API de Factiliza.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/pos/clients/quick-register` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Cuerpo de la Solicitud (Request Body)
+
+```json
+{
+  "documentType": "DNI",
+  "documentId": "73614169",
+  "phone": "987654321",
+  "email": "cliente@correo.com"
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Registro Exitoso (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 15,
+    "documentType": "DNI",
+    "documentId": "73614169",
+    "name": "JOSE PEDRO",
+    "lastName": "CASTILLO TERRONES",
+    "phone": "987654321",
+    "email": "cliente@correo.com",
+    "address": "CASERIO PUÑA",
+    "department": "CAJAMARCA",
+    "province": "CHOTA",
+    "district": "TACABAMBA",
+    "ubigeo": "060417",
+    "userId": null,
+    "createdAt": "2026-06-01T23:28:00.000Z",
+    "updatedAt": "2026-06-01T23:28:00.000Z"
+  }
+}
+```
+
+##### Conflicto - Cliente ya existe en BD (HTTP 409 Conflict)
+
+```json
+{
+  "success": false,
+  "error": "El cliente con documento 73614169 ya se encuentra registrado en el sistema"
+}
+```
+
+##### Error - Documento Inválido o No Existe en Factiliza (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Cliente no encontrado o documento inválido (DNI: 00000000)"
+}
+```
+
+---
+
+### GET /api/v1/pos/clients/search
+
+Realiza una búsqueda express de clientes locales registrados en el sistema por DNI, RUC o Nombre/Apellido con paginación máxima de 10 registros.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/clients/search` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `q` | `string` | Sí | El término de búsqueda (coincide parcialmente por DNI, RUC, nombre o apellido). |
+| `page` | `number` | No | Número de página para la paginación (por defecto es 1). |
+
+#### 3. Respuestas (Responses)
+
+##### Búsqueda Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "clients": [
+    {
+      "id": 15,
+      "documentType": "DNI",
+      "documentId": "73614169",
+      "name": "JOSE PEDRO",
+      "lastName": "CASTILLO TERRONES",
+      "phone": "987654321",
+      "email": "cliente@correo.com",
+      "address": "CASERIO PUÑA",
+      "department": "CAJAMARCA",
+      "province": "CHOTA",
+      "district": "TACABAMBA",
+      "ubigeo": "060417",
+      "userId": null,
+      "createdAt": "2026-06-01T23:28:00.000Z",
+      "updatedAt": "2026-06-01T23:28:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "totalPages": 1,
+    "limit": 10
+  }
+}
+```
+
+##### Error - Parámetro q Faltante (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "El parámetro de búsqueda q es obligatorio"
+}
+```
+>>>>>>> origin/develop
+
+## Punto de Venta (POS) — HU-034
+
+### POST /api/v1/pos/discounts/validate
+
+Valida y calcula la aplicación de un descuento sobre un carrito de compra del POS. Requiere que el rol del usuario autenticado posea el permiso `pos:discounts` (Control RBAC). Devuelve el desglose financiero completo: subtotal, monto de descuento calculado y total final.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso RBAC Requerido |
+| :----- | :--- | :------------ | :--------------------- |
+| `POST` | `/api/v1/pos/discounts/validate` | Bearer JWT | `pos:discounts` |
+
+> **Nota de Seguridad:** Este endpoint está protegido por el middleware `requirePermission('pos:discounts')`. Solo usuarios con roles que tengan este permiso asignado (ej. `ADMIN`, `CAJERO_SENIOR`) podrán acceder. Los intentos sin el permiso correcto retornarán `HTTP 403 Forbidden`.
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+Se espera un objeto JSON con la siguiente estructura:
+
+```json
+{
+  "items": [
+    {
+      "variantId": 12,
+      "quantity": 2,
+      "unitPrice": 49.99
+    },
+    {
+      "variantId": 7,
+      "quantity": 1,
+      "unitPrice": 25.00
+    }
+  ],
+  "discountType": "percentage",
+  "discountValue": 10
+}
+```
+
+#### 3. Campos del Request Body
+
+| Campo | Tipo | Requerido | Descripción |
+| :---- | :--- | :-------- | :---------- |
+| `items` | `Array` | Sí | Lista de ítems del carrito. Debe tener al menos 1 elemento. |
+| `items[].variantId` | `number (int)` | Sí | ID del `ProductVariant` a vender. |
+| `items[].quantity` | `number (int)` | Sí | Cantidad de unidades. Debe ser mayor que 0. |
+| `items[].unitPrice` | `number` | Sí | Precio unitario del ítem en moneda local. No negativo. |
+| `discountType` | `"percentage" \| "fixed"` | Sí | Modalidad del descuento. `"percentage"` aplica un porcentaje sobre el subtotal. `"fixed"` aplica un monto fijo. |
+| `discountValue` | `number` | Sí | Valor del descuento. Para `"percentage"`: valor entre 0.01 y 100. Para `"fixed"`: valor positivo que no supere el subtotal. |
+
+#### 4. Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "subtotal": 124.98,
+    "discountType": "percentage",
+    "discountValue": 10,
+    "discountAmount": 12.50,
+    "total": 112.48,
+    "appliedBy": {
+      "userId": 3,
+      "email": "cajero@dmendoza.com"
+    }
+  }
+}
+```
+
+#### 5. Respuestas de Error
+
+**HTTP 400 — Validación fallida (datos inválidos)**
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "code": "too_small",
+      "message": "Se requiere al menos un ítem para calcular el descuento",
+      "path": ["items"]
+    }
+  ]
+}
+```
+
+**HTTP 400 — Porcentaje superior al 100%**
+
+```json
+{
+  "success": false,
+  "error": "El descuento porcentual no puede superar el 100%"
+}
+```
+
+**HTTP 400 — Descuento fijo mayor que el subtotal**
+
+```json
+{
+  "success": false,
+  "error": "El descuento fijo no puede superar el subtotal de la orden"
+}
+```
+
+**HTTP 401 — Token faltante o inválido**
+
+```json
+{
+  "success": false,
+  "error": "Acceso no autorizado: Token faltante o con formato incorrecto"
+}
+```
+
+**HTTP 403 — Rol sin permiso `pos:discounts`**
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el permiso 'pos:discounts'"
+}
+```
+
+---
+
+### 3. Emisión de Comprobante (Receipt)
+
+**`GET /api/v1/pos/sales/:id/receipt`**
+
+Devuelve los datos completos y estructurados de una venta específica, optimizados para la impresión del ticket en el POS (comprobante térmico de 58/80mm).
+
+- **Permisos requeridos:** `pos:sales:read` o `pos:sales`
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "orderId": 1,
+    "date": "2026-06-02T12:00:00.000Z",
+    "seller": "Carlos Mendoza",
+    "branch": {
+      "id": 1,
+      "name": "Sede Principal",
+      "address": "Av. Central 123",
+      "phone": "999888777"
+    },
+    "items": [
+      {
+        "id": 1,
+        "name": "Aceite Motor 5W30",
+        "sku": "LUB-001",
+        "quantity": 2,
+        "unitPrice": 45.00,
+        "discountAmount": 0.00,
+        "lineTotal": 90.00,
+        "isCrossBranch": false
+      }
+    ],
+    "totals": {
+      "subtotal": 90.00,
+      "discountTotal": 0.00,
+      "total": 90.00,
+      "paid": 100.00,
+      "change": 10.00
+    },
+    "payments": [
+      {
+        "method": "CASH",
+        "amount": 100.00
+      }
+    ]
+  }
+}
+```
+
+---
+
+### GET /api/v1/pos/stock/cross-branch
+
+Consulta el stock de una variante de producto en todas las sucursales activas, excluyendo la sucursal del turno actual del vendedor.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/stock/cross-branch` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `variantId` | `number` | Sí | El ID de la variante de producto a consultar. |
+
+#### 3. Respuestas (Responses)
+
+##### Consulta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "branchId": 2,
+      "branchName": "Sede Miraflores",
+      "quantity": 15
+    },
+    {
+      "branchId": 3,
+      "branchName": "Sede Larco",
+      "quantity": 5
+    }
+  ]
+}
+```
+
+##### Error - Parámetro variantId Inválido (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "El parámetro variantId debe ser un número entero positivo"
+}
+```
+
+##### Error - Turno Cerrado o Sin Apertura de Caja (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "No tienes un turno de caja abierto. Por favor, abre caja antes de realizar consultas de stock intersucursales."
+}
+```
+
+##### Error - Variante No Encontrada (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "La variante de producto con ID 999 no existe o se encuentra inactiva"
+}
+```
+
+---
+
+### POST /api/v1/stock-transfers
+
+Registra y ejecuta una transferencia interna de stock de una variante de producto desde una sucursal de origen hacia otra de destino. Descuenta el inventario en la de origen, lo incrementa en la de destino, y genera los asientos de Kardex (SALIDA y ENTRADA) correspondientes.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/stock-transfers` | JWT `Bearer Token` | Permiso `inventory:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "fromBranchId": 1,
+  "toBranchId": 2,
+  "variantId": 15,
+  "quantity": 5
+}
+```
+
+| Campo | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `fromBranchId` | `number` | Sí | El ID de la sucursal de origen (debe existir y estar activa). |
+| `toBranchId` | `number` | Sí | El ID de la sucursal de destino (debe existir, estar activa y ser diferente del origen). |
+| `variantId` | `number` | Sí | El ID de la variante de producto a transferir (debe existir y estar activa). |
+| `quantity` | `number` | Sí | La cantidad de unidades a transferir (debe ser un número entero o decimal positivo). |
+
+#### 3. Respuestas (Responses)
+
+##### Transferencia Exitosa (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "fromBranchId": 1,
+    "toBranchId": 2,
+    "variantId": 15,
+    "quantity": 5,
+    "status": "CONFIRMED",
+    "createdAt": "2026-06-10T08:14:00.000Z",
+    "updatedAt": "2026-06-10T08:14:00.000Z",
+    "fromBranch": {
+      "id": 1,
+      "name": "Sede Central",
+      "isActive": true
+    },
+    "toBranch": {
+      "id": 2,
+      "name": "Sede San Isidro",
+      "isActive": true
+    },
+    "variant": {
+      "id": 15,
+      "sku": "CAM-M-ROJO",
+      "price": 49.90,
+      "isActive": true
+    }
+  }
+}
+```
+
+##### Error - Stock Insuficiente (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Stock insuficiente en la sucursal de origen. Stock disponible: 3"
+}
+```
+
+##### Error - Sucursales Iguales (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "La sucursal de origen y destino no pueden ser la misma"
+}
+```
+
+##### Error - Recurso No Encontrado o Inactivo (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "La variante del producto no existe o se encuentra inactiva"
+}
+```
+
+---
+
+### POST /api/v1/pos/sales (Soporte Cross-Branch)
+
+Registra una venta desde el POS. Permite indicar de forma opcional si es una venta Cross-Branch para reservar stock en la sucursal de origen en lugar de descontar directamente y generar Kardex.
+
+#### 1. Nuevos Campos en el Request Body
+
+| Campo | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `isCrossBranch` | `boolean` | No | Indica si la venta toma stock de otra sucursal (`default: false`). |
+| `sourceBranchId` | `number` | No | ID de la sucursal de origen de donde proviene el stock físico. |
+
+---
+
+### PATCH /api/v1/pos/sales/:id/confirm-cross-branch
+
+Confirma la entrega física de una venta Cross-Branch. Esto cambia el estado de stock en la sucursal de origen de `RESERVED` a `SOLD`, genera el asiento correspondiente de `SALIDA` en el Kardex de origen y registra la auditoría.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `PATCH` | `/api/v1/pos/sales/:id/confirm-cross-branch` | JWT `Bearer Token` | Autenticado |
+
+#### 2. Respuestas (Responses)
+
+##### Confirmación Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 12,
+    "status": "COMPLETED",
+    "subtotal": 120.00,
+    "discountTotal": 0.00,
+    "total": 120.00,
+    "branchId": 1,
+    "isCrossBranch": true,
+    "sourceBranchId": 2,
+    "createdAt": "2026-06-10T09:40:00.000Z",
+    "updatedAt": "2026-06-10T09:42:00.000Z"
+  }
+}
+```
+
+##### Error - No es Venta Cross-Branch (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Esta orden no corresponde a una venta Cross-Branch"
+}
+```
+
+##### Error - Ya Confirmada Previamente (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Esta venta Cross-Branch ya ha sido confirmada previamente"
+}
+```
+
+---
+
+### GET /api/v1/admin/cross-branch/pending
+
+Obtiene las ventas Cross-Branch que están pendientes de entrega física, agrupadas por sucursal de origen (sucursal proveedora de stock).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/admin/cross-branch/pending` | JWT `Bearer Token` | Permiso `inventory:read` |
+
+#### 2. Respuestas (Responses)
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "sourceBranchId": 1,
+      "sourceBranchName": "Sede Central",
+      "pendingOrdersCount": 1,
+      "totalReservedUnits": 2,
+      "orders": [
+        {
+          "orderId": 12,
+          "destinationBranchId": 2,
+          "destinationBranchName": "Sede San Isidro",
+          "totalAmount": 99.80,
+          "createdAt": "2026-06-10T09:40:00.000Z",
+          "items": [
+            {
+              "variantId": 15,
+              "sku": "CAM-M-ROJO",
+              "productName": "Camisa Casual",
+              "quantity": 2,
+              "unitPrice": 49.90
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/v1/receipts
+
+Consulta de manera paginada y filtrada las ventas/comprobantes electrónicos emitidos en el sistema POS.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/receipts` | JWT `Bearer Token` | Permiso `sales:read` |
+
+#### 2. Parámetros Query (Query Parameters)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `branchId` | `number` | No | ID de la sucursal emisora. |
+| `type` | `string` | No | Tipo de comprobante (`cross-branch` \| `normal`). |
+| `from` | `string` | No | Fecha de inicio de búsqueda (formato YYYY-MM-DD o ISO). |
+| `to` | `string` | No | Fecha de fin de búsqueda (formato YYYY-MM-DD o ISO). |
+| `page` | `number` | No | Número de página para la paginación (`default: 1`). |
+| `limit` | `number` | No | Cantidad de elementos por página (`default: 10`). |
+
+#### 3. Respuestas (Responses)
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "total": 1,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1,
+    "results": [
+      {
+        "orderId": 12,
+        "status": "COMPLETED",
+        "subtotal": 99.80,
+        "discountTotal": 0.00,
+        "total": 99.80,
+        "isCrossBranch": true,
+        "sourceBranch": {
+          "id": 1,
+          "name": "Sede Central"
+        },
+        "branch": {
+          "id": 2,
+          "name": "Sede San Isidro"
+        },
+        "createdAt": "2026-06-10T09:40:00.000Z",
+        "seller": {
+          "id": 5,
+          "name": "Juan",
+          "lastName": "Perez",
+          "email": "juan.perez@dmendoza.com"
+        },
+        "client": {
+          "id": 3,
+          "name": "Carlos",
+          "lastName": "Mendoza",
+          "documentId": "45678912"
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Wishlist (Favoritos) — HU-010
+
+### GET /api/v1/wishlist
+
+Retorna la lista de productos favoritos del usuario autenticado, ordenados del más reciente al más antiguo.
+
+- **Permisos requeridos:** Solo requiere autenticación (`requireAuth`).
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "userId": 3,
+      "variantId": 12,
+      "addedAt": "2026-06-05T12:00:00.000Z",
+      "variant": {
+        "id": 12,
+        "sku": "TSHIRT-001",
+        "price": "29.99",
+        "product": {
+          "id": 5,
+          "name": "Camiseta Básica",
+          "description": "Camiseta de algodón 100%",
+          "images": [
+            {
+              "id": 1,
+              "url": "https://example.com/image.jpg",
+              "isMain": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+### POST /api/v1/wishlist/:variantId
+
+Agrega o elimina una variante de producto (`variantId`) de la lista de favoritos del usuario autenticado (Toggle). Si ya existía, lo elimina. Si no existía, lo agrega.
+
+- **Parámetros de ruta:**
+  - `variantId` (number): ID de la variante de producto.
+- **Permisos requeridos:** Solo requiere autenticación (`requireAuth`).
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Agregado a favoritos",
+  "data": {
+    "id": 2,
+    "userId": 3,
+    "variantId": 12,
+    "addedAt": "2026-06-05T12:05:00.000Z"
+  }
+}
+```
+
+### DELETE /api/v1/wishlist/:variantId
+
+Elimina una variante de producto específica de la lista de favoritos.
+
+- **Parámetros de ruta:**
+  - `variantId` (number): ID de la variante de producto.
+- **Permisos requeridos:** Solo requiere autenticación (`requireAuth`).
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Eliminado de favoritos"
+}
+```
