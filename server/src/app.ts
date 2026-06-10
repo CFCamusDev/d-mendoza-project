@@ -30,6 +30,7 @@ import posClientRoutes from '@infrastructure/http/routes/pos-client.routes';
 import posStockRoutes from '@infrastructure/http/routes/pos-stock.routes';
 import stockTransferRoutes from '@infrastructure/http/routes/stock-transfer.routes';
 import adminCrossBranchRoutes from '@infrastructure/http/routes/admin-cross-branch.routes';
+import receiptRoutes from '@infrastructure/http/routes/receipt.routes';
 
 const app = express();
 
@@ -78,6 +79,7 @@ app.use('/api/v1', posClientRoutes);
 app.use('/api/v1', posStockRoutes);
 app.use('/api/v1', stockTransferRoutes);
 app.use('/api/v1', adminCrossBranchRoutes);
+app.use('/api/v1', receiptRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });

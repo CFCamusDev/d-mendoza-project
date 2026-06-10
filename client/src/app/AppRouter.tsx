@@ -30,6 +30,7 @@ import StockEntriesPage from '../features/admin/entries/StockEntriesPage';
 import StockPage from '../features/admin/stock/StockPage';
 import InventoryAuditPage from '../features/admin/audits/InventoryAuditPage';
 import CrossBranchMonitorPage from '../features/admin/stock/CrossBranchMonitorPage';
+import ReceiptsPage from '../features/admin/ReceiptsPage';
 import { PosProvider, PosGuard } from '../features/pos/context/PosContext';
 import OpenCashPage from '../features/pos/OpenCashPage';
 import CashRegistersPage from '../features/admin/branches/CashRegistersPage';
@@ -194,6 +195,9 @@ export const AppRouter = () => {
 
         {/* HU-057 */}
         <Route path="/admin/inventory/cross-branch/pending" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><CrossBranchMonitorPage /></ProtectedRoute>} />
+
+        {/* HU-055 */}
+        <Route path="/admin/receipts" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><ReceiptsPage /></ProtectedRoute>} />
 
         {/* HU-029 */}
         <Route path="/admin/inventory/audits" element={<ProtectedRoute allowedRoles={['ADMIN']}><InventoryAuditPage /></ProtectedRoute>} />

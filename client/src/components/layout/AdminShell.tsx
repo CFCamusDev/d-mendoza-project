@@ -30,7 +30,8 @@ import {
   Sliders,
   UserPlus,
   Landmark,
-  ArrowLeftRight
+  ArrowLeftRight,
+  FileText
 } from 'lucide-react';
 
 export const AdminShell: React.FC = () => {
@@ -147,6 +148,16 @@ export const AdminShell: React.FC = () => {
               {!isCollapsed && <span>Control de Stock</span>}
             </Link>
 
+            <Link
+              to="/admin/receipts"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/receipts') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Comprobantes Electrónicos"
+            >
+              <FileText className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Comprobantes</span>}
+            </Link>
 
             <Link
               to="/pos"
