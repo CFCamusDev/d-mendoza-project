@@ -49,6 +49,12 @@ export const PosShell: React.FC = () => {
               >
                 Ventas del Turno
               </Link>
+              <Link 
+                to="/pos/turn/close" 
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 hover:bg-red-100 text-red-700 text-xs font-bold rounded-xl transition-all shadow-sm"
+              >
+                Cerrar Turno
+              </Link>
             </div>
           )}
         </div>
