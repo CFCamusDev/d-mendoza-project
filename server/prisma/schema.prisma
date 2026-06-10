@@ -85,6 +85,7 @@ model Branch {
   cashRegisters   CashRegister[]   // HU-032
   transfersSent     StockTransfer[]  @relation("TransfersSent")
   transfersReceived StockTransfer[]  @relation("TransfersReceived")
+  sourcePosOrders   PosOrder[]       @relation("SourceBranchOrders")
 }
 
 model Warehouse {
@@ -262,9 +263,10 @@ model BranchStock {
   branchId  Int
   branch    Branch         @relation(fields: [branchId], references: [id])
   quantity  Float          @default(0)
+  status    StockStatus    @default(AVAILABLE)
   updatedAt DateTime       @updatedAt
 
-  @@unique([variantId, branchId])
+  @@unique([variantId, branchId, status])
 }
 
 // ─── HU-026 ───────────────────────────────────────────────────────────────────
@@ -405,6 +407,9 @@ model PosOrder {
   userId        Int? // Cajero que abrió la venta
   branchId      Int
   branch        Branch         @relation(fields: [branchId], references: [id])
+  isCrossBranch Boolean        @default(false)
+  sourceBranchId Int?
+  sourceBranch  Branch?        @relation("SourceBranchOrders", fields: [sourceBranchId], references: [id])
   items         PosOrderItem[]
   payments      Payment[]
   createdAt     DateTime       @default(now())
@@ -412,6 +417,7 @@ model PosOrder {
 
   @@index([branchId])
   @@index([userId])
+  @@index([sourceBranchId])
 }
 
 /// Ítem de línea dentro de una venta POS.
@@ -504,6 +510,12 @@ model CashMovement {
 enum TransferStatus {
   PENDING
   CONFIRMED
+}
+
+enum StockStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
 }
 
 model StockTransfer {
