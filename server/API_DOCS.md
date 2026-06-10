@@ -2669,3 +2669,97 @@ Consulta el stock de una variante de producto en todas las sucursales activas, e
 }
 ```
 
+---
+
+### POST /api/v1/stock-transfers
+
+Registra y ejecuta una transferencia interna de stock de una variante de producto desde una sucursal de origen hacia otra de destino. Descuenta el inventario en la de origen, lo incrementa en la de destino, y genera los asientos de Kardex (SALIDA y ENTRADA) correspondientes.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/stock-transfers` | JWT `Bearer Token` | Permiso `inventory:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "fromBranchId": 1,
+  "toBranchId": 2,
+  "variantId": 15,
+  "quantity": 5
+}
+```
+
+| Campo | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `fromBranchId` | `number` | Sí | El ID de la sucursal de origen (debe existir y estar activa). |
+| `toBranchId` | `number` | Sí | El ID de la sucursal de destino (debe existir, estar activa y ser diferente del origen). |
+| `variantId` | `number` | Sí | El ID de la variante de producto a transferir (debe existir y estar activa). |
+| `quantity` | `number` | Sí | La cantidad de unidades a transferir (debe ser un número entero o decimal positivo). |
+
+#### 3. Respuestas (Responses)
+
+##### Transferencia Exitosa (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "fromBranchId": 1,
+    "toBranchId": 2,
+    "variantId": 15,
+    "quantity": 5,
+    "status": "CONFIRMED",
+    "createdAt": "2026-06-10T08:14:00.000Z",
+    "updatedAt": "2026-06-10T08:14:00.000Z",
+    "fromBranch": {
+      "id": 1,
+      "name": "Sede Central",
+      "isActive": true
+    },
+    "toBranch": {
+      "id": 2,
+      "name": "Sede San Isidro",
+      "isActive": true
+    },
+    "variant": {
+      "id": 15,
+      "sku": "CAM-M-ROJO",
+      "price": 49.90,
+      "isActive": true
+    }
+  }
+}
+```
+
+##### Error - Stock Insuficiente (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Stock insuficiente en la sucursal de origen. Stock disponible: 3"
+}
+```
+
+##### Error - Sucursales Iguales (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "La sucursal de origen y destino no pueden ser la misma"
+}
+```
+
+##### Error - Recurso No Encontrado o Inactivo (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "La variante del producto no existe o se encuentra inactiva"
+}
+```
+
+
