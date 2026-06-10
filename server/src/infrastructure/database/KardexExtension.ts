@@ -21,15 +21,15 @@ export const kardexExtension = Prisma.defineExtension({
 
         return client.$transaction(async (tx: any) => {
           const existing = await tx.branchStock.findUnique({
-            where: { variantId_branchId: { variantId: args.variantId, branchId: args.branchId } },
+            where: { variantId_branchId_status: { variantId: args.variantId, branchId: args.branchId, status: 'AVAILABLE' } },
           });
 
           const prevQty = existing?.quantity ?? 0;
           const newQty = args.newQuantity !== undefined ? args.newQuantity : prevQty + args.quantityDelta;
 
           const stock = await tx.branchStock.upsert({
-            where: { variantId_branchId: { variantId: args.variantId, branchId: args.branchId } },
-            create: { variantId: args.variantId, branchId: args.branchId, quantity: newQty },
+            where: { variantId_branchId_status: { variantId: args.variantId, branchId: args.branchId, status: 'AVAILABLE' } },
+            create: { variantId: args.variantId, branchId: args.branchId, quantity: newQty, status: 'AVAILABLE' },
             update: { quantity: newQty },
           });
 

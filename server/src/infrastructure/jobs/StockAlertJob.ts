@@ -19,6 +19,7 @@ export class StockAlertJob {
     // Buscar el stock en todas las sucursales que sea menor al stock mínimo de la variante (y que esté activo)
     const criticalStocks = await prisma.branchStock.findMany({
       where: {
+        status: 'AVAILABLE',
         variant: {
           isActive: true
         }
