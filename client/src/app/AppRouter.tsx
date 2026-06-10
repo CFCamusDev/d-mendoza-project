@@ -23,6 +23,7 @@ import BrandsPage from '../features/admin/BrandsPage';
 import AttributesPage from '../features/admin/AttributesPage';
 import ProductFormPage from '../features/admin/ProductFormPage';
 import AdjustmentPage from '../features/admin/AdjustmentPage';
+import TransferPage from '../features/admin/TransferPage';
 import RotationReportPage from '../features/admin/RotationReportPage';
 import SuppliersPage from '../features/admin/suppliers/SuppliersPage';
 import StockEntriesPage from '../features/admin/entries/StockEntriesPage';
@@ -179,6 +180,9 @@ export const AppRouter = () => {
 
         {/* HU-028 */}
         <Route path="/admin/inventory/adjustments" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdjustmentPage /></ProtectedRoute>} />
+
+        {/* HU-024 */}
+        <Route path="/admin/inventory/transfers" element={<ProtectedRoute allowedRoles={['ADMIN']}><TransferPage /></ProtectedRoute>} />
 
         {/* HU-051 */}
         <Route path="/admin/inventory/suppliers" element={<ProtectedRoute allowedRoles={['ADMIN']}><SuppliersPage /></ProtectedRoute>} />

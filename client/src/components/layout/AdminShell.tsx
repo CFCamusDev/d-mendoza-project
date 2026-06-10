@@ -28,7 +28,8 @@ import {
   Award,
   Sliders,
   UserPlus,
-  Landmark
+  Landmark,
+  ArrowLeftRight
 } from 'lucide-react';
 
 export const AdminShell: React.FC = () => {
@@ -322,6 +323,17 @@ export const AdminShell: React.FC = () => {
                 >
                   <Archive className="w-4 h-4 shrink-0" />
                   {!isCollapsed && <span>Ajustes de Stock</span>}
+                </Link>
+
+                <Link
+                  to="/admin/inventory/transfers"
+                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                    isActiveRoute('/admin/inventory/transfers') ? activeClass : inactiveClass
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title="Transferencias"
+                >
+                  <ArrowLeftRight className="w-4 h-4 shrink-0" />
+                  {!isCollapsed && <span>Transferencias</span>}
                 </Link>
               </div>
             )}
