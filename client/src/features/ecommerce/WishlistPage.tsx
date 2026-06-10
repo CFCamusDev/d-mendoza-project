@@ -34,7 +34,7 @@ export const WishlistPage = () => {
 
   const fetchWishlist = async () => {
     try {
-      const response = await axiosInstance.get('/wishlist');
+      const response = await axiosInstance.get('/v1/wishlist');
       if (response.data?.success) {
         setItems(response.data.data);
       }
@@ -69,7 +69,7 @@ export const WishlistPage = () => {
           <HeartCrack className="mx-auto h-16 w-16 text-gray-300 mb-4" />
           <h2 className="text-2xl font-bold text-[#3F3F3F] mb-2">Inicia sesión</h2>
           <p className="text-gray-500 mb-6">Debes iniciar sesión para ver tus favoritos.</p>
-          <button 
+          <button
             onClick={() => window.location.href = '/login'}
             className="w-full py-3 px-4 bg-[#3F3F3F] text-white rounded-xl font-medium hover:bg-black transition-colors"
           >
@@ -112,13 +112,13 @@ export const WishlistPage = () => {
             {items.map((item) => {
               const product = item.variant.product;
               const mainImage = product.images.find(img => img.isMain)?.url || product.images[0]?.url || 'https://via.placeholder.com/400x500?text=No+Image';
-              
+
               return (
                 <div key={item.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col">
                   {/* Image container */}
                   <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-                    <img 
-                      src={mainImage} 
+                    <img
+                      src={mainImage}
                       alt={product.name}
                       className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                     />
@@ -136,12 +136,12 @@ export const WishlistPage = () => {
                     <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-[#3F3F3F] transition-colors">
                       {product.name}
                     </h3>
-                    
+
                     <div className="mt-auto pt-4 flex items-center justify-between">
                       <span className="text-xl font-black text-[#3F3F3F]">
                         S/ {Number(item.variant.price).toFixed(2)}
                       </span>
-                      <button 
+                      <button
                         onClick={() => handleAddToCart(item.variantId)}
                         className="flex items-center justify-center p-3 bg-gray-100 hover:bg-[#3F3F3F] hover:text-white text-gray-700 rounded-xl transition-all duration-300 group/btn"
                         title="Agregar al carrito"
