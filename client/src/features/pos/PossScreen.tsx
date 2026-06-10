@@ -19,10 +19,12 @@ import {
   PlusCircle, 
   Loader2, 
   Scan,
-  CheckCircle2
+  CheckCircle2,
+  Building2
 } from 'lucide-react';
 
 import { ClientSearchBar } from './components/ClientSearchBar';
+import { CrossBranchStockModal } from './components/CrossBranchStockModal';
 
 export const PossScreen: React.FC = () => {
   useDocumentTitle('Punto de Venta (POS) - D\'Mendoza');
@@ -40,6 +42,10 @@ export const PossScreen: React.FC = () => {
   // Discount State (HU-034)
   const [discountResult, setDiscountResult] = useState<DiscountResult | null>(null);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+
+  // Cross Branch Stock States (HU-023)
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+  const [consultVariant, setConsultVariant] = useState<{ id: number; name: string } | null>(null);
 
   // Reset discount if cart changes
   useEffect(() => {
@@ -383,10 +389,13 @@ export const PossScreen: React.FC = () => {
                         </div>
 
                         <button
-                          disabled={outOfStock}
                           onClick={() => addItem(prod)}
-                          className="p-2 bg-[#3F3F3F] hover:bg-[#3F3F3F]/90 text-white rounded-xl transition-all shadow hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                          title="Agregar prenda"
+                          className={`p-2 rounded-xl transition-all shadow hover:scale-105 cursor-pointer ${
+                            outOfStock
+                              ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                              : 'bg-[#3F3F3F] hover:bg-[#3F3F3F]/90 text-white'
+                          }`}
+                          title={outOfStock ? "Consultar/Vincular prenda sin stock" : "Agregar prenda"}
                         >
                           <PlusCircle className="w-4 h-4" />
                         </button>
@@ -444,12 +453,17 @@ export const PossScreen: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <div className="font-bold text-sm text-[#3F3F3F] truncate">{item.name}</div>
                       <div className="text-[10px] text-[#6B6B6B] font-mono mt-0.5">{item.sku}</div>
-                      <div className="flex gap-1.5 mt-1.5">
+                      <div className="flex gap-1.5 mt-1.5 flex-wrap">
                         {Object.entries(item.attributes).map(([k, v]) => (
                           <span key={k} className="text-[9px] bg-[#FAFAFA] border text-gray-500 px-1.5 py-0.5 rounded font-semibold">
                             {k}: {v}
                           </span>
                         ))}
+                        {item.stock <= 0 && (
+                          <span className="text-[9px] bg-amber-50 border border-amber-200 text-amber-800 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                            Sin Stock Local
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -488,6 +502,22 @@ export const PossScreen: React.FC = () => {
                           S/. {(item.price * item.quantity).toFixed(2)}
                         </div>
                       </div>
+
+                      {/* Cross branch consultation button */}
+                      {item.stock <= 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setConsultVariant({ id: item.variantId, name: item.name });
+                            setIsStockModalOpen(true);
+                          }}
+                          className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-extrabold text-[10px] uppercase tracking-wider rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                          title="Consultar stock en otras sucursales"
+                        >
+                          <Building2 className="w-3.5 h-3.5" />
+                          <span>Ver Sedes</span>
+                        </button>
+                      )}
 
                       {/* Delete item button */}
                       <button
@@ -587,6 +617,16 @@ export const PossScreen: React.FC = () => {
           </div>
         </div>
       )}
+
+      <CrossBranchStockModal
+        isOpen={isStockModalOpen}
+        onClose={() => {
+          setIsStockModalOpen(false);
+          setConsultVariant(null);
+        }}
+        variantId={consultVariant?.id || null}
+        variantName={consultVariant?.name || ''}
+      />
 
       <Receipt data={receiptData} />
     </>
