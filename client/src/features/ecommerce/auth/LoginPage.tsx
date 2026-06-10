@@ -1,6 +1,6 @@
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { LoginForm } from './components/LoginForm';
 import { GoogleLoginButton } from './components/GoogleLoginButton';
 import { useLogin } from './hooks/useLogin';
@@ -8,6 +8,7 @@ import { useAuth } from '@/shared/context/AuthContext';
 import type { LoginFormData } from './schemas/login.schema';
 import { useBrand } from '@/shared/context/BrandContext';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
+import { ForcePasswordChangeModal } from './components/ForcePasswordChangeModal';
 
 export default function LoginPage() {
   useDocumentTitle('Iniciar sesión');
@@ -16,6 +17,8 @@ export default function LoginPage() {
   const { login: loginHook, isLoading } = useLogin();
   const auth = useAuth();
   const { brandConfig } = useBrand();
+
+  const [isForceModalOpen, setIsForceModalOpen] = useState(false);
 
   // Show error toast if redirected from failed OAuth (HU-001)
   useEffect(() => {
@@ -49,6 +52,10 @@ export default function LoginPage() {
         navigate('/');
       }
     } catch (err: any) {
+      if (err.requirePasswordChange) {
+        setIsForceModalOpen(true);
+        return;
+      }
       // Show specific message for Google-only accounts
       if (err.message?.includes('registrada con Google')) {
         toast.error(err.message);
@@ -104,6 +111,14 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      <ForcePasswordChangeModal
+        isOpen={isForceModalOpen}
+        onConfirm={() => {
+          setIsForceModalOpen(false);
+          navigate('/forgot-password');
+        }}
+      />
     </div>
   );
 }

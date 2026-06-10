@@ -7,19 +7,22 @@ import { ResendEmailService } from '@infrastructure/services/ResendEmailService'
 import { PrismaTransactionManager } from '@infrastructure/database/PrismaTransactionManager';
 import { LinkClientUseCase } from '@application/use-cases/admin/LinkClientUseCase';
 import { BulkLinkClientsUseCase } from '@application/use-cases/admin/BulkLinkClientsUseCase';
+import { JwtService } from '@infrastructure/services/JwtService';
 
 const clientRepository = new PrismaClientRepository();
 const userRepository = new PrismaUserRepository();
 const roleRepository = new PrismaRoleRepository();
 const emailService = new ResendEmailService();
 const transactionManager = new PrismaTransactionManager();
+const jwtService = new JwtService();
 
 const linkClientUseCase = new LinkClientUseCase(
   clientRepository,
   userRepository,
   roleRepository,
   emailService,
-  transactionManager
+  transactionManager,
+  jwtService
 );
 const bulkLinkClientsUseCase = new BulkLinkClientsUseCase(linkClientUseCase);
 
