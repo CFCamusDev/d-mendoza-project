@@ -2870,6 +2870,75 @@ Obtiene las ventas Cross-Branch que están pendientes de entrega física, agrupa
         }
       ]
     }
-  ]
+```
+
+---
+
+### GET /api/v1/receipts
+
+Consulta de manera paginada y filtrada las ventas/comprobantes electrónicos emitidos en el sistema POS.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/receipts` | JWT `Bearer Token` | Permiso `sales:read` |
+
+#### 2. Parámetros Query (Query Parameters)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `branchId` | `number` | No | ID de la sucursal emisora. |
+| `type` | `string` | No | Tipo de comprobante (`cross-branch` \| `normal`). |
+| `from` | `string` | No | Fecha de inicio de búsqueda (formato YYYY-MM-DD o ISO). |
+| `to` | `string` | No | Fecha de fin de búsqueda (formato YYYY-MM-DD o ISO). |
+| `page` | `number` | No | Número de página para la paginación (`default: 1`). |
+| `limit` | `number` | No | Cantidad de elementos por página (`default: 10`). |
+
+#### 3. Respuestas (Responses)
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "total": 1,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1,
+    "results": [
+      {
+        "orderId": 12,
+        "status": "COMPLETED",
+        "subtotal": 99.80,
+        "discountTotal": 0.00,
+        "total": 99.80,
+        "isCrossBranch": true,
+        "sourceBranch": {
+          "id": 1,
+          "name": "Sede Central"
+        },
+        "branch": {
+          "id": 2,
+          "name": "Sede San Isidro"
+        },
+        "createdAt": "2026-06-10T09:40:00.000Z",
+        "seller": {
+          "id": 5,
+          "name": "Juan",
+          "lastName": "Perez",
+          "email": "juan.perez@dmendoza.com"
+        },
+        "client": {
+          "id": 3,
+          "name": "Carlos",
+          "lastName": "Mendoza",
+          "documentId": "45678912"
+        }
+      }
+    ]
+  }
 }
+```
 ```
