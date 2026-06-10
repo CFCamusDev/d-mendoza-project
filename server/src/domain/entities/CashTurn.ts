@@ -14,6 +14,7 @@ export interface CashTurn {
   registerId: number;
   userId: number;
   openAmount: number;
+  closeAmount?: number | null;
   status: TurnStatus;
   openedAt?: Date;
   closedAt?: Date | null;

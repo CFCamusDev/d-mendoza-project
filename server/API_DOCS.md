@@ -1864,8 +1864,7 @@ Si faltan parámetros o no corresponden con las especificaciones.
 ```
 
 ---
-<<<<<<< HEAD
-=======
+
 
 ## Apertura de Caja y Turnos — HU-032
 
@@ -2596,6 +2595,349 @@ Devuelve los datos completos y estructurados de una venta específica, optimizad
       {
         "method": "CASH",
         "amount": 100.00
+      }
+    ]
+  }
+}
+```
+
+---
+
+### GET /api/v1/pos/stock/cross-branch
+
+Consulta el stock de una variante de producto en todas las sucursales activas, excluyendo la sucursal del turno actual del vendedor.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/stock/cross-branch` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `variantId` | `number` | Sí | El ID de la variante de producto a consultar. |
+
+#### 3. Respuestas (Responses)
+
+##### Consulta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "branchId": 2,
+      "branchName": "Sede Miraflores",
+      "quantity": 15
+    },
+    {
+      "branchId": 3,
+      "branchName": "Sede Larco",
+      "quantity": 5
+    }
+  ]
+}
+```
+
+##### Error - Parámetro variantId Inválido (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "El parámetro variantId debe ser un número entero positivo"
+}
+```
+
+##### Error - Turno Cerrado o Sin Apertura de Caja (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "No tienes un turno de caja abierto. Por favor, abre caja antes de realizar consultas de stock intersucursales."
+}
+```
+
+##### Error - Variante No Encontrada (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "La variante de producto con ID 999 no existe o se encuentra inactiva"
+}
+```
+
+---
+
+### POST /api/v1/stock-transfers
+
+Registra y ejecuta una transferencia interna de stock de una variante de producto desde una sucursal de origen hacia otra de destino. Descuenta el inventario en la de origen, lo incrementa en la de destino, y genera los asientos de Kardex (SALIDA y ENTRADA) correspondientes.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/stock-transfers` | JWT `Bearer Token` | Permiso `inventory:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "fromBranchId": 1,
+  "toBranchId": 2,
+  "variantId": 15,
+  "quantity": 5
+}
+```
+
+| Campo | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `fromBranchId` | `number` | Sí | El ID de la sucursal de origen (debe existir y estar activa). |
+| `toBranchId` | `number` | Sí | El ID de la sucursal de destino (debe existir, estar activa y ser diferente del origen). |
+| `variantId` | `number` | Sí | El ID de la variante de producto a transferir (debe existir y estar activa). |
+| `quantity` | `number` | Sí | La cantidad de unidades a transferir (debe ser un número entero o decimal positivo). |
+
+#### 3. Respuestas (Responses)
+
+##### Transferencia Exitosa (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "fromBranchId": 1,
+    "toBranchId": 2,
+    "variantId": 15,
+    "quantity": 5,
+    "status": "CONFIRMED",
+    "createdAt": "2026-06-10T08:14:00.000Z",
+    "updatedAt": "2026-06-10T08:14:00.000Z",
+    "fromBranch": {
+      "id": 1,
+      "name": "Sede Central",
+      "isActive": true
+    },
+    "toBranch": {
+      "id": 2,
+      "name": "Sede San Isidro",
+      "isActive": true
+    },
+    "variant": {
+      "id": 15,
+      "sku": "CAM-M-ROJO",
+      "price": 49.90,
+      "isActive": true
+    }
+  }
+}
+```
+
+##### Error - Stock Insuficiente (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Stock insuficiente en la sucursal de origen. Stock disponible: 3"
+}
+```
+
+##### Error - Sucursales Iguales (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "La sucursal de origen y destino no pueden ser la misma"
+}
+```
+
+##### Error - Recurso No Encontrado o Inactivo (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "La variante del producto no existe o se encuentra inactiva"
+}
+```
+
+---
+
+### POST /api/v1/pos/sales (Soporte Cross-Branch)
+
+Registra una venta desde el POS. Permite indicar de forma opcional si es una venta Cross-Branch para reservar stock en la sucursal de origen en lugar de descontar directamente y generar Kardex.
+
+#### 1. Nuevos Campos en el Request Body
+
+| Campo | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `isCrossBranch` | `boolean` | No | Indica si la venta toma stock de otra sucursal (`default: false`). |
+| `sourceBranchId` | `number` | No | ID de la sucursal de origen de donde proviene el stock físico. |
+
+---
+
+### PATCH /api/v1/pos/sales/:id/confirm-cross-branch
+
+Confirma la entrega física de una venta Cross-Branch. Esto cambia el estado de stock en la sucursal de origen de `RESERVED` a `SOLD`, genera el asiento correspondiente de `SALIDA` en el Kardex de origen y registra la auditoría.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `PATCH` | `/api/v1/pos/sales/:id/confirm-cross-branch` | JWT `Bearer Token` | Autenticado |
+
+#### 2. Respuestas (Responses)
+
+##### Confirmación Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 12,
+    "status": "COMPLETED",
+    "subtotal": 120.00,
+    "discountTotal": 0.00,
+    "total": 120.00,
+    "branchId": 1,
+    "isCrossBranch": true,
+    "sourceBranchId": 2,
+    "createdAt": "2026-06-10T09:40:00.000Z",
+    "updatedAt": "2026-06-10T09:42:00.000Z"
+  }
+}
+```
+
+##### Error - No es Venta Cross-Branch (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Esta orden no corresponde a una venta Cross-Branch"
+}
+```
+
+##### Error - Ya Confirmada Previamente (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Esta venta Cross-Branch ya ha sido confirmada previamente"
+}
+```
+
+---
+
+### GET /api/v1/admin/cross-branch/pending
+
+Obtiene las ventas Cross-Branch que están pendientes de entrega física, agrupadas por sucursal de origen (sucursal proveedora de stock).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/admin/cross-branch/pending` | JWT `Bearer Token` | Permiso `inventory:read` |
+
+#### 2. Respuestas (Responses)
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "sourceBranchId": 1,
+      "sourceBranchName": "Sede Central",
+      "pendingOrdersCount": 1,
+      "totalReservedUnits": 2,
+      "orders": [
+        {
+          "orderId": 12,
+          "destinationBranchId": 2,
+          "destinationBranchName": "Sede San Isidro",
+          "totalAmount": 99.80,
+          "createdAt": "2026-06-10T09:40:00.000Z",
+          "items": [
+            {
+              "variantId": 15,
+              "sku": "CAM-M-ROJO",
+              "productName": "Camisa Casual",
+              "quantity": 2,
+              "unitPrice": 49.90
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/v1/receipts
+
+Consulta de manera paginada y filtrada las ventas/comprobantes electrónicos emitidos en el sistema POS.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/receipts` | JWT `Bearer Token` | Permiso `sales:read` |
+
+#### 2. Parámetros Query (Query Parameters)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `branchId` | `number` | No | ID de la sucursal emisora. |
+| `type` | `string` | No | Tipo de comprobante (`cross-branch` \| `normal`). |
+| `from` | `string` | No | Fecha de inicio de búsqueda (formato YYYY-MM-DD o ISO). |
+| `to` | `string` | No | Fecha de fin de búsqueda (formato YYYY-MM-DD o ISO). |
+| `page` | `number` | No | Número de página para la paginación (`default: 1`). |
+| `limit` | `number` | No | Cantidad de elementos por página (`default: 10`). |
+
+#### 3. Respuestas (Responses)
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "total": 1,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1,
+    "results": [
+      {
+        "orderId": 12,
+        "status": "COMPLETED",
+        "subtotal": 99.80,
+        "discountTotal": 0.00,
+        "total": 99.80,
+        "isCrossBranch": true,
+        "sourceBranch": {
+          "id": 1,
+          "name": "Sede Central"
+        },
+        "branch": {
+          "id": 2,
+          "name": "Sede San Isidro"
+        },
+        "createdAt": "2026-06-10T09:40:00.000Z",
+        "seller": {
+          "id": 5,
+          "name": "Juan",
+          "lastName": "Perez",
+          "email": "juan.perez@dmendoza.com"
+        },
+        "client": {
+          "id": 3,
+          "name": "Carlos",
+          "lastName": "Mendoza",
+          "documentId": "45678912"
+        }
       }
     ]
   }

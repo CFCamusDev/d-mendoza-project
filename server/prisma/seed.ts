@@ -89,6 +89,16 @@ async function main() {
     },
   });
 
+  // HU-055: Permisos para Gestión y Consulta de Comprobantes Electrónicos
+  const permissionSalesRead = await prisma.permission.upsert({
+    where: { name: 'sales:read' },
+    update: {},
+    create: {
+      name: 'sales:read',
+      description: 'Capacidad para visualizar y consultar comprobantes de venta electrónicos.',
+    },
+  });
+
   console.log('✅ Master permissions registered.');
 
   // ------------------------------------------------------------------
@@ -107,6 +117,7 @@ async function main() {
           { id: permissionInventoryRead.id },  // HU-051
           { id: permissionInventoryWrite.id }, // HU-051
           { id: permissionPosDiscounts.id },   // HU-034
+          { id: permissionSalesRead.id },      // HU-055
         ],
       },
     },
@@ -123,6 +134,7 @@ async function main() {
           { id: permissionInventoryRead.id },  // HU-051
           { id: permissionInventoryWrite.id }, // HU-051
           { id: permissionPosDiscounts.id },   // HU-034
+          { id: permissionSalesRead.id },      // HU-055
         ],
       },
     },

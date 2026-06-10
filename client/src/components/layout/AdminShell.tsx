@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/context/AuthContext';
 import { useStockAlerts } from '@/features/admin/hooks/useStockAlerts';
 import { useBrand } from '@/shared/context/BrandContext';
 import { QuickRegisterModal } from '@/features/pos/components/QuickRegisterModal';
+import axiosInstance from '@/shared/api/axiosInstance';
 import { 
   Menu, 
   User, 
@@ -28,7 +29,9 @@ import {
   Award,
   Sliders,
   UserPlus,
-  Landmark
+  Landmark,
+  ArrowLeftRight,
+  FileText
 } from 'lucide-react';
 
 export const AdminShell: React.FC = () => {
@@ -53,6 +56,29 @@ export const AdminShell: React.FC = () => {
   // Stock Alerts hook
   const { alerts, dismissAlert } = useStockAlerts();
   const activeAlertsCount = alerts.length;
+
+  // Cross Branch count state
+  const [pendingCrossBranchCount, setPendingCrossBranchCount] = useState(0);
+
+  useEffect(() => {
+    const fetchPendingCrossBranch = async () => {
+      try {
+        const { data } = await axiosInstance.get('/v1/admin/cross-branch/pending');
+        if (data.success) {
+          const list = data.data || [];
+          const count = list.reduce((acc: number, item: any) => acc + (item.pendingOrdersCount || 0), 0);
+          setPendingCrossBranchCount(count);
+        }
+      } catch (err) {
+        console.error('Error fetching pending cross branch count:', err);
+      }
+    };
+    fetchPendingCrossBranch();
+    
+    // Poll every 60 seconds
+    const interval = setInterval(fetchPendingCrossBranch, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -122,6 +148,16 @@ export const AdminShell: React.FC = () => {
               {!isCollapsed && <span>Control de Stock</span>}
             </Link>
 
+            <Link
+              to="/admin/receipts"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/receipts') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Comprobantes Electrónicos"
+            >
+              <FileText className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Comprobantes</span>}
+            </Link>
 
             <Link
               to="/pos"
@@ -322,6 +358,35 @@ export const AdminShell: React.FC = () => {
                 >
                   <Archive className="w-4 h-4 shrink-0" />
                   {!isCollapsed && <span>Ajustes de Stock</span>}
+                </Link>
+
+                <Link
+                  to="/admin/inventory/transfers"
+                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                    isActiveRoute('/admin/inventory/transfers') ? activeClass : inactiveClass
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title="Transferencias"
+                >
+                  <ArrowLeftRight className="w-4 h-4 shrink-0" />
+                  {!isCollapsed && <span>Transferencias</span>}
+                </Link>
+
+                <Link
+                  to="/admin/inventory/cross-branch/pending"
+                  className={`flex items-center justify-between gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                    isActiveRoute('/admin/inventory/cross-branch/pending') ? activeClass : inactiveClass
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title="Monitoreo Cross-Branch"
+                >
+                  <div className="flex items-center gap-3">
+                    <Building2 className="w-4 h-4 shrink-0" />
+                    {!isCollapsed && <span>Ventas Intersucursal</span>}
+                  </div>
+                  {!isCollapsed && pendingCrossBranchCount > 0 && (
+                    <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-indigo-600 rounded-full animate-pulse">
+                      {pendingCrossBranchCount}
+                    </span>
+                  )}
                 </Link>
               </div>
             )}

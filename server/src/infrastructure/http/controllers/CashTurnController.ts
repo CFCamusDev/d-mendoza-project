@@ -1,17 +1,33 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { PrismaCashTurnRepository } from '@infrastructure/database/repositories/PrismaCashTurnRepository';
+import { PrismaCashMovementRepository } from '@infrastructure/database/repositories/PrismaCashMovementRepository';
 import { OpenCashTurnUseCase } from '@application/use-cases/pos/OpenCashTurnUseCase';
+import { RegisterCashMovementUseCase } from '@application/use-cases/pos/RegisterCashMovementUseCase';
+import { CloseCashTurnUseCase } from '@application/use-cases/pos/CloseCashTurnUseCase';
 import prisma from '@infrastructure/database/prisma';
 
 // DI Manual
 const cashTurnRepository = new PrismaCashTurnRepository();
+const cashMovementRepository = new PrismaCashMovementRepository();
 const openCashTurnUseCase = new OpenCashTurnUseCase(cashTurnRepository);
+const registerCashMovementUseCase = new RegisterCashMovementUseCase(cashTurnRepository, cashMovementRepository);
+const closeCashTurnUseCase = new CloseCashTurnUseCase(cashTurnRepository, cashMovementRepository);
 
 // Schemas de Zod
 const OpenCashTurnSchema = z.object({
   registerId: z.number().int().positive('El ID de la caja debe ser un entero positivo'),
   openAmount: z.number().nonnegative('El monto inicial no puede ser negativo'),
+});
+
+const RegisterMovementSchema = z.object({
+  type: z.enum(['INGRESO', 'EGRESO']),
+  amount: z.number().positive('El monto debe ser un número positivo'),
+  reason: z.string().min(3, 'La razón debe tener al menos 3 caracteres'),
+});
+
+const CloseTurnSchema = z.object({
+  closeAmount: z.number().min(0, 'El monto de cierre no puede ser negativo').optional(),
 });
 
 const mapZodErrors = (issues: z.ZodIssue[]) =>
@@ -168,6 +184,98 @@ export class CashTurnController {
       return res.status(200).json({ success: true, data: sales });
     } catch (error: any) {
       console.error('[CashTurnController] Error obteniendo ventas del turno:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/v1/cash-turns/:id/movements
+   * Registra un movimiento de caja (ingreso o egreso) en un turno abierto.
+   */
+  async registerMovement(req: Request, res: Response, next: NextFunction) {
+    try {
+      const turnId = parseInt(String(req.params.id), 10);
+      if (isNaN(turnId)) {
+        return res.status(400).json({ success: false, error: 'El ID del turno debe ser un número entero' });
+      }
+
+      const validation = RegisterMovementSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ success: false, errors: mapZodErrors(validation.error.issues) });
+      }
+
+      const movement = await registerCashMovementUseCase.execute({
+        turnId,
+        type: validation.data.type,
+        amount: validation.data.amount,
+        reason: validation.data.reason,
+      });
+
+      return res.status(201).json({ success: true, data: movement });
+    } catch (error: any) {
+      if (error.message?.includes('no existe')) {
+        return res.status(404).json({ success: false, error: error.message });
+      }
+      if (error.message?.includes('cerrado')) {
+        return res.status(409).json({ success: false, error: error.message });
+      }
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/v1/cash-turns/:id/movements
+   * Lista los movimientos de caja de un turno.
+   */
+  async getMovements(req: Request, res: Response, next: NextFunction) {
+    try {
+      const turnId = parseInt(String(req.params.id), 10);
+      if (isNaN(turnId)) {
+        return res.status(400).json({ success: false, error: 'El ID del turno debe ser un número entero' });
+      }
+
+      const movements = await cashMovementRepository.findByTurnId(turnId);
+      return res.status(200).json({ success: true, data: movements });
+    } catch (error: any) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/v1/cash-turns/:id/close
+   * Cierra un turno de caja y retorna el resumen de cierre.
+   */
+  async closeTurn(req: Request, res: Response, next: NextFunction) {
+    try {
+      const turnId = parseInt(String(req.params.id), 10);
+      if (isNaN(turnId)) {
+        return res.status(400).json({ success: false, error: 'El ID del turno debe ser un número entero' });
+      }
+
+      const userId = req.auth?.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Usuario no autenticado' });
+      }
+
+      const validation = CloseTurnSchema.safeParse(req.body || {});
+      if (!validation.success) {
+        return res.status(400).json({ success: false, errors: mapZodErrors(validation.error.issues) });
+      }
+
+      const summary = await closeCashTurnUseCase.execute({
+        turnId,
+        userId,
+        closeAmount: validation.data?.closeAmount,
+      });
+
+      return res.status(200).json({ success: true, data: summary });
+    } catch (error: any) {
+      if (error.message?.includes('no existe')) {
+        return res.status(404).json({ success: false, error: error.message });
+      }
+      if (error.message?.includes('cerrado') || error.message?.includes('permiso')) {
+        return res.status(409).json({ success: false, error: error.message });
+      }
       next(error);
     }
   }

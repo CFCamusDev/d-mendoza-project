@@ -24,16 +24,20 @@ import BrandsPage from '../features/admin/BrandsPage';
 import AttributesPage from '../features/admin/AttributesPage';
 import ProductFormPage from '../features/admin/ProductFormPage';
 import AdjustmentPage from '../features/admin/AdjustmentPage';
+import TransferPage from '../features/admin/TransferPage';
 import RotationReportPage from '../features/admin/RotationReportPage';
 import SuppliersPage from '../features/admin/suppliers/SuppliersPage';
 import StockEntriesPage from '../features/admin/entries/StockEntriesPage';
 import StockPage from '../features/admin/stock/StockPage';
 import InventoryAuditPage from '../features/admin/audits/InventoryAuditPage';
+import CrossBranchMonitorPage from '../features/admin/stock/CrossBranchMonitorPage';
+import ReceiptsPage from '../features/admin/ReceiptsPage';
 import { PosProvider, PosGuard } from '../features/pos/context/PosContext';
 import OpenCashPage from '../features/pos/OpenCashPage';
 import CashRegistersPage from '../features/admin/branches/CashRegistersPage';
 import PossScreen from '../features/pos/PossScreen';
 import TurnSalesPage from '../features/pos/TurnSalesPage';
+import CloseTurnPage from '../features/pos/CloseTurnPage';
 
 export const AppRouter = () => {
   return (
@@ -91,6 +95,14 @@ export const AppRouter = () => {
           element={
             <PosGuard>
               <TurnSalesPage />
+            </PosGuard>
+          }
+        />
+        <Route
+          path="/pos/turn/close"
+          element={
+            <PosGuard>
+              <CloseTurnPage />
             </PosGuard>
           }
         />
@@ -173,12 +185,21 @@ export const AppRouter = () => {
         {/* HU-028 */}
         <Route path="/admin/inventory/adjustments" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdjustmentPage /></ProtectedRoute>} />
 
+        {/* HU-024 */}
+        <Route path="/admin/inventory/transfers" element={<ProtectedRoute allowedRoles={['ADMIN']}><TransferPage /></ProtectedRoute>} />
+
         {/* HU-051 */}
         <Route path="/admin/inventory/suppliers" element={<ProtectedRoute allowedRoles={['ADMIN']}><SuppliersPage /></ProtectedRoute>} />
         <Route path="/admin/inventory/entries" element={<ProtectedRoute allowedRoles={['ADMIN']}><StockEntriesPage /></ProtectedRoute>} />
 
         {/* HU-021 */}
         <Route path="/admin/inventory/stock" element={<ProtectedRoute allowedRoles={['ADMIN']}><StockPage /></ProtectedRoute>} />
+
+        {/* HU-057 */}
+        <Route path="/admin/inventory/cross-branch/pending" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><CrossBranchMonitorPage /></ProtectedRoute>} />
+
+        {/* HU-055 */}
+        <Route path="/admin/receipts" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><ReceiptsPage /></ProtectedRoute>} />
 
         {/* HU-029 */}
         <Route path="/admin/inventory/audits" element={<ProtectedRoute allowedRoles={['ADMIN']}><InventoryAuditPage /></ProtectedRoute>} />

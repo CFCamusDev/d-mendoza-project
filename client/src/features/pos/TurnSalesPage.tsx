@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { usePos } from '@/features/pos/context/PosContext';
 import { Receipt, type ReceiptData } from './components/Receipt';
-import { Printer, RefreshCw, AlertTriangle, Clock, CreditCard, Banknote, Landmark, Smartphone } from 'lucide-react';
+import { Printer, RefreshCw, AlertTriangle, Clock, CreditCard, Banknote, Landmark, Smartphone, XCircle } from 'lucide-react';
+import { useAuth } from '@/shared/context/AuthContext';
+import { AdminAuthModal } from './components/AdminAuthModal';
 
 interface SaleListItem {
   id: number;
@@ -10,6 +12,12 @@ interface SaleListItem {
   total: string | number;
   subtotal: string | number;
   createdAt: string;
+  isCrossBranch?: boolean;
+  sourceBranchId?: number;
+  sourceBranch?: {
+    id: number;
+    name: string;
+  };
   payments: {
     method: string;
     amount: string | number;
@@ -17,6 +25,7 @@ interface SaleListItem {
 }
 
 export const TurnSalesPage: React.FC = () => {
+  const { user } = useAuth();
   const { turnId, isOpen } = usePos();
   const [sales, setSales] = useState<SaleListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +36,14 @@ export const TurnSalesPage: React.FC = () => {
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [loadingReceipt, setLoadingReceipt] = useState(false);
 
+  // States para anulación
+  const [cancellingSaleId, setCancellingSaleId] = useState<number | null>(null);
+  const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
+  const [saleToCancel, setSaleToCancel] = useState<number | null>(null);
+
+  // State para confirmar entrega cross-branch
+  const [confirmingSaleId, setConfirmingSaleId] = useState<number | null>(null);
+
   const fetchSales = async () => {
     if (!turnId) return;
     try {
@@ -36,7 +53,8 @@ export const TurnSalesPage: React.FC = () => {
       if (data.success) {
         setSales(data.data);
       }
-    } catch (err: any) {
+    } catch (error) {
+      const err = error as any;
       setError(err.response?.data?.error || 'Error al obtener las ventas del turno.');
     } finally {
       setLoading(false);
@@ -45,7 +63,8 @@ export const TurnSalesPage: React.FC = () => {
 
   useEffect(() => {
     if (isOpen && turnId) {
-      fetchSales();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      void fetchSales();
     }
   }, [isOpen, turnId]);
 
@@ -70,12 +89,63 @@ export const TurnSalesPage: React.FC = () => {
       if (data.success) {
         setReceiptData(data.data);
       }
-    } catch (err: any) {
+    } catch (error) {
+      const err = error as any;
       console.error(err);
       setSelectedSaleId(null);
       alert('Error al obtener los datos del comprobante');
     } finally {
       setLoadingReceipt(false);
+    }
+  };
+
+  const handleCancelClick = (saleId: number) => {
+    const isAdmin = user?.role === 'ADMIN';
+    if (isAdmin) {
+      if (window.confirm('¿Está seguro de que desea anular esta venta? Esta acción no se puede deshacer.')) {
+        void executeCancel(saleId);
+      }
+    } else {
+      setSaleToCancel(saleId);
+      setIsAdminAuthModalOpen(true);
+    }
+  };
+
+  const executeCancel = async (saleId: number, adminEmail?: string, adminPassword?: string) => {
+    try {
+      setCancellingSaleId(saleId);
+      const { data } = await axiosInstance.patch(`/v1/pos/sales/${saleId}/cancel`, {
+        adminEmail,
+        adminPassword
+      });
+      if (data.success) {
+        alert('Venta anulada correctamente');
+        setIsAdminAuthModalOpen(false);
+        setSaleToCancel(null);
+        void fetchSales();
+      }
+    } catch (error) {
+      const err = error as any;
+      alert(err.response?.data?.error || 'Error al anular la venta');
+    } finally {
+      setCancellingSaleId(null);
+    }
+  };
+
+  const handleConfirmCrossBranch = async (saleId: number) => {
+    if (!window.confirm('¿Confirmar la entrega física de esta venta Cross-Branch?')) return;
+    try {
+      setConfirmingSaleId(saleId);
+      const { data } = await axiosInstance.patch(`/v1/pos/sales/${saleId}/confirm-cross-branch`);
+      if (data.success) {
+        alert('Entrega física confirmada con éxito. Stock actualizado en origen.');
+        void fetchSales();
+      }
+    } catch (error) {
+      const err = error as any;
+      alert(err.response?.data?.error || 'Error al confirmar la entrega.');
+    } finally {
+      setConfirmingSaleId(null);
     }
   };
 
@@ -165,8 +235,13 @@ export const TurnSalesPage: React.FC = () => {
                   <tbody className="divide-y divide-[#D9D9D2]/20">
                     {sales.map((sale) => (
                       <tr key={sale.id} className="hover:bg-[#FAFAFA]/50 transition-colors group">
-                        <td className="px-6 py-4 font-bold text-[#3F3F3F]">
-                          #{sale.id.toString().padStart(6, '0')}
+                        <td className="px-6 py-4 font-bold text-[#3F3F3F] flex flex-col gap-1">
+                          <span>#{sale.id.toString().padStart(6, '0')}</span>
+                          {sale.isCrossBranch && (
+                            <span className="inline-flex items-center gap-1 w-fit text-[9px] bg-indigo-50 border border-indigo-200 text-indigo-700 font-extrabold px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                              Cross-Branch: {sale.sourceBranch?.name || `Sede #${sale.sourceBranchId}`}
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-[#6B6B6B]">
                           {new Date(sale.createdAt).toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' })}
@@ -194,18 +269,44 @@ export const TurnSalesPage: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => onReprint(sale.id)}
-                            disabled={loadingReceipt || sale.status !== 'COMPLETED'}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3F3F3F] hover:bg-black text-white text-xs font-bold rounded-lg transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {(loadingReceipt && selectedSaleId === sale.id) ? (
-                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <Printer className="w-3.5 h-3.5" />
+                          <div className="flex items-center justify-end gap-2">
+                            {sale.isCrossBranch && sale.status !== 'COMPLETED' && sale.status !== 'CANCELLED' && (
+                              <button
+                                onClick={() => handleConfirmCrossBranch(sale.id)}
+                                disabled={confirmingSaleId === sale.id}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {confirmingSaleId === sale.id ? (
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                ) : null}
+                                Confirmar Entrega
+                              </button>
                             )}
-                            Reimprimir
-                          </button>
+                            <button
+                              onClick={() => handleCancelClick(sale.id)}
+                              disabled={cancellingSaleId === sale.id || sale.status !== 'COMPLETED'}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-lg transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {(cancellingSaleId === sale.id) ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <XCircle className="w-3.5 h-3.5" />
+                              )}
+                              Anular
+                            </button>
+                            <button
+                              onClick={() => onReprint(sale.id)}
+                              disabled={loadingReceipt || sale.status !== 'COMPLETED'}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3F3F3F] hover:bg-black text-white text-xs font-bold rounded-lg transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {(loadingReceipt && selectedSaleId === sale.id) ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Printer className="w-3.5 h-3.5" />
+                              )}
+                              Reimprimir
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -216,6 +317,20 @@ export const TurnSalesPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      <AdminAuthModal
+        isOpen={isAdminAuthModalOpen}
+        onClose={() => {
+          setIsAdminAuthModalOpen(false);
+          setSaleToCancel(null);
+        }}
+        onConfirm={(email, password) => {
+          if (saleToCancel) {
+            void executeCancel(saleToCancel, email, password);
+          }
+        }}
+        isLoading={cancellingSaleId !== null}
+      />
     </div>
   );
 };
