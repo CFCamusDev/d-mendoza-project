@@ -29,7 +29,7 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const fetchBrandConfig = async () => {
     try {
-      const response = await axiosInstance.get('/config/brand');
+      const response = await axiosInstance.get('/v1/config/brand');
       if (response.data.success) {
         const config = response.data.data as BrandConfig;
         setBrandConfig(config);
