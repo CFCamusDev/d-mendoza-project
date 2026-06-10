@@ -2601,3 +2601,71 @@ Devuelve los datos completos y estructurados de una venta específica, optimizad
   }
 }
 ```
+
+---
+
+### GET /api/v1/pos/stock/cross-branch
+
+Consulta el stock de una variante de producto en todas las sucursales activas, excluyendo la sucursal del turno actual del vendedor.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/pos/stock/cross-branch` | JWT `Bearer Token` | Autenticado (`ADMIN` o `SELLER`) |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `variantId` | `number` | Sí | El ID de la variante de producto a consultar. |
+
+#### 3. Respuestas (Responses)
+
+##### Consulta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "branchId": 2,
+      "branchName": "Sede Miraflores",
+      "quantity": 15
+    },
+    {
+      "branchId": 3,
+      "branchName": "Sede Larco",
+      "quantity": 5
+    }
+  ]
+}
+```
+
+##### Error - Parámetro variantId Inválido (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "El parámetro variantId debe ser un número entero positivo"
+}
+```
+
+##### Error - Turno Cerrado o Sin Apertura de Caja (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "No tienes un turno de caja abierto. Por favor, abre caja antes de realizar consultas de stock intersucursales."
+}
+```
+
+##### Error - Variante No Encontrada (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "La variante de producto con ID 999 no existe o se encuentra inactiva"
+}
+```
+

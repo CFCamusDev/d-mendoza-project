@@ -12,8 +12,13 @@ export const usePosCart = () => {
       const currentQty = existingItem ? existingItem.quantity : 0;
       const newQty = currentQty + quantity;
 
-      if (newQty > product.stock) {
+      if (product.stock > 0 && newQty > product.stock) {
         toast.error(`Stock insuficiente. Solo quedan ${product.stock} unidades de "${product.name}"`);
+        return prevItems;
+      }
+
+      if (product.stock <= 0 && newQty > 1) {
+        toast.error(`Stock insuficiente en sucursal local. Máximo 1 unidad para consulta/venta cruzada.`);
         return prevItems;
       }
 
@@ -53,8 +58,13 @@ export const usePosCart = () => {
       const targetItem = prevItems.find((item) => item.variantId === variantId);
       if (!targetItem) return prevItems;
 
-      if (newQty > targetItem.stock) {
+      if (targetItem.stock > 0 && newQty > targetItem.stock) {
         toast.error(`Stock insuficiente. Solo quedan ${targetItem.stock} unidades en almacén`);
+        return prevItems;
+      }
+
+      if (targetItem.stock <= 0 && newQty > 1) {
+        toast.error(`Stock insuficiente en sucursal local. Máximo 1 unidad para consulta/venta cruzada.`);
         return prevItems;
       }
 

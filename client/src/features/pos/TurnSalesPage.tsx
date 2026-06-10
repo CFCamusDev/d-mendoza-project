@@ -3,7 +3,7 @@ import axiosInstance from '@/shared/api/axiosInstance';
 import { usePos } from '@/features/pos/context/PosContext';
 import { Receipt, type ReceiptData } from './components/Receipt';
 import { Printer, RefreshCw, AlertTriangle, Clock, CreditCard, Banknote, Landmark, Smartphone, XCircle } from 'lucide-react';
-import { useAuth } from '@/core/auth/hooks/useAuth';
+import { useAuth } from '@/shared/context/AuthContext';
 import { AdminAuthModal } from './components/AdminAuthModal';
 
 interface SaleListItem {
@@ -91,7 +91,7 @@ export const TurnSalesPage: React.FC = () => {
   };
 
   const handleCancelClick = (saleId: number) => {
-    const isAdmin = user?.roles.some(r => r.name === 'ADMIN');
+    const isAdmin = user?.role === 'ADMIN';
     if (isAdmin) {
       if (window.confirm('¿Está seguro de que desea anular esta venta? Esta acción no se puede deshacer.')) {
         void executeCancel(saleId);
