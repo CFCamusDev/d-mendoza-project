@@ -28,6 +28,7 @@ import cashRegisterRoutes from '@infrastructure/http/routes/cash-register.routes
 import posProductRoutes from '@infrastructure/http/routes/pos-product.routes';
 import posClientRoutes from '@infrastructure/http/routes/pos-client.routes';
 import posStockRoutes from '@infrastructure/http/routes/pos-stock.routes';
+import stockTransferRoutes from '@infrastructure/http/routes/stock-transfer.routes';
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use('/api/v1', cashRegisterRoutes);
 app.use('/api/v1', posProductRoutes);
 app.use('/api/v1', posClientRoutes);
 app.use('/api/v1', posStockRoutes);
+app.use('/api/v1', stockTransferRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });
