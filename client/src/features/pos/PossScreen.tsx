@@ -25,6 +25,7 @@ import {
 
 import { ClientSearchBar } from './components/ClientSearchBar';
 import { CrossBranchStockModal } from './components/CrossBranchStockModal';
+import { CrossBranchTag } from './components/CrossBranchTag';
 
 export const PossScreen: React.FC = () => {
   useDocumentTitle('Punto de Venta (POS) - D\'Mendoza');
@@ -47,9 +48,22 @@ export const PossScreen: React.FC = () => {
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [consultVariant, setConsultVariant] = useState<{ id: number; name: string } | null>(null);
 
-  // Reset discount if cart changes
+  // Cross Branch Sale States (HU-025)
+  const [isCrossBranch, setIsCrossBranch] = useState(false);
+  const [sourceBranchId, setSourceBranchId] = useState<number | null>(null);
+  const [sourceBranchName, setSourceBranchName] = useState('');
+
+  // Reset discount and cross-branch state if cart changes
   useEffect(() => {
     setDiscountResult(null);
+  }, [cartItems]);
+
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      setIsCrossBranch(false);
+      setSourceBranchId(null);
+      setSourceBranchName('');
+    }
   }, [cartItems]);
 
   const finalTotal = Math.max(0, totals.total - (discountResult?.discountAmount || 0));
@@ -148,6 +162,8 @@ export const PossScreen: React.FC = () => {
         discountTotal: discountResult?.discountAmount || 0,
         total: finalTotal,
         items: itemsForBackend,
+        isCrossBranch,
+        sourceBranchId: isCrossBranch ? sourceBranchId : undefined,
         payments: payments.map(p => ({
           method: p.method,
           amount: p.amount
@@ -464,6 +480,9 @@ export const PossScreen: React.FC = () => {
                             Sin Stock Local
                           </span>
                         )}
+                        {item.stock <= 0 && isCrossBranch && sourceBranchName && (
+                          <CrossBranchTag branchName={sourceBranchName} />
+                        )}
                       </div>
                     </div>
 
@@ -626,6 +645,11 @@ export const PossScreen: React.FC = () => {
         }}
         variantId={consultVariant?.id || null}
         variantName={consultVariant?.name || ''}
+        onSelectBranch={(branchId, branchName) => {
+          setIsCrossBranch(true);
+          setSourceBranchId(branchId);
+          setSourceBranchName(branchName);
+        }}
       />
 
       <Receipt data={receiptData} />

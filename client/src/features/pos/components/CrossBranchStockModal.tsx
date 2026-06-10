@@ -8,6 +8,7 @@ interface CrossBranchStockModalProps {
   onClose: () => void;
   variantId: number | null;
   variantName: string;
+  onSelectBranch?: (branchId: number, branchName: string) => void;
 }
 
 interface CrossBranchStockData {
@@ -21,6 +22,7 @@ export const CrossBranchStockModal: React.FC<CrossBranchStockModalProps> = ({
   onClose,
   variantId,
   variantName,
+  onSelectBranch,
 }) => {
   const [data, setData] = useState<CrossBranchStockData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,6 +129,7 @@ export const CrossBranchStockModal: React.FC<CrossBranchStockModalProps> = ({
                   <tr className="bg-[#F7F7F5] border-b border-[#D9D9D2]/40 text-[#6B6B6B] font-bold uppercase tracking-wider">
                     <th className="px-4 py-3 font-extrabold">Sucursal</th>
                     <th className="px-4 py-3 text-right font-extrabold">Stock Disponible</th>
+                    {onSelectBranch && <th className="px-4 py-3 text-right font-extrabold">Acción</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#D9D9D2]/20 text-[#3F3F3F]">
@@ -141,6 +144,24 @@ export const CrossBranchStockModal: React.FC<CrossBranchStockModalProps> = ({
                           {item.quantity} unds.
                         </span>
                       </td>
+                      {onSelectBranch && (
+                        <td className="px-4 py-3 text-right">
+                          {item.quantity > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onSelectBranch(item.branchId, item.branchName);
+                                onClose();
+                              }}
+                              className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-[10px] rounded-lg transition-colors cursor-pointer"
+                            >
+                              Vincular Venta
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-gray-400 font-bold">Sin Stock</span>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
