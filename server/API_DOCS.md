@@ -2762,4 +2762,70 @@ Registra y ejecuta una transferencia interna de stock de una variante de product
 }
 ```
 
+---
+
+### POST /api/v1/pos/sales (Soporte Cross-Branch)
+
+Registra una venta desde el POS. Permite indicar de forma opcional si es una venta Cross-Branch para reservar stock en la sucursal de origen en lugar de descontar directamente y generar Kardex.
+
+#### 1. Nuevos Campos en el Request Body
+
+| Campo | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `isCrossBranch` | `boolean` | No | Indica si la venta toma stock de otra sucursal (`default: false`). |
+| `sourceBranchId` | `number` | No | ID de la sucursal de origen de donde proviene el stock físico. |
+
+---
+
+### PATCH /api/v1/pos/sales/:id/confirm-cross-branch
+
+Confirma la entrega física de una venta Cross-Branch. Esto cambia el estado de stock en la sucursal de origen de `RESERVED` a `SOLD`, genera el asiento correspondiente de `SALIDA` en el Kardex de origen y registra la auditoría.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `PATCH` | `/api/v1/pos/sales/:id/confirm-cross-branch` | JWT `Bearer Token` | Autenticado |
+
+#### 2. Respuestas (Responses)
+
+##### Confirmación Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 12,
+    "status": "COMPLETED",
+    "subtotal": 120.00,
+    "discountTotal": 0.00,
+    "total": 120.00,
+    "branchId": 1,
+    "isCrossBranch": true,
+    "sourceBranchId": 2,
+    "createdAt": "2026-06-10T09:40:00.000Z",
+    "updatedAt": "2026-06-10T09:42:00.000Z"
+  }
+}
+```
+
+##### Error - No es Venta Cross-Branch (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Esta orden no corresponde a una venta Cross-Branch"
+}
+```
+
+##### Error - Ya Confirmada Previamente (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Esta venta Cross-Branch ya ha sido confirmada previamente"
+}
+```
+
+
 

@@ -62,4 +62,14 @@ router.patch(
   saleController.cancelSale.bind(saleController)
 );
 
+/**
+ * PATCH /api/v1/pos/sales/:id/confirm-cross-branch
+ * HU-025 / T-148: Confirmar entrega física de venta cross-branch
+ */
+router.patch(
+  '/sales/:id/confirm-cross-branch',
+  requireAuth,
+  saleController.confirmCrossBranch.bind(saleController)
+);
+
 export default router;

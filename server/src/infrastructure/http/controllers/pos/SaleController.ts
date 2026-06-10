@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import prisma from '@infrastructure/database/prisma';
 import { CancelSaleUseCase } from '@application/use-cases/pos/CancelSaleUseCase';
+import { ConfirmCrossBranchSaleUseCase } from '@application/use-cases/pos/ConfirmCrossBranchSaleUseCase';
 
 const cancelSaleUseCase = new CancelSaleUseCase();
+const confirmCrossBranchSaleUseCase = new ConfirmCrossBranchSaleUseCase();
 
 export class SaleController {
   async processSale(req: Request, res: Response) {
@@ -336,6 +338,32 @@ export class SaleController {
         success: false,
         error: error.message || 'Error al obtener el comprobante de venta.',
       });
+    }
+  }
+
+  async confirmCrossBranch(req: Request, res: Response) {
+    try {
+      const orderId = parseInt(String(req.params.id), 10);
+      if (isNaN(orderId)) {
+        return res.status(400).json({ success: false, error: 'El ID de la venta debe ser un número entero' });
+      }
+
+      const userId = req.auth?.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Usuario no autenticado' });
+      }
+
+      const result = await confirmCrossBranchSaleUseCase.execute({ orderId, userId });
+      return res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+      console.error('[SaleController] Error confirmando entrega cross-branch:', error);
+      if (error.statusCode === 400) {
+        return res.status(400).json({ success: false, error: error.message });
+      }
+      if (error.statusCode === 404) {
+        return res.status(404).json({ success: false, error: error.message });
+      }
+      return res.status(500).json({ success: false, error: error.message || 'Error al confirmar la entrega.' });
     }
   }
 }
