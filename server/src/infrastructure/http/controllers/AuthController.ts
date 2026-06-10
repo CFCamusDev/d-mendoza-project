@@ -142,6 +142,15 @@ export class AuthController {
         return res.status(403).json({ success: false, error: error.message });
       }
 
+      // Forced password change required on first login → 403
+      if (error.message === 'Cambio de contraseña obligatorio') {
+        return res.status(403).json({
+          success: false,
+          requirePasswordChange: true,
+          error: 'Se requiere un cambio de contraseña obligatorio en su primer inicio de sesión.',
+        });
+      }
+
       // OAuth-only account trying email/password login → 403
       if (error.message.includes('registrada con Google')) {
         return res.status(403).json({ success: false, error: error.message });

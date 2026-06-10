@@ -45,6 +45,7 @@ export class PrismaUserRepository implements IUserRepository {
         avatarUrl: data.avatarUrl ?? null,
         authProvider: data.authProvider ?? 'local',
         isActive: data.isActive ?? false,
+        mustChangePassword: data.mustChangePassword ?? false,
         roles: {
           connect: { name: 'CLIENT' },
         },
@@ -97,7 +98,10 @@ export class PrismaUserRepository implements IUserRepository {
   async updatePassword(userId: number, passwordHash: string): Promise<void> {
     await prisma.user.update({
       where: { id: userId },
-      data: { password: passwordHash },
+      data: {
+        password: passwordHash,
+        mustChangePassword: false,
+      },
     });
   }
 
@@ -164,6 +168,7 @@ export class PrismaUserRepository implements IUserRepository {
       authProvider: record.authProvider,
       lastLogin: record.lastLogin,
       isActive: record.isActive,
+      mustChangePassword: record.mustChangePassword,
       verificationPin: record.verificationPin,
       pinExpiresAt: record.pinExpiresAt,
       roles: record.roles ? record.roles.map((r: any) => r.name) : undefined,

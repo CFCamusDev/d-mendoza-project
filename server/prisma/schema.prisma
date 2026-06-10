@@ -23,6 +23,7 @@ model User {
   authProvider    String     @default("local") // "local" | "google"
   lastLogin       DateTime?
   isActive        Boolean    @default(false)
+  mustChangePassword Boolean   @default(false)
   verificationPin String?
   pinExpiresAt    DateTime?
   createdAt       DateTime   @default(now())

@@ -111,6 +111,7 @@ describe('LinkClientUseCase (HU-008)', () => {
   let roleRepo: jest.Mocked<IRoleRepository>;
   let emailService: jest.Mocked<IEmailService>;
   let txManager: jest.Mocked<ITransactionManager>;
+  let mockJwtService: any;
   let useCase: LinkClientUseCase;
 
   beforeEach(() => {
@@ -119,7 +120,17 @@ describe('LinkClientUseCase (HU-008)', () => {
     roleRepo = makeMockRoleRepository();
     emailService = makeMockEmailService();
     txManager = makeMockTransactionManager();
-    useCase = new LinkClientUseCase(clientRepo, userRepo, roleRepo, emailService, txManager);
+    mockJwtService = {
+      generatePasswordResetToken: jest.fn().mockReturnValue('mock-reset-token'),
+    };
+    useCase = new LinkClientUseCase(
+      clientRepo,
+      userRepo,
+      roleRepo,
+      emailService,
+      txManager,
+      mockJwtService as any
+    );
     jest.clearAllMocks();
     // Restore transaction manager mock after clearAllMocks
     txManager.run.mockImplementation(async (cb: (tx: any) => Promise<any>) => cb(null));

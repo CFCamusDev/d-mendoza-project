@@ -16,6 +16,7 @@ export interface User {
   authProvider: string; // "local" | "google"
   lastLogin?: Date | null;
   isActive: boolean;
+  mustChangePassword?: boolean;
   verificationPin?: string | null;
   pinExpiresAt?: Date | null;
   roles?: string[];
@@ -34,5 +35,6 @@ export interface CreateUserDTO {
   avatarUrl?: string;
   authProvider?: string;
   isActive?: boolean;
+  mustChangePassword?: boolean;
 }
 
