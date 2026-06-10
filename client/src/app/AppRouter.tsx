@@ -6,6 +6,7 @@ import ForgotPasswordPage from '../features/ecommerce/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../features/ecommerce/auth/ResetPasswordPage';
 import GoogleAuthSuccessPage from '../features/ecommerce/auth/GoogleAuthSuccessPage';
 import HomePage from '../features/ecommerce/HomePage';
+import WishlistPage from '../features/ecommerce/WishlistPage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
 import EmployeesPage from '../features/admin/EmployeesPage';
 import BranchesPage from '../features/admin/branches/BranchesPage';
@@ -45,6 +46,7 @@ export const AppRouter = () => {
       <Route element={<AppShell />}>
         {/* Main Entry Point */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
 
         {/* Public / Unprotected Routes */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />

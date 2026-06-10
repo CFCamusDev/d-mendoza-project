@@ -27,6 +27,7 @@ import cashTurnRoutes from '@infrastructure/http/routes/cash-turn.routes'; // HU
 import cashRegisterRoutes from '@infrastructure/http/routes/cash-register.routes';
 import posProductRoutes from '@infrastructure/http/routes/pos-product.routes';
 import posClientRoutes from '@infrastructure/http/routes/pos-client.routes';
+import wishlistRoutes from '@infrastructure/http/routes/wishlist.routes'; // HU-010
 import posStockRoutes from '@infrastructure/http/routes/pos-stock.routes';
 import stockTransferRoutes from '@infrastructure/http/routes/stock-transfer.routes';
 import adminCrossBranchRoutes from '@infrastructure/http/routes/admin-cross-branch.routes';
@@ -76,6 +77,7 @@ app.use('/api/v1', cashTurnRoutes); // HU-032 — Apertura de Caja
 app.use('/api/v1', cashRegisterRoutes);
 app.use('/api/v1', posProductRoutes);
 app.use('/api/v1', posClientRoutes);
+app.use('/api/v1/wishlist', wishlistRoutes); // HU-010 — Wishlist
 app.use('/api/v1', posStockRoutes);
 app.use('/api/v1', stockTransferRoutes);
 app.use('/api/v1', adminCrossBranchRoutes);
