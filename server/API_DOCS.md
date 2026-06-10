@@ -2824,8 +2824,52 @@ Confirma la entrega física de una venta Cross-Branch. Esto cambia el estado de 
 {
   "success": false,
   "error": "Esta venta Cross-Branch ya ha sido confirmada previamente"
-}
 ```
 
+---
 
+### GET /api/v1/admin/cross-branch/pending
 
+Obtiene las ventas Cross-Branch que están pendientes de entrega física, agrupadas por sucursal de origen (sucursal proveedora de stock).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/admin/cross-branch/pending` | JWT `Bearer Token` | Permiso `inventory:read` |
+
+#### 2. Respuestas (Responses)
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "sourceBranchId": 1,
+      "sourceBranchName": "Sede Central",
+      "pendingOrdersCount": 1,
+      "totalReservedUnits": 2,
+      "orders": [
+        {
+          "orderId": 12,
+          "destinationBranchId": 2,
+          "destinationBranchName": "Sede San Isidro",
+          "totalAmount": 99.80,
+          "createdAt": "2026-06-10T09:40:00.000Z",
+          "items": [
+            {
+              "variantId": 15,
+              "sku": "CAM-M-ROJO",
+              "productName": "Camisa Casual",
+              "quantity": 2,
+              "unitPrice": 49.90
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
