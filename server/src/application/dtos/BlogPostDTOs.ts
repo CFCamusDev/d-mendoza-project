@@ -27,4 +27,7 @@ export interface BlogPostResponseDTO {
   authorId: number;
   createdAt: Date;
   updatedAt: Date;
+  author?: {
+    name: string;
+  };
 }

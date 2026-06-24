@@ -6,18 +6,39 @@ export class PrismaBlogPostRepository implements IBlogPostRepository {
   async findById(id: number): Promise<BlogPost | null> {
     return prisma.blogPost.findUnique({
       where: { id },
+      include: {
+        author: {
+          select: {
+            name: true,
+          },
+        },
+      },
     }) as Promise<BlogPost | null>;
   }
 
   async findBySlug(slug: string): Promise<BlogPost | null> {
     return prisma.blogPost.findUnique({
       where: { slug },
+      include: {
+        author: {
+          select: {
+            name: true,
+          },
+        },
+      },
     }) as Promise<BlogPost | null>;
   }
 
   async findAll(): Promise<BlogPost[]> {
     return prisma.blogPost.findMany({
       orderBy: { createdAt: 'desc' },
+      include: {
+        author: {
+          select: {
+            name: true,
+          },
+        },
+      },
     }) as Promise<BlogPost[]>;
   }
 
@@ -32,6 +53,13 @@ export class PrismaBlogPostRepository implements IBlogPostRepository {
   }): Promise<BlogPost> {
     return prisma.blogPost.create({
       data,
+      include: {
+        author: {
+          select: {
+            name: true,
+          },
+        },
+      },
     }) as Promise<BlogPost>;
   }
 
@@ -50,6 +78,13 @@ export class PrismaBlogPostRepository implements IBlogPostRepository {
     return prisma.blogPost.update({
       where: { id },
       data,
+      include: {
+        author: {
+          select: {
+            name: true,
+          },
+        },
+      },
     }) as Promise<BlogPost>;
   }
 

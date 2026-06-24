@@ -43,6 +43,10 @@ import CashRegistersPage from '../features/admin/branches/CashRegistersPage';
 import PossScreen from '../features/pos/PossScreen';
 import TurnSalesPage from '../features/pos/TurnSalesPage';
 import CloseTurnPage from '../features/pos/CloseTurnPage';
+import BlogAdminPage from '../features/admin/BlogAdminPage';
+import BlogEditorPage from '../features/admin/BlogEditorPage';
+import BlogListPage from '../features/ecommerce/BlogListPage';
+import BlogPostPage from '../features/ecommerce/BlogPostPage';
 
 export const AppRouter = () => {
   return (
@@ -55,6 +59,10 @@ export const AppRouter = () => {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/search" element={<SearchResultsPage />} />
         <Route path="/products/:slug" element={<ProductDetailPage />} />
+        
+        {/* HU-018 Blog */}
+        <Route path="/blog" element={<BlogListPage />} />
+        <Route path="/blog/:slug" element={<BlogPostPage />} />
 
         {/* Public / Unprotected Routes */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -185,6 +193,11 @@ export const AppRouter = () => {
         {/* HU-011 */}
         <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['ADMIN']}><CategoriesPage /></ProtectedRoute>} />
         <Route path="/admin/brands" element={<ProtectedRoute allowedRoles={['ADMIN']}><BrandsPage /></ProtectedRoute>} />
+
+        {/* HU-018 Blog Management */}
+        <Route path="/admin/blog" element={<ProtectedRoute allowedRoles={['ADMIN']}><BlogAdminPage /></ProtectedRoute>} />
+        <Route path="/admin/blog/new" element={<ProtectedRoute allowedRoles={['ADMIN']}><BlogEditorPage /></ProtectedRoute>} />
+        <Route path="/admin/blog/:id/edit" element={<ProtectedRoute allowedRoles={['ADMIN']}><BlogEditorPage /></ProtectedRoute>} />
 
         {/* HU-012 */}
         <Route path="/admin/attributes" element={<ProtectedRoute allowedRoles={['ADMIN']}><AttributesPage /></ProtectedRoute>} />

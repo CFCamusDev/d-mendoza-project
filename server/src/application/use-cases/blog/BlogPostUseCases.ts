@@ -122,3 +122,24 @@ export class DeleteBlogPostUseCase {
     await this.blogPostRepository.delete(id);
   }
 }
+
+export class ListPublicBlogPostsUseCase {
+  constructor(private readonly blogPostRepository: IBlogPostRepository) {}
+
+  async execute(): Promise<BlogPost[]> {
+    const all = await this.blogPostRepository.findAll();
+    return all.filter(post => post.status === 'PUBLISHED');
+  }
+}
+
+export class GetPublicBlogPostBySlugUseCase {
+  constructor(private readonly blogPostRepository: IBlogPostRepository) {}
+
+  async execute(slug: string): Promise<BlogPost | null> {
+    const post = await this.blogPostRepository.findBySlug(slug);
+    if (!post || post.status !== 'PUBLISHED') {
+      return null;
+    }
+    return post;
+  }
+}

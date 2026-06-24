@@ -47,6 +47,14 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/cash-turns/open](#post-apiv1cashturnsopen)
   - [GET /api/v1/cash-registers](#get-apiv1cashregisters)
   - [GET /api/v1/cash-turns/active](#get-apiv1cashturnsactive)
+- [Blog y Posicionamiento SEO — HU-018](#blog-y-posicionamiento-seo--hu-018)
+  - [GET /api/v1/blog](#get-apiv1blog)
+  - [GET /api/v1/blog/:slug](#get-apiv1blogslug)
+  - [GET /api/v1/admin/blog](#get-apiv1adminblog)
+  - [GET /api/v1/admin/blog/:id](#get-apiv1adminblogid)
+  - [POST /api/v1/admin/blog](#post-apiv1adminblog)
+  - [PATCH /api/v1/admin/blog/:id](#patch-apiv1adminblogid)
+  - [DELETE /api/v1/admin/blog/:id](#delete-apiv1adminblogid)
 
 ---
 
@@ -3433,4 +3441,191 @@ No requiere cuerpo de petición.
   "error": "Dirección no encontrada"
 }
 ```
+
+---
+
+## Blog y Posicionamiento SEO — HU-018
+
+### GET /api/v1/blog
+
+Obtiene la lista de todos los artículos de blog publicados (activos).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta            | Autenticación | Rol Requerido |
+| :----- | :-------------- | :------------ | :------------ |
+| `GET`  | `/api/v1/blog`  | Ninguna       | Público       |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "title": "Mi Primer Post",
+      "slug": "mi-primer-post",
+      "content": "<p>Contenido del post en HTML</p>",
+      "status": "PUBLISHED",
+      "metaTitle": "SEO Title",
+      "metaDescription": "SEO Desc",
+      "authorId": 1,
+      "createdAt": "2026-06-24T14:00:00.000Z",
+      "updatedAt": "2026-06-24T14:10:00.000Z",
+      "author": {
+        "name": "Administrador"
+      }
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/v1/blog/:slug
+
+Obtiene un artículo de blog publicado a partir de su slug único.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                  | Autenticación | Rol Requerido |
+| :----- | :-------------------- | :------------ | :------------ |
+| `GET`  | `/api/v1/blog/:slug`  | Ninguna       | Público       |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "Mi Primer Post",
+    "slug": "mi-primer-post",
+    "content": "<p>Contenido del post en HTML</p>",
+    "status": "PUBLISHED",
+    "metaTitle": "SEO Title",
+    "metaDescription": "SEO Desc",
+    "authorId": 1,
+    "createdAt": "2026-06-24T14:00:00.000Z",
+    "updatedAt": "2026-06-24T14:10:00.000Z",
+    "author": {
+      "name": "Administrador"
+    }
+  }
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "El artículo no existe o no está publicado"
+}
+```
+
+---
+
+### GET /api/v1/admin/blog
+
+Obtiene todos los artículos de blog (incluyendo borradores) para su gestión en el panel administrativo.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                  | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :-------------------- | :----------------- | :------------ | :---------------- |
+| `GET`  | `/api/v1/admin/blog`  | JWT `Bearer Token` | `ADMIN`       | `roles:manage`    |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "title": "Mi Primer Post",
+      "slug": "mi-primer-post",
+      "content": "<p>Contenido del post en HTML</p>",
+      "status": "DRAFT",
+      "metaTitle": "SEO Title",
+      "metaDescription": "SEO Desc",
+      "authorId": 1,
+      "createdAt": "2026-06-24T14:00:00.000Z",
+      "updatedAt": "2026-06-24T14:10:00.000Z",
+      "author": {
+        "name": "Administrador"
+      }
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/v1/admin/blog/:id
+
+Obtiene el detalle completo de un artículo de blog por su ID.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                      | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :------------------------ | :----------------- | :------------ | :---------------- |
+| `GET`  | `/api/v1/admin/blog/:id`  | JWT `Bearer Token` | `ADMIN`       | `roles:manage`    |
+
+---
+
+### POST /api/v1/admin/blog
+
+Crea un nuevo artículo de blog. El slug se genera automáticamente de forma única a partir de un slugify del título.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                  | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :-------------------- | :----------------- | :------------ | :---------------- |
+| `POST` | `/api/v1/admin/blog`  | JWT `Bearer Token` | `ADMIN`       | `roles:manage`    |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "title": "Mi Primer Post",
+  "content": "<p>Contenido detallado...</p>",
+  "status": "DRAFT",
+  "metaTitle": "Título SEO Opcional",
+  "metaDescription": "Meta Descripción SEO Opcional"
+}
+```
+
+---
+
+### PATCH /api/v1/admin/blog/:id
+
+Actualiza parcialmente un artículo de blog existente.
+
+#### 1. Especificación del Endpoint
+
+| Método  | Ruta                      | Autenticación      | Rol Requerido | Permiso Requerido |
+| :------ | :------------------------ | :----------------- | :------------ | :---------------- |
+| `PATCH` | `/api/v1/admin/blog/:id`  | JWT `Bearer Token` | `ADMIN`       | `roles:manage`    |
+
+---
+
+### DELETE /api/v1/admin/blog/:id
+
+Elimina físicamente o inactiva un artículo de blog.
+
+#### 1. Especificación del Endpoint
+
+| Método   | Ruta                      | Autenticación      | Rol Requerido | Permiso Requerido |
+| :------- | :------------------------ | :----------------- | :------------ | :---------------- |
+| `DELETE` | `/api/v1/admin/blog/:id`  | JWT `Bearer Token` | `ADMIN`       | `roles:manage`    |
+
 

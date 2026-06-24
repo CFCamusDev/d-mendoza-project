@@ -11,7 +11,8 @@ import {
   Shield, 
   Home,
   Link as LinkIcon,
-  ShoppingCart
+  ShoppingCart,
+  FileText
 } from 'lucide-react';
 import { useBrand } from '@/shared/context/BrandContext';
 import { useCart } from '@/features/ecommerce/hooks/useCart';
@@ -55,6 +56,7 @@ export const AppShell: React.FC = () => {
   // Enlaces de navegación pública / e-commerce
   const publicNavLinks = [
     { label: 'Inicio', path: '/', icon: <Home className="w-4 h-4" /> },
+    { label: 'Blog', path: '/blog', icon: <FileText className="w-4 h-4" /> },
   ];
 
   return (

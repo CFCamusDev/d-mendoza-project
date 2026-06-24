@@ -7,6 +7,8 @@ import {
   GetBlogPostUseCase,
   ListBlogPostsUseCase,
   DeleteBlogPostUseCase,
+  ListPublicBlogPostsUseCase,
+  GetPublicBlogPostBySlugUseCase,
 } from '@application/use-cases/blog/BlogPostUseCases';
 
 const blogPostRepository = new PrismaBlogPostRepository();
@@ -15,6 +17,8 @@ const updateBlogPostUseCase = new UpdateBlogPostUseCase(blogPostRepository);
 const getBlogPostUseCase = new GetBlogPostUseCase(blogPostRepository);
 const listBlogPostsUseCase = new ListBlogPostsUseCase(blogPostRepository);
 const deleteBlogPostUseCase = new DeleteBlogPostUseCase(blogPostRepository);
+const listPublicBlogPostsUseCase = new ListPublicBlogPostsUseCase(blogPostRepository);
+const getPublicBlogPostBySlugUseCase = new GetPublicBlogPostBySlugUseCase(blogPostRepository);
 
 const CreateBlogPostSchema = z.object({
   title: z.string().min(1, 'El título es obligatorio'),
@@ -91,6 +95,28 @@ export class BlogPostController {
       }
       await deleteBlogPostUseCase.execute(id);
       return res.status(200).json({ success: true, message: 'Artículo eliminado exitosamente' });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async getPublicList(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const posts = await listPublicBlogPostsUseCase.execute();
+      return res.status(200).json({ success: true, data: posts });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async getPublicBySlug(req: Request, res: Response, next: NextFunction) {
+    try {
+      const slug = String(req.params.slug);
+      const post = await getPublicBlogPostBySlugUseCase.execute(slug);
+      if (!post) {
+        return res.status(404).json({ success: false, error: 'El artículo no existe o no está publicado' });
+      }
+      return res.status(200).json({ success: true, data: post });
     } catch (e) {
       next(e);
     }

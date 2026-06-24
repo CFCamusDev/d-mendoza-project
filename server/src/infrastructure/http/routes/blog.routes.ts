@@ -5,6 +5,11 @@ import { requirePermission } from '@infrastructure/http/middlewares/auth.middlew
 const router = Router();
 const controller = new BlogPostController();
 
+// Public routes
+router.get('/blog', controller.getPublicList.bind(controller));
+router.get('/blog/:slug', controller.getPublicBySlug.bind(controller));
+
+// Admin routes
 router.get('/admin/blog', requirePermission('roles:manage'), controller.getAll.bind(controller));
 router.get('/admin/blog/:id', requirePermission('roles:manage'), controller.getOne.bind(controller));
 router.post('/admin/blog', requirePermission('roles:manage'), controller.create.bind(controller));

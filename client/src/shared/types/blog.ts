@@ -9,8 +9,8 @@ export interface BlogPost {
   metaTitle: string | null;
   metaDescription: string | null;
   authorId: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   author?: {
     name: string;
   };
