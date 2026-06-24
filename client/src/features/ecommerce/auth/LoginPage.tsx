@@ -10,6 +10,8 @@ import { useBrand } from '@/shared/context/BrandContext';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { ForcePasswordChangeModal } from './components/ForcePasswordChangeModal';
 
+import { useCartContext } from '../context/CartContext';
+
 export default function LoginPage() {
   useDocumentTitle('Iniciar sesión');
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export default function LoginPage() {
   const { login: loginHook, isLoading } = useLogin();
   const auth = useAuth();
   const { brandConfig } = useBrand();
+  const cartContext = useCartContext();
 
   const [isForceModalOpen, setIsForceModalOpen] = useState(false);
 
@@ -40,6 +43,9 @@ export default function LoginPage() {
 
       // Persist tokens and hydrate user state in AuthContext
       auth.login(result.data.tokens);
+
+      // Merge cart after successful login (HU-041)
+      await cartContext.mergeCart();
 
       toast.success('¡Bienvenido!');
 
