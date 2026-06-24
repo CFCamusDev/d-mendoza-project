@@ -4,6 +4,7 @@ export interface BranchFormData {
   name: string;
   address: string | null;
   phone: string | null;
+  isMain: boolean;
 }
 
 export const branchSchema: yup.ObjectSchema<BranchFormData> = yup.object().shape({
@@ -24,4 +25,8 @@ export const branchSchema: yup.ObjectSchema<BranchFormData> = yup.object().shape
     .default(null)
     .nullable()
     .max(20, 'El teléfono no puede exceder los 20 caracteres'),
+  isMain: yup
+    .boolean()
+    .default(false)
+    .required(),
 });

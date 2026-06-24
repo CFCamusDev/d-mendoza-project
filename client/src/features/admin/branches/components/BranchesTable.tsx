@@ -8,7 +8,8 @@ import {
   XCircle, 
   Warehouse as WarehouseIcon,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Star
 } from 'lucide-react';
 import type { Branch } from '../hooks/useBranches';
 
@@ -78,7 +79,15 @@ export const BranchesTable: React.FC<BranchesTableProps> = ({
                       <Building2 className="w-5 h-5 stroke-[1.8]" />
                     </div>
                     <div>
-                      <div className="font-semibold text-[#3F3F3F] text-base">{branch.name}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-[#3F3F3F] text-base">{branch.name}</span>
+                        {branch.isMain && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
+                            <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                            <span>Principal</span>
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-[#6B6B6B] mt-0.5">ID Sucursal: {branch.id}</div>
                     </div>
                   </div>
@@ -168,7 +177,12 @@ export const BranchesTable: React.FC<BranchesTableProps> = ({
                   <Building2 className="w-4.5 h-4.5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-[#3F3F3F]">{branch.name}</h4>
+                  <div className="flex items-center gap-1.5" title={branch.isMain ? "Sucursal Principal" : undefined}>
+                    <h4 className="font-bold text-[#3F3F3F]">{branch.name}</h4>
+                    {branch.isMain && (
+                      <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500 flex-shrink-0" />
+                    )}
+                  </div>
                   <p className="text-[10px] text-[#6B6B6B]">ID Sucursal: {branch.id}</p>
                 </div>
               </div>
