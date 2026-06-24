@@ -8,7 +8,6 @@ export class PrismaDeliveryZoneRepository implements IDeliveryZoneRepository {
   private mapToEntity(record: any): DeliveryZone {
     return new DeliveryZone(
       record.id,
-      record.name,
       record.districts as string[],
       Number(record.deliveryCost),
       record.estimatedDays,
@@ -19,19 +18,13 @@ export class PrismaDeliveryZoneRepository implements IDeliveryZoneRepository {
 
   async findAll(): Promise<DeliveryZone[]> {
     const records = await this.prisma.deliveryZone.findMany({
-      orderBy: { name: 'asc' }
+      orderBy: { id: 'asc' }
     });
     return records.map(this.mapToEntity);
   }
 
   async findById(id: number): Promise<DeliveryZone | null> {
     const record = await this.prisma.deliveryZone.findUnique({ where: { id } });
-    if (!record) return null;
-    return this.mapToEntity(record);
-  }
-
-  async findByName(name: string): Promise<DeliveryZone | null> {
-    const record = await this.prisma.deliveryZone.findUnique({ where: { name } });
     if (!record) return null;
     return this.mapToEntity(record);
   }
@@ -56,7 +49,6 @@ export class PrismaDeliveryZoneRepository implements IDeliveryZoneRepository {
   async create(data: Omit<DeliveryZone, 'id' | 'createdAt' | 'updatedAt'>): Promise<DeliveryZone> {
     const record = await this.prisma.deliveryZone.create({
       data: {
-        name: data.name,
         districts: data.districts,
         deliveryCost: data.deliveryCost,
         estimatedDays: data.estimatedDays,

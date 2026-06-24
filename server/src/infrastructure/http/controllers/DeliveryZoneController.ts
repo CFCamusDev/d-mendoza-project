@@ -4,6 +4,7 @@ import { UpdateDeliveryZoneUseCase } from '../../../application/use-cases/delive
 import { DeleteDeliveryZoneUseCase } from '../../../application/use-cases/delivery-zone/DeleteDeliveryZoneUseCase';
 import { GetDeliveryZonesUseCase } from '../../../application/use-cases/delivery-zone/GetDeliveryZonesUseCase';
 import { GetDeliveryZoneByDistrictUseCase } from '../../../application/use-cases/delivery-zone/GetDeliveryZoneByDistrictUseCase';
+import { GetSupportedLocationsUseCase } from '../../../application/use-cases/delivery-zone/GetSupportedLocationsUseCase';
 import { PrismaDeliveryZoneRepository } from '../../database/repositories/PrismaDeliveryZoneRepository';
 import { PrismaClient } from '@prisma/client';
 
@@ -15,8 +16,17 @@ const updateDeliveryZoneUseCase = new UpdateDeliveryZoneUseCase(repository);
 const deleteDeliveryZoneUseCase = new DeleteDeliveryZoneUseCase(repository);
 const getDeliveryZonesUseCase = new GetDeliveryZonesUseCase(repository);
 const getDeliveryZoneByDistrictUseCase = new GetDeliveryZoneByDistrictUseCase(repository);
+const getSupportedLocationsUseCase = new GetSupportedLocationsUseCase(repository);
 
 export class DeliveryZoneController {
+  static async getSupportedLocations(req: Request, res: Response) {
+    try {
+      const locations = await getSupportedLocationsUseCase.execute();
+      res.json(locations);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
   static async getAll(req: Request, res: Response) {
     try {
       const zones = await getDeliveryZonesUseCase.execute();
@@ -41,9 +51,8 @@ export class DeliveryZoneController {
 
   static async create(req: Request, res: Response) {
     try {
-      const { name, districts, deliveryCost, estimatedDays } = req.body;
+      const { districts, deliveryCost, estimatedDays } = req.body;
       const newZone = await createDeliveryZoneUseCase.execute({
-        name,
         districts,
         deliveryCost,
         estimatedDays,
@@ -57,9 +66,8 @@ export class DeliveryZoneController {
   static async update(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id as string);
-      const { name, districts, deliveryCost, estimatedDays } = req.body;
+      const { districts, deliveryCost, estimatedDays } = req.body;
       const updatedZone = await updateDeliveryZoneUseCase.execute(id, {
-        name,
         districts,
         deliveryCost,
         estimatedDays,
