@@ -1,9 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { useCart } from './hooks/useCart';
-import { ShoppingCart, MapPin, CreditCard, CheckCircle, ChevronRight, Loader2 } from 'lucide-react';
+import { ShoppingCart, MapPin, CreditCard, CheckCircle, ChevronRight, Loader2, Plus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '@/shared/api/axiosInstance';
+import { AddressFormModal } from './profile/components/AddressFormModal';
+import type { AddressFormData } from './profile/schemas/address.schema';
+
+interface Address {
+  id: number;
+  alias: string;
+  fullAddress: string;
+  district: string;
+  reference?: string;
+  isDefault: boolean;
+}
 
 export const CheckoutPage = () => {
   useDocumentTitle('Checkout - Envío y Pago');
@@ -11,33 +23,92 @@ export const CheckoutPage = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    documentId: '',
-    department: '',
-    city: '',
-    district: '',
-    address: '',
-    reference: '',
-  });
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [shippingCost, setShippingCost] = useState<number | null>(null);
+  const [calculatedTotal, setCalculatedTotal] = useState<number | null>(null);
+  const [coverageError, setCoverageError] = useState<string | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
+
+  // Address Modal State
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+
+  const fetchAddresses = async () => {
+    setIsLoadingAddresses(true);
+    try {
+      const response = await axiosInstance.get('/v1/addresses');
+      setAddresses(response.data.data as Address[]);
+    } catch (error) {
+      toast.error('Error al cargar tus direcciones');
+    } finally {
+      setIsLoadingAddresses(false);
+    }
+  };
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  const handleCreateAddress = async (data: AddressFormData) => {
+    setIsSavingAddress(true);
+    try {
+      await axiosInstance.post('/v1/addresses', data);
+      toast.success('Dirección creada exitosamente');
+      setIsAddressModalOpen(false);
+      await fetchAddresses();
+    } catch (error) {
+      toast.error('Ocurrió un error al guardar la dirección');
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
+
+  // Calculate checkout costs
+  const calculateCosts = async (addressId: number) => {
+    if (!cart?.id) return;
+    setIsCalculating(true);
+    try {
+      const response = await axiosInstance.post('/v1/checkout/calculate', {
+        cartId: cart.id,
+        addressId,
+      });
+      const data = response.data.data;
+      setShippingCost(data.shippingCost);
+      setCalculatedTotal(data.total);
+      setCoverageError(null);
+    } catch (error: any) {
+      setShippingCost(null);
+      setCalculatedTotal(null);
+      setCoverageError(error.response?.data?.error || 'Error al calcular costo de envío');
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  const handleAddressSelect = (addressId: number) => {
+    setSelectedAddressId(addressId);
+    calculateCosts(addressId);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedAddressId) {
+      toast.error('Por favor selecciona una dirección de envío');
+      return;
+    }
+    if (coverageError) {
+      toast.error(coverageError);
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Aquí iría la lógica de procesar la orden o ir a pasarela de pago
+    // Aquí iría la lógica de procesar la orden
     try {
-      // Simulación de delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       toast.success('¡Orden generada con éxito!');
-      // TODO: Limpiar carrito y redirigir a confirmación
       navigate('/');
     } catch (error) {
       toast.error('Ocurrió un error al procesar la orden.');
@@ -95,67 +166,81 @@ export const CheckoutPage = () => {
           
           {/* Formulario de Envío */}
           <div className="lg:col-span-7 xl:col-span-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">Detalles de Facturación y Envío</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">Detalles de Envío</h2>
             
             <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
               
-              {/* Información Personal */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Información de Contacto</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-                    <input required type="text" name="firstName" value={formData.firstName} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition" placeholder="Juan" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Apellidos *</label>
-                    <input required type="text" name="lastName" value={formData.lastName} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition" placeholder="Pérez" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico *</label>
-                    <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition" placeholder="juan@correo.com" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono Móvil *</label>
-                    <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition" placeholder="987654321" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">DNI / CE *</label>
-                    <input required type="text" name="documentId" value={formData.documentId} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition" placeholder="Documento de Identidad" />
-                  </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Selecciona una Dirección</h3>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddressModalOpen(true)}
+                    className="flex items-center gap-1.5 text-sm font-semibold text-brand-accent hover:text-black transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Nueva Dirección
+                  </button>
                 </div>
-              </div>
+                
+                {isLoadingAddresses ? (
+                  <div className="flex justify-center p-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-brand-accent" />
+                  </div>
+                ) : addresses.length === 0 ? (
+                  <div className="p-5 bg-yellow-50 border border-yellow-200 rounded-xl flex flex-col items-center text-center gap-3">
+                    <p className="text-yellow-800 text-sm font-medium">
+                      No tienes direcciones guardadas. Por favor agrega una antes de continuar.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddressModalOpen(true)}
+                      className="px-4 py-2 bg-brand-accent text-white rounded-lg text-sm font-bold shadow-sm hover:bg-black transition-colors"
+                    >
+                      Agregar Dirección
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {addresses.map((addr) => (
+                      <label 
+                        key={addr.id} 
+                        className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${
+                          selectedAddressId === addr.id 
+                            ? 'border-brand-accent bg-brand-accent/5 ring-1 ring-brand-accent' 
+                            : 'border-gray-200 hover:border-brand-accent/50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="address"
+                          className="mt-1 w-4 h-4 text-brand-accent focus:ring-brand-accent border-gray-300"
+                          checked={selectedAddressId === addr.id}
+                          onChange={() => handleAddressSelect(addr.id)}
+                        />
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 flex items-center gap-2">
+                            {addr.alias}
+                            {addr.isDefault && (
+                              <span className="text-[10px] uppercase font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                Principal
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">{addr.fullAddress}</p>
+                          <p className="text-xs text-gray-500 mt-1">{addr.district}</p>
+                          {addr.reference && <p className="text-xs text-gray-400 mt-0.5">Ref: {addr.reference}</p>}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                
+                {coverageError && (
+                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium">
+                    {coverageError}
+                  </div>
+                )}
 
-              {/* Información de Envío */}
-              <div className="pt-6 border-t">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Dirección de Envío</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Departamento *</label>
-                    <select required name="department" value={formData.department} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition bg-white">
-                      <option value="">Seleccionar...</option>
-                      <option value="Lima">Lima</option>
-                      <option value="Arequipa">Arequipa</option>
-                      <option value="Cusco">Cusco</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Provincia *</label>
-                    <input required type="text" name="city" value={formData.city} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition" placeholder="Ej. Lima" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Distrito *</label>
-                    <input required type="text" name="district" value={formData.district} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition" placeholder="Ej. Miraflores" />
-                  </div>
-                  <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Dirección Exacta (Calle, Nro) *</label>
-                    <input required type="text" name="address" value={formData.address} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition" placeholder="Av. Principal 123, Dpto 4" />
-                  </div>
-                  <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Referencia (Opcional)</label>
-                    <input type="text" name="reference" value={formData.reference} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition" placeholder="Frente al parque, casa blanca" />
-                  </div>
-                </div>
               </div>
 
             </form>
@@ -183,8 +268,8 @@ export const CheckoutPage = () => {
                       <div>
                         <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">{item.variant.product.name}</h3>
                         <p className="text-xs text-gray-500 mt-0.5">
-                          {item.variant.attributesJson.talla && `Talla: ${item.variant.attributesJson.talla}`}
-                          {item.variant.attributesJson.color && ` • Color: ${item.variant.attributesJson.color}`}
+                          {item.variant.attributesJson?.talla && `Talla: ${item.variant.attributesJson.talla}`}
+                          {item.variant.attributesJson?.color && ` • Color: ${item.variant.attributesJson.color}`}
                         </p>
                       </div>
                       <div className="text-right pl-4">
@@ -202,14 +287,22 @@ export const CheckoutPage = () => {
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Envío estimado</span>
-                  <span className="font-medium text-gray-900">Por calcular</span>
+                  {isCalculating ? (
+                    <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> Calculando...</span>
+                  ) : shippingCost !== null ? (
+                    <span className="font-medium text-gray-900">S/ {shippingCost.toFixed(2)}</span>
+                  ) : (
+                    <span className="font-medium text-gray-900 text-xs">Selecciona dirección</span>
+                  )}
                 </div>
               </div>
 
               <div className="border-t pt-4 mb-8">
                 <div className="flex justify-between items-center text-lg">
                   <span className="font-bold text-gray-900">Total</span>
-                  <span className="font-black text-brand-accent text-xl">S/ {cart.subtotal.toFixed(2)}</span>
+                  <span className="font-black text-brand-accent text-xl">
+                    S/ {calculatedTotal !== null ? calculatedTotal.toFixed(2) : cart.subtotal.toFixed(2)}
+                  </span>
                 </div>
               </div>
 
@@ -236,6 +329,13 @@ export const CheckoutPage = () => {
 
         </div>
       </div>
+
+      <AddressFormModal
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        onSubmit={handleCreateAddress}
+        isSaving={isSavingAddress}
+      />
     </div>
   );
 };
