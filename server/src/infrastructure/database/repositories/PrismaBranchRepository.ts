@@ -35,6 +35,7 @@ export class PrismaBranchRepository implements IBranchRepository {
           address: data.address || null,
           phone: data.phone || null,
           isActive: true,
+          isMain: data.isMain ?? false,
         },
       });
 
@@ -60,6 +61,7 @@ export class PrismaBranchRepository implements IBranchRepository {
         name: data.name,
         address: data.address,
         phone: data.phone,
+        isMain: data.isMain,
       },
       include: { warehouse: true },
     });
@@ -75,6 +77,18 @@ export class PrismaBranchRepository implements IBranchRepository {
     return this.toDomain(record);
   }
 
+  async unsetOtherMainBranches(excludeId?: number): Promise<void> {
+    await prisma.branch.updateMany({
+      where: {
+        id: excludeId ? { not: excludeId } : undefined,
+        isMain: true,
+      },
+      data: {
+        isMain: false,
+      },
+    });
+  }
+
   private toDomain(record: any): Branch {
     return {
       id: record.id,
@@ -82,6 +96,7 @@ export class PrismaBranchRepository implements IBranchRepository {
       address: record.address,
       phone: record.phone,
       isActive: record.isActive,
+      isMain: record.isMain,
       warehouse: record.warehouse
         ? {
             id: record.warehouse.id,

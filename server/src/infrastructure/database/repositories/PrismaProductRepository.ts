@@ -34,10 +34,16 @@ export class PrismaProductRepository implements IProductRepository {
 
   async create(data: CreateProductDTO | { code: string; name: string; description?: string }): Promise<Product> {
     const fullData = data as CreateProductDTO;
+    const generatedSlug = fullData.slug || 
+      (fullData.name.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '') + '-' + fullData.code.toLowerCase());
+
     return prisma.product.create({
       data: {
         code: fullData.code,
         name: fullData.name,
+        slug: generatedSlug,
         description: fullData.description ?? null,
         categoryId: fullData.categoryId ?? null,
         brandId: fullData.brandId ?? null,

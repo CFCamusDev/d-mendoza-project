@@ -11,6 +11,10 @@ export class CreateBranchUseCase {
       throw new Error('El nombre de la sucursal ya está registrado');
     }
 
+    if (dto.isMain) {
+      await this.branchRepository.unsetOtherMainBranches();
+    }
+
     const branch = await this.branchRepository.create(dto);
     return this.mapToDTO(branch);
   }
@@ -22,6 +26,7 @@ export class CreateBranchUseCase {
       address: branch.address ?? null,
       phone: branch.phone ?? null,
       isActive: branch.isActive,
+      isMain: branch.isMain,
       warehouse: branch.warehouse ? {
         id: branch.warehouse.id,
         createdAt: branch.warehouse.createdAt,

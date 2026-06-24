@@ -6,6 +6,7 @@ export interface Branch {
   address?: string | null;
   phone?: string | null;
   isActive: boolean;
+  isMain: boolean;
   warehouse: Warehouse | null;
   createdAt: Date;
   updatedAt: Date;
