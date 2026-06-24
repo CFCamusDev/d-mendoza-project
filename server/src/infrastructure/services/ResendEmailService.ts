@@ -3,7 +3,7 @@ import { IEmailService } from '@domain/services/IEmailService';
 
 export class ResendEmailService implements IEmailService {
   private resend: Resend | null;
-  private readonly defaultFrom = 'DMendoza <onboarding@resend.dev>'; // Cambiar a noreply@techinnovats.com cuando esté validado en Resend
+  private readonly defaultFrom = process.env.RESEND_FROM_EMAIL || 'DMendoza <noreply@dmendoza.shop>';
 
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
