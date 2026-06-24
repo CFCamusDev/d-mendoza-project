@@ -19,6 +19,8 @@ import BannersPage from '../features/admin/BannersPage';
 import ProductsAdminPage from '../features/admin/ProductsAdminPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
+import { ProfileLayout } from '../features/ecommerce/profile/components/ProfileLayout';
+import AddressesPage from '../features/ecommerce/profile/AddressesPage';
 import { AppShell } from '../components/layout/AppShell';
 import { AdminShell } from '../components/layout/AdminShell';
 import { PosShell } from '../components/layout/PosShell';
@@ -71,10 +73,13 @@ export const AppRouter = () => {
           path="/profile"
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'SELLER', 'CLIENT']}>
-              <ProfilePage />
+              <ProfileLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<ProfilePage />} />
+          <Route path="addresses" element={<AddressesPage />} />
+        </Route>
       </Route>
 
       {/* POS Routes with Cash Register Opening Shift verification (standalone container) */}

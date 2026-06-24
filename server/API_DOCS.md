@@ -16,6 +16,11 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Perfil de Cliente](#perfil-de-cliente)
   - [GET /api/v1/profile](#get-apiv1profile)
   - [PATCH /api/v1/profile](#patch-apiv1profile)
+- [Direcciones de Envío — HU-006](#direcciones-de-envío--hu-006)
+  - [GET /api/v1/addresses](#get-apiv1addresses)
+  - [POST /api/v1/addresses](#post-apiv1addresses)
+  - [PUT /api/v1/addresses/:id](#put-apiv1addressesid)
+  - [DELETE /api/v1/addresses/:id](#delete-apiv1addressesid)
 - [Identidad Visual y Branding](#identidad-visual-y-branding)
   - [GET /api/v1/config/brand](#get-apiv1configbrand)
   - [PUT /api/v1/config/brand](#put-apiv1configbrand)
@@ -3192,3 +3197,240 @@ Obtiene la ficha técnica detallada de un producto activo basado en su `slug` ú
 }
 ```
 ```
+
+---
+
+## Direcciones de Envío — HU-006
+
+Este módulo permite al cliente autenticado autogestionar sus direcciones de envío para las compras en la tienda virtual. El sistema requiere que la primera dirección registrada sea la predeterminada (`isDefault = true`), no permite eliminar la única dirección del usuario, y si se elimina la dirección predeterminada teniendo otras registradas, la predeterminada pasará a ser automáticamente la más antigua que quede.
+
+### GET /api/v1/addresses
+
+Recupera la lista de todas las direcciones de envío registradas para el cliente autenticado, ordenadas con la dirección predeterminada primero, seguida por la fecha de creación de forma ascendente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                 | Autenticación      | Rol Requerido         |
+| :----- | :------------------- | :----------------- | :-------------------- |
+| `GET`  | `/api/v1/addresses`  | JWT `Bearer Token` | Cualquier Autenticado |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+No requiere cuerpo de petición.
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "userId": 5,
+      "alias": "Casa",
+      "fullAddress": "Av. Larco 123, Dpto 402",
+      "district": "Miraflores",
+      "reference": "Frente al parque Kennedy",
+      "isDefault": true,
+      "createdAt": "2026-06-24T14:00:00.000Z",
+      "updatedAt": "2026-06-24T14:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "userId": 5,
+      "alias": "Trabajo",
+      "fullAddress": "Av. Javier Prado Este 456",
+      "district": "San Isidro",
+      "reference": "Edificio Capital",
+      "isDefault": false,
+      "createdAt": "2026-06-24T14:05:00.000Z",
+      "updatedAt": "2026-06-24T14:05:00.000Z"
+    }
+  ]
+}
+```
+
+##### Error de Autenticación (HTTP 401 Unauthorized)
+
+```json
+{
+  "success": false,
+  "error": "Acceso no autorizado: Contexto de seguridad faltante"
+}
+```
+
+---
+
+### POST /api/v1/addresses
+
+Registra una nueva dirección de envío para el cliente autenticado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                 | Autenticación      | Rol Requerido         |
+| :----- | :------------------- | :----------------- | :-------------------- |
+| `POST` | `/api/v1/addresses`  | JWT `Bearer Token` | Cualquier Autenticado |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+Se espera un objeto JSON con la siguiente estructura:
+
+```json
+{
+  "alias": "Casa",
+  "fullAddress": "Av. Larco 123, Dpto 402",
+  "district": "Miraflores",
+  "reference": "Frente al parque Kennedy",
+  "isDefault": false
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro     | Tipo      | Requerido | Reglas de Validación                                                  |
+| :------------ | :-------- | :-------- | :-------------------------------------------------------------------- |
+| `alias`       | `string`  | Sí        | Mínimo 2 caracteres, máximo 50. Nombre identificador (ej: "Trabajo"). |
+| `fullAddress` | `string`  | Sí        | Mínimo 5 caracteres. Dirección completa.                              |
+| `district`    | `string`  | Sí        | Mínimo 2 caracteres. Nombre del distrito.                             |
+| `reference`   | `string`  | No        | Referencias físicas opcionales del domicilio.                         |
+| `isDefault`   | `boolean` | No        | Flag para indicar si es la dirección predeterminada.                  |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "message": "Dirección creada correctamente",
+  "data": {
+    "id": 1,
+    "userId": 5,
+    "alias": "Casa",
+    "fullAddress": "Av. Larco 123, Dpto 402",
+    "district": "Miraflores",
+    "reference": "Frente al parque Kennedy",
+    "isDefault": true,
+    "createdAt": "2026-06-24T14:00:00.000Z",
+    "updatedAt": "2026-06-24T14:00:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "alias",
+      "message": "El alias debe tener al menos 2 caracteres"
+    }
+  ]
+}
+```
+
+---
+
+### PUT /api/v1/addresses/:id
+
+Actualiza los datos de una dirección de envío existente que pertenece al cliente autenticado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                     | Autenticación      | Rol Requerido         |
+| :----- | :----------------------- | :----------------- | :-------------------- |
+| `PUT`  | `/api/v1/addresses/:id`  | JWT `Bearer Token` | Cualquier Autenticado |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+Permite actualizar parcialmente o en su totalidad los campos de la dirección:
+
+```json
+{
+  "alias": "Mi Nuevo Domicilio",
+  "isDefault": true
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Dirección actualizada correctamente",
+  "data": {
+    "id": 1,
+    "userId": 5,
+    "alias": "Mi Nuevo Domicilio",
+    "fullAddress": "Av. Larco 123, Dpto 402",
+    "district": "Miraflores",
+    "reference": "Frente al parque Kennedy",
+    "isDefault": true,
+    "createdAt": "2026-06-24T14:00:00.000Z",
+    "updatedAt": "2026-06-24T14:10:00.000Z"
+  }
+}
+```
+
+##### Error de Validación o Negocio (HTTP 400 Bad Request)
+
+- Intento de quitar `isDefault` a la dirección predeterminada sin haber asignado otra dirección como default:
+```json
+{
+  "success": false,
+  "error": "Debe marcar otra dirección como predeterminada en su lugar"
+}
+```
+
+---
+
+### DELETE /api/v1/addresses/:id
+
+Elimina una dirección de envío del cliente autenticado.
+
+#### 1. Especificación del Endpoint
+
+| Método   | Ruta                     | Autenticación      | Rol Requerido         |
+| :------- | :----------------------- | :----------------- | :-------------------- |
+| `DELETE` | `/api/v1/addresses/:id`  | JWT `Bearer Token` | Cualquier Autenticado |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+No requiere cuerpo de petición.
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Dirección eliminada correctamente"
+}
+```
+
+##### Error de Negocio (HTTP 400 Bad Request)
+
+- Intento de eliminar la única dirección registrada por el usuario:
+```json
+{
+  "success": false,
+  "error": "No puede eliminar su única dirección"
+}
+```
+
+##### Dirección No Encontrada (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "Dirección no encontrada"
+}
+```
+
