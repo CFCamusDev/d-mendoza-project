@@ -14,6 +14,6 @@ router.get('/ecommerce/products/best-sellers', bestSellersController.getBestSell
 router.get('/ecommerce/products/on-sale', onSaleController.getOnSale.bind(onSaleController));
 
 // GET /api/v1/ecommerce/products/:slug — Detalle de un producto por slug (Público de e-commerce)
-router.get('/ecommerce/products/:slug', controller.getDetail.bind(controller));
+router.get('/ecommerce/products/:slug', searchController.getDetail.bind(searchController));
 
 export default router;
