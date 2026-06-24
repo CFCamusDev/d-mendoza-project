@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { PrismaCouponRepository } from '../database/repositories/PrismaCouponRepository';
+import { PrismaCouponRepository } from '../../database/repositories/PrismaCouponRepository';
 import { ValidateCouponUseCase } from '../../../application/use-cases/coupon/ValidateCouponUseCase';
-import { CouponController } from './controllers/CouponController';
-import { requireAuth } from './middlewares/auth.middleware';
+import { CouponController } from '../controllers/CouponController';
+import { requireAuth } from '../middlewares/auth.middleware';
 
 const router = Router();
 const prisma = new PrismaClient();
