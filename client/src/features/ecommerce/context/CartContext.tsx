@@ -83,30 +83,40 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateItem = async (itemId: number, quantity: number) => {
+    const previousCart = cart;
+    if (cart) {
+      setCart({
+        ...cart,
+        items: cart.items.map(item => item.id === itemId ? { ...item, quantity } : item),
+      });
+    }
     try {
-      setIsLoading(true);
       const { data } = await api.patch(`/cart/items/${itemId}`, { quantity });
       if (data.success) {
         setCart(data.data);
       }
     } catch (error) {
       console.error('Error updating item:', error);
-    } finally {
-      setIsLoading(false);
+      if (previousCart) setCart(previousCart);
     }
   };
 
   const removeItem = async (itemId: number) => {
+    const previousCart = cart;
+    if (cart) {
+      setCart({
+        ...cart,
+        items: cart.items.filter(item => item.id !== itemId),
+      });
+    }
     try {
-      setIsLoading(true);
       const { data } = await api.delete(`/cart/items/${itemId}`);
       if (data.success) {
         setCart(data.data);
       }
     } catch (error) {
       console.error('Error removing item:', error);
-    } finally {
-      setIsLoading(false);
+      if (previousCart) setCart(previousCart);
     }
   };
 

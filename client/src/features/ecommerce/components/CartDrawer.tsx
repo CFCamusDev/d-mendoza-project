@@ -23,7 +23,7 @@ export const CartDrawer = () => {
       className="fixed inset-0 z-50 flex justify-end bg-black/50"
       onClick={handleOverlayClick}
     >
-      <div className="w-full max-w-md h-full bg-white shadow-xl flex flex-col animate-slide-in-right">
+      <div className="relative w-full max-w-md h-full bg-white shadow-xl flex flex-col animate-slide-in-right">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2 text-brand-accent">
