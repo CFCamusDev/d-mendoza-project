@@ -34,6 +34,7 @@ model User {
   client          Client?
   cashTurns       CashTurn[] // HU-032
   wishlists       Wishlist[] // HU-010
+  carts           Cart[]     // HU-041
 }
 
 model Client {
@@ -259,6 +260,7 @@ model ProductVariant {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   stockTransfers  StockTransfer[]
+  cartItems       CartItem[]       // HU-041
 
   @@index([productId])
 }
@@ -556,4 +558,32 @@ model StockTransfer {
   @@index([fromBranchId])
   @@index([toBranchId])
   @@index([variantId])
+}
+
+// ─── HU-041: Carrito de Compras Persistente ───────────────────────────────────
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int?
+  user      User?      @relation(fields: [userId], references: [id])
+  sessionId String?    @unique // Para carritos anónimos
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model CartItem {
+  id        Int            @id @default(autoincrement())
+  cartId    Int
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId Int
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int            @default(1)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([cartId, variantId])
 }
