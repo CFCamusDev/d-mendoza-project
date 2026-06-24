@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import { getApiUrl } from '@/shared/config/env';
 import type { Cart } from '../types';
 
 interface CartContextType {
@@ -30,7 +31,7 @@ const getSessionId = () => {
 
 // API Client
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
+  baseURL: `${getApiUrl()}/v1`,
   withCredentials: true,
 });
 
