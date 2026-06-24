@@ -35,6 +35,7 @@ model User {
   cashTurns       CashTurn[] // HU-032
   wishlists       Wishlist[] // HU-010
   carts           Cart[]     // HU-041
+  addresses       Address[]
 }
 
 model Client {
@@ -586,4 +587,19 @@ model CartItem {
   updatedAt DateTime       @updatedAt
 
   @@unique([cartId, variantId])
+}
+
+model Address {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alias       String   // Ej: "Casa", "Trabajo"
+  fullAddress String   @db.Text
+  district    String
+  reference   String?  @db.Text
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
