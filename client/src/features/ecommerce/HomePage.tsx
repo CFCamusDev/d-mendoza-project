@@ -1,6 +1,8 @@
 import BestSellersSection from './components/BestSellersSection';
 import OnSaleSection from './components/OnSaleSection';
 
+import { CartDrawer } from './components/CartDrawer';
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
@@ -19,6 +21,8 @@ export default function HomePage() {
         <OnSaleSection />
         
       </main>
+
+      <CartDrawer />
     </div>
   );
 }

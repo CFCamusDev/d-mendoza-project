@@ -24,10 +24,7 @@ export default function BestSellersSection() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleAddToCart = (variantId: number) => {
-    // Implement Add to Cart logic
-    console.log('Add to cart', variantId);
-  };
+
 
   if (loading) {
     return <div className="py-8 text-center text-gray-500">Cargando los más vendidos...</div>;
@@ -61,7 +58,7 @@ export default function BestSellersSection() {
         >
           {variants.map((variant) => (
             <SwiperSlide key={variant.id} className="h-auto">
-              <ProductCard variant={variant} onAddToCart={handleAddToCart} />
+              <ProductCard variant={variant} />
             </SwiperSlide>
           ))}
         </Swiper>

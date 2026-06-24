@@ -16,6 +16,7 @@ export interface ProductVariant {
   product: {
     id: number;
     name: string;
+    slug: string;
     description?: string;
     images: Array<{
       id: number;
@@ -33,4 +34,24 @@ export interface ProductVariant {
     };
   };
   salesInLast30Days?: number;
+}
+
+export interface CartItem {
+  id: number;
+  cartId: number;
+  variantId: number;
+  quantity: number;
+  createdAt: string;
+  updatedAt: string;
+  variant: ProductVariant & { finalPrice: number };
+}
+
+export interface Cart {
+  id: number;
+  userId: number | null;
+  sessionId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: CartItem[];
+  subtotal: number;
 }

@@ -155,3 +155,41 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     });
   }
 };
+
+/**
+ * Optional authentication middleware.
+ * If a valid JWT is provided, attaches req.auth context. Otherwise, continues without it.
+ */
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+    let payload;
+    try {
+      payload = jwtService.verifyAccessToken(token);
+    } catch (err) {
+      // Si el token es inválido o expiró, simplemente lo ignoramos para el modo opcional
+      return next();
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: payload.userId },
+    });
+
+    if (dbUser && dbUser.isActive) {
+      req.auth = {
+        userId: payload.userId,
+        email: payload.email,
+        role: payload.role,
+      };
+    }
+
+    next();
+  } catch (error) {
+    next();
+  }
+};

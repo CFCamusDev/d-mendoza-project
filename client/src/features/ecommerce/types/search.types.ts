@@ -46,6 +46,7 @@ export interface SearchProductItem {
   id: number;
   code: string;
   name: string;
+  slug: string;
   description: string;
   categoryId: number;
   brandId: number;

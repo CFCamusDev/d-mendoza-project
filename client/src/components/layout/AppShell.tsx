@@ -10,9 +10,12 @@ import {
   LogOut, 
   Shield, 
   Home,
-  Link as LinkIcon
+  Link as LinkIcon,
+  ShoppingCart
 } from 'lucide-react';
 import { useBrand } from '@/shared/context/BrandContext';
+import { useCart } from '@/features/ecommerce/hooks/useCart';
+import { CartDrawer } from '@/features/ecommerce/components/CartDrawer';
 
 export const AppShell: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -20,6 +23,9 @@ export const AppShell: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { cart, openCart } = useCart();
+
+  const cartItemsCount = cart?.items.reduce((acc, item) => acc + item.quantity, 0) || 0;
 
   // Helper for dynamic social icons using inline SVGs
   const getSocialIcon = (key: string) => {
@@ -103,6 +109,19 @@ export const AppShell: React.FC = () => {
 
           {/* Área del Usuario (Login/Logout/Perfil) - Desktop */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Botón del Carrito */}
+            <button
+              onClick={openCart}
+              className="relative p-2 text-brand-text hover:text-brand-accent hover:bg-brand-primary/20 rounded-full transition-colors mr-2"
+              title="Ver Carrito"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              {cartItemsCount > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-brand-accent border border-white rounded-full">
+                  {cartItemsCount}
+                </span>
+              )}
+            </button>
             {isAuthenticated && user ? (
               <div className="flex items-center gap-4">
                 <Link 
@@ -309,6 +328,9 @@ export const AppShell: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Drawer del Carrito */}
+      <CartDrawer />
     </div>
   );
 };
