@@ -18,6 +18,7 @@ const CreateBranchSchema = z.object({
     .max(100, 'El nombre no puede exceder 100 caracteres'),
   address: z.string().max(255, 'La dirección no puede exceder 255 caracteres').optional(),
   phone: z.string().max(20, 'El teléfono no puede exceder 20 caracteres').optional(),
+  isMain: z.boolean().optional(),
 });
 
 const UpdateBranchSchema = z.object({
@@ -28,6 +29,7 @@ const UpdateBranchSchema = z.object({
     .optional(),
   address: z.string().max(255, 'La dirección no puede exceder 255 caracteres').optional().nullable(),
   phone: z.string().max(20, 'El teléfono no puede exceder 20 caracteres').optional().nullable(),
+  isMain: z.boolean().optional(),
 });
 
 const ToggleStatusSchema = z.object({

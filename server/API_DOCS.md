@@ -983,6 +983,7 @@ No requiere cuerpo de petición.
       "address": "Av. Larco 123",
       "phone": "999888777",
       "isActive": true,
+      "isMain": true,
       "warehouse": {
         "id": 101,
         "createdAt": "2026-05-20T17:00:00.000Z"
@@ -1017,17 +1018,19 @@ Registra una nueva sucursal comercial en el sistema y crea atómicamente en una 
 {
   "name": "Sucursal Norte",
   "address": "Calle Las Flores 456",
-  "phone": "999888777"
+  "phone": "999888777",
+  "isMain": false
 }
 ```
 
 **Detalle de Campos:**
 
-| Parámetro | Tipo     | Requerido | Reglas de Validación                                                |
-| :-------- | :------- | :-------- | :------------------------------------------------------------------ |
-| `name`    | `string` | Sí        | Debe ser único. Mínimo 2 caracteres, máximo 100 caracteres.         |
-| `address` | `string` | No        | Dirección física de la sucursal. Máximo 255 caracteres.             |
-| `phone`   | `string` | No        | Número de teléfono de contacto. Máximo 20 caracteres.               |
+| Parámetro | Tipo      | Requerido | Reglas de Validación                                                |
+| :-------- | :-------- | :-------- | :------------------------------------------------------------------ |
+| `name`    | `string`  | Sí        | Debe ser único. Mínimo 2 caracteres, máximo 100 caracteres.         |
+| `address` | `string`  | No        | Dirección física de la sucursal. Máximo 255 caracteres.             |
+| `phone`   | `string`  | No        | Número de teléfono de contacto. Máximo 20 caracteres.               |
+| `isMain`  | `boolean` | No        | Si es `true`, marca la sucursal como principal y el resto en `false`.|
 
 #### 3. Respuestas (Responses)
 
@@ -1044,6 +1047,7 @@ Retornado cuando la sucursal y su almacén se crean de forma atómica y exitosa.
     "address": "Calle Las Flores 456",
     "phone": "999888777",
     "isActive": true,
+    "isMain": false,
     "warehouse": {
       "id": 102,
       "createdAt": "2026-05-20T17:30:00.000Z"
@@ -1086,17 +1090,19 @@ Actualiza parcialmente uno o más detalles de una sucursal existente por su ID n
 {
   "name": "Sucursal Norte Refactor",
   "address": null,
-  "phone": "987654321"
+  "phone": "987654321",
+  "isMain": true
 }
 ```
 
 **Detalle de Campos:**
 
-| Parámetro | Tipo     | Requerido | Reglas de Validación                                                  |
-| :-------- | :------- | :-------- | :-------------------------------------------------------------------- |
-| `name`    | `string` | No        | Si se provee, debe ser único. Mínimo 2 caracteres, máximo 100.        |
-| `address` | `string` | No        | Puede ser `null` para eliminar la dirección. Máximo 255 caracteres.   |
-| `phone`   | `string` | No        | Puede ser `null` para eliminar el teléfono. Máximo 20 caracteres.     |
+| Parámetro | Tipo      | Requerido | Reglas de Validación                                                  |
+| :-------- | :-------- | :-------- | :-------------------------------------------------------------------- |
+| `name`    | `string`  | No        | Si se provee, debe ser único. Mínimo 2 caracteres, máximo 100.        |
+| `address` | `string`  | No        | Puede ser `null` para eliminar la dirección. Máximo 255 caracteres.   |
+| `phone`   | `string`  | No        | Puede ser `null` para eliminar el teléfono. Máximo 20 caracteres.     |
+| `isMain`  | `boolean` | No        | Si es `true`, marca la sucursal como principal y el resto en `false`. |
 
 #### 3. Respuestas (Responses)
 
@@ -1111,6 +1117,7 @@ Actualiza parcialmente uno o más detalles de una sucursal existente por su ID n
     "address": null,
     "phone": "987654321",
     "isActive": true,
+    "isMain": true,
     "warehouse": {
       "id": 102,
       "createdAt": "2026-05-20T17:30:00.000Z"
@@ -1170,6 +1177,7 @@ Permite activar o desactivar una sucursal en el sistema, lo cual impacta su disp
     "address": null,
     "phone": "987654321",
     "isActive": false,
+    "isMain": true,
     "warehouse": {
       "id": 102,
       "createdAt": "2026-05-20T17:30:00.000Z"
@@ -3110,4 +3118,77 @@ Búsqueda predictiva y filtrado avanzado de productos para el portal público de
     "nextCursor": "1"
   }
 }
+
+---
+
+### GET /api/v1/ecommerce/products/:slug
+
+Obtiene la ficha técnica detallada de un producto activo basado en su `slug` único para el portal público de e-commerce. Retorna el producto con sus imágenes, categoría, marca, y sus variantes activas junto con el stock disponible de la sucursal principal (`isMain = true`).
+
+- **Parámetros de Ruta (Path Params):**
+  - `slug` (string, requerido): El identificador URL único generado automáticamente para el producto.
+
+- **Regla de Negocio de Stock:**
+  - El stock devuelto para cada variante corresponde únicamente al disponible en la sucursal principal (`isMain = true`). Si no hay una sucursal explícitamente marcada como principal, se usará por defecto la primera sucursal activa.
+  - Cada variante incluye un flag `outOfStock` calculado a partir del stock disponible en dicha sucursal principal.
+
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "code": "CAM",
+    "name": "Camisa Casual",
+    "slug": "camisa-casual-cam",
+    "description": "Una linda camisa",
+    "categoryId": 2,
+    "brandId": 1,
+    "gender": "UNISEX",
+    "isActive": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z",
+    "category": {
+      "id": 2,
+      "name": "Camisas"
+    },
+    "brand": {
+      "id": 1,
+      "name": "D-Mendoza"
+    },
+    "images": [
+      {
+        "id": 1,
+        "productId": 1,
+        "url": "https://example.com/camisa.jpg",
+        "isMain": true
+      }
+    ],
+    "variants": [
+      {
+        "id": 10,
+        "productId": 1,
+        "sku": "CAM-M-NEGRO",
+        "price": 49.99,
+        "attributesJson": {"talla": "M", "color": "NEGRO"},
+        "isActive": true,
+        "minStock": 5,
+        "createdAt": "2026-06-24T00:00:00.000Z",
+        "updatedAt": "2026-06-24T00:00:00.000Z",
+        "stock": 15,
+        "outOfStock": false
+      }
+    ],
+    "sizeGuideUrl": null
+  }
+}
+```
+
+- **Response Not Found (404 Not Found):**
+```json
+{
+  "success": false,
+  "error": "Producto no encontrado"
+}
+```
 ```

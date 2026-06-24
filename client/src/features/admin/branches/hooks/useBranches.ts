@@ -13,6 +13,7 @@ export interface Branch {
   address: string | null;
   phone: string | null;
   isActive: boolean;
+  isMain: boolean;
   warehouse?: Warehouse | null;
   createdAt: string;
   updatedAt: string;
@@ -40,13 +41,17 @@ export const useBranches = () => {
     }
   }, []);
 
-  const createBranch = useCallback(async (formData: { name: string; address?: string | null; phone?: string | null }) => {
+  const createBranch = useCallback(async (formData: { name: string; address?: string | null; phone?: string | null; isMain?: boolean }) => {
     setSubmitting(true);
     try {
       const { data } = await axiosInstance.post('/v1/branches', formData);
       if (data.success) {
         toast.success(`Sucursal "${data.data.name}" creada con éxito`);
-        setBranches((prev) => [...prev, data.data]);
+        if (data.data.isMain) {
+          setBranches((prev) => [...prev.map((b) => ({ ...b, isMain: false })), data.data]);
+        } else {
+          setBranches((prev) => [...prev, data.data]);
+        }
         return data.data;
       }
       return null;
@@ -67,15 +72,21 @@ export const useBranches = () => {
     }
   }, []);
 
-  const updateBranch = useCallback(async (id: number, formData: { name?: string; address?: string | null; phone?: string | null }) => {
+  const updateBranch = useCallback(async (id: number, formData: { name?: string; address?: string | null; phone?: string | null; isMain?: boolean }) => {
     setSubmitting(true);
     try {
       const { data } = await axiosInstance.put(`/v1/branches/${id}`, formData);
       if (data.success) {
         toast.success(`Sucursal "${data.data.name}" actualizada con éxito`);
-        setBranches((prev) =>
-          prev.map((branch) => (branch.id === id ? data.data : branch))
-        );
+        if (data.data.isMain) {
+          setBranches((prev) =>
+            prev.map((branch) => (branch.id === id ? data.data : { ...branch, isMain: false }))
+          );
+        } else {
+          setBranches((prev) =>
+            prev.map((branch) => (branch.id === id ? data.data : branch))
+          );
+        }
         return data.data;
       }
       return null;

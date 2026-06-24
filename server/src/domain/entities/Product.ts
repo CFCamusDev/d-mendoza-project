@@ -12,6 +12,7 @@ export interface Product {
   id: number;
   code: string;
   name: string;
+  slug: string;
   description: string | null;
   categoryId: number | null;
   brandId?: number | null;
@@ -26,6 +27,7 @@ export interface Product {
 export interface CreateProductDTO {
   code: string;
   name: string;
+  slug?: string;
   description?: string | null;
   categoryId: number;
   brandId: number;

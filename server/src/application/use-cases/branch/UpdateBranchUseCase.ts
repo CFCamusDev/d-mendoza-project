@@ -18,6 +18,10 @@ export class UpdateBranchUseCase {
       }
     }
 
+    if (dto.isMain) {
+      await this.branchRepository.unsetOtherMainBranches(id);
+    }
+
     const updated = await this.branchRepository.update(id, dto);
     return this.mapToDTO(updated);
   }
@@ -29,6 +33,7 @@ export class UpdateBranchUseCase {
       address: branch.address ?? null,
       phone: branch.phone ?? null,
       isActive: branch.isActive,
+      isMain: branch.isMain,
       warehouse: branch.warehouse ? {
         id: branch.warehouse.id,
         createdAt: branch.warehouse.createdAt,

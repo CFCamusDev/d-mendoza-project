@@ -4,12 +4,14 @@ export interface CreateBranchDTO {
   name: string;
   address?: string;
   phone?: string;
+  isMain?: boolean;
 }
 
 export interface UpdateBranchDTO {
   name?: string;
   address?: string | null;
   phone?: string | null;
+  isMain?: boolean;
 }
 
 export interface IBranchRepository {
@@ -19,4 +21,5 @@ export interface IBranchRepository {
   create(data: CreateBranchDTO): Promise<Branch>;
   update(id: number, data: UpdateBranchDTO): Promise<Branch>;
   updateStatus(id: number, isActive: boolean): Promise<Branch>;
+  unsetOtherMainBranches(excludeId?: number): Promise<void>;
 }

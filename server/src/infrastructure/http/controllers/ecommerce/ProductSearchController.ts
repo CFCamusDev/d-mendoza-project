@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { SearchProductsUseCase } from '@application/use-cases/ecommerce/SearchProductsUseCase';
+import { GetProductDetailUseCase } from '@application/use-cases/ecommerce/GetProductDetailUseCase';
 import { ProductSearchCriteria } from '@domain/criteria/ProductSearchCriteria';
 
 const searchUseCase = new SearchProductsUseCase();
+const getProductDetailUseCase = new GetProductDetailUseCase();
 
 const SearchQuerySchema = z.object({
   q: z.string().optional(),
@@ -55,6 +57,28 @@ export class ProductSearchController {
         pagination: {
           nextCursor: result.nextCursor,
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getDetail(req: Request, res: Response, next: NextFunction) {
+    try {
+      const slug = req.params.slug as string;
+      if (!slug) {
+        return res.status(400).json({ success: false, error: 'Slug de producto inválido' });
+      }
+
+      const product = await getProductDetailUseCase.execute(slug);
+
+      if (!product) {
+        return res.status(404).json({ success: false, error: 'Producto no encontrado' });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: product,
       });
     } catch (error) {
       next(error);

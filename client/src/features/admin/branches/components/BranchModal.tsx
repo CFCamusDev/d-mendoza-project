@@ -70,6 +70,7 @@ export const BranchModal: React.FC<BranchModalProps> = ({
       name: '',
       address: '',
       phone: '',
+      isMain: false,
     },
   });
 
@@ -82,12 +83,14 @@ export const BranchModal: React.FC<BranchModalProps> = ({
         name: editingBranch.name,
         address: editingBranch.address || '',
         phone: editingBranch.phone || '',
+        isMain: editingBranch.isMain || false,
       });
     } else {
       reset({
         name: '',
         address: '',
         phone: '',
+        isMain: false,
       });
     }
   }, [editingBranch, reset]);
@@ -378,6 +381,24 @@ export const BranchModal: React.FC<BranchModalProps> = ({
                 <p className="text-[10px] text-[#6B6B6B] italic leading-tight">
                   Consejo: Haz clic en el mapa de la derecha para rellenar automáticamente la dirección.
                 </p>
+              </div>
+
+              {/* Branch Principal (isMain) */}
+              <div className="flex items-start gap-3 p-3.5 bg-[#F7F7F5] rounded-xl border border-[#D9D9D2]/40 mt-2">
+                <input
+                  type="checkbox"
+                  id="isMain"
+                  {...register('isMain')}
+                  className="mt-1 w-4 h-4 text-[#3F3F3F] border-[#D9D9D2] rounded focus:ring-[#3F3F3F] cursor-pointer"
+                />
+                <div className="space-y-0.5">
+                  <label htmlFor="isMain" className="text-sm font-semibold text-[#3F3F3F] cursor-pointer">
+                    Sucursal Principal
+                  </label>
+                  <p className="text-[11px] text-[#6B6B6B] leading-normal">
+                    Identifica a esta sucursal como la fuente principal de stock para el e-commerce. Al marcarla, las demás sucursales se desmarcarán automáticamente.
+                  </p>
+                </div>
               </div>
             </div>
 
