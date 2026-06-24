@@ -36,6 +36,7 @@ import receiptRoutes from '@infrastructure/http/routes/receipt.routes';
 import addressRoutes from '@infrastructure/http/routes/address.routes';
 
 import ecommerceCartRoutes from '@infrastructure/http/routes/ecommerce-cart.routes';
+import deliveryZoneRoutes from '@infrastructure/http/routes/delivery-zone.routes';
 
 const app = express();
 
@@ -89,6 +90,7 @@ app.use('/api/v1', stockTransferRoutes);
 app.use('/api/v1', adminCrossBranchRoutes);
 app.use('/api/v1', receiptRoutes);
 app.use('/api/v1', addressRoutes);
+app.use('/api/v1', deliveryZoneRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });
