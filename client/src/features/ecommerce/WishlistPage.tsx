@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { ShoppingCart, HeartCrack } from 'lucide-react';
 import { WishlistButton } from './components/WishlistButton';
 import { useAuth } from '@/shared/context/AuthContext';
+import { useCart } from './hooks/useCart';
 
 interface WishlistItem {
   id: number;
@@ -31,6 +32,7 @@ export const WishlistPage = () => {
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { isAuthenticated } = useAuth();
+  const { addItem } = useCart();
 
   const fetchWishlist = async () => {
     try {
@@ -56,10 +58,13 @@ export const WishlistPage = () => {
     }
   }, [isAuthenticated]);
 
-  const handleAddToCart = (variantId: number) => {
-    // Aquí iría la lógica para agregar al carrito real
-    // Por ahora solo mostraremos un toast
-    toast.success(`Producto (Variante ${variantId}) agregado al carrito`);
+  const handleAddToCart = async (variantId: number, productName: string) => {
+    try {
+      await addItem(variantId, 1);
+      toast.success(`"${productName}" agregado al carrito de compras`);
+    } catch (error) {
+      toast.error('Error al agregar al carrito');
+    }
   };
 
   if (!isAuthenticated) {
@@ -142,7 +147,7 @@ export const WishlistPage = () => {
                         S/ {Number(item.variant.price).toFixed(2)}
                       </span>
                       <button
-                        onClick={() => handleAddToCart(item.variantId)}
+                        onClick={() => handleAddToCart(item.variantId, product.name)}
                         className="flex items-center justify-center p-3 bg-gray-100 hover:bg-[#3F3F3F] hover:text-white text-gray-700 rounded-xl transition-all duration-300 group/btn"
                         title="Agregar al carrito"
                       >

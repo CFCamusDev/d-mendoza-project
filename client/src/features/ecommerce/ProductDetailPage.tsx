@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
+import { useCart } from './hooks/useCart';
 
 interface ProductImage {
   id: number;
@@ -59,6 +60,7 @@ interface ProductDetail {
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { addItem } = useCart();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +146,7 @@ export const ProductDetailPage: React.FC = () => {
     toast.success(!isWishlisted ? 'Agregado a favoritos' : 'Eliminado de favoritos');
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!selectedVariant) {
       toast.error('Por favor selecciona talla y color.');
       return;
@@ -153,7 +155,13 @@ export const ProductDetailPage: React.FC = () => {
       toast.error('Esta variante no tiene stock disponible.');
       return;
     }
-    toast.success(`¡Agregado al carrito! ${product?.name} (${selectedTalla}/${selectedColor}) x${quantity}`);
+    
+    try {
+      await addItem(selectedVariant.id, quantity);
+      toast.success(`¡Agregado al carrito! ${product?.name} (${selectedTalla}/${selectedColor}) x${quantity}`);
+    } catch (error) {
+      toast.error('Error al agregar al carrito');
+    }
   };
 
   if (loading) {

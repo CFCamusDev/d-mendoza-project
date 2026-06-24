@@ -7,8 +7,10 @@ import { searchProducts } from './services/search.service';
 import type { SearchProductItem } from './types/search.types';
 import { toast } from 'react-hot-toast';
 import { ShoppingCart, ShoppingBag, Loader2, Grid3X3, ArrowUpDown } from 'lucide-react';
+import { useCart } from './hooks/useCart';
 
 export const SearchResultsPage: React.FC = () => {
+  const { addItem } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<SearchProductItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -124,8 +126,13 @@ export const SearchResultsPage: React.FC = () => {
     setSearchParams(nextParams);
   };
 
-  const handleAddToCart = (_variantId: number, productName: string) => {
-    toast.success(`"${productName}" agregado al carrito de compras`);
+  const handleAddToCart = async (variantId: number, productName: string) => {
+    try {
+      await addItem(variantId, 1);
+      toast.success(`"${productName}" agregado al carrito de compras`);
+    } catch (error) {
+      toast.error('Error al agregar al carrito');
+    }
   };
 
   const getProductPriceString = (product: SearchProductItem) => {
