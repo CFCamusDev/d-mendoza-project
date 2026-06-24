@@ -1,6 +1,9 @@
 import { useAuth } from '@/shared/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import logoHorizontal from '@/assets/logo-horizontal.png';
+import BestSellersSection from './components/BestSellersSection';
+import OnSaleSection from './components/OnSaleSection';
+import { SearchBar } from './components/SearchBar';
 
 export default function HomePage() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -12,42 +15,54 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-bg flex flex-col items-center justify-center p-4 text-center">
-      <img src={logoHorizontal} alt="Logo" className="h-16 mb-8" />
-      
-      <div className="bg-white shadow-md rounded-lg p-8 max-w-md w-full border border-brand-primary">
-        <h1 className="text-2xl font-bold text-brand-accent mb-4">
-          🎉 ¡Autenticación Exitosa!
-        </h1>
+    <div className="min-h-screen bg-white">
+      {/* Header temporal */}
+      <header className="bg-brand-bg border-b border-brand-primary p-4 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+          <img src={logoHorizontal} alt="Logo" className="h-10 cursor-pointer" onClick={() => navigate('/')} />
+          
+          <div className="flex-grow max-w-xl mx-4">
+            <SearchBar />
+          </div>
+
+          <div className="flex items-center gap-4 text-sm">
+            {isAuthenticated ? (
+              <div className="flex items-center gap-4">
+                <span className="font-medium text-brand-accent">Hola, {user?.name || user?.email?.split('@')[0]}</span>
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-500 hover:text-red-500 transition-colors"
+                >
+                  Salir
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className="bg-brand-accent text-white px-4 py-2 rounded-md hover:bg-opacity-90"
+              >
+                Ingresar
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="pb-16">
+        {/* Banner Placeholder */}
+        <section className="w-full h-64 md:h-96 bg-gray-200 flex items-center justify-center relative overflow-hidden">
+           <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=2070" className="absolute inset-0 w-full h-full object-cover opacity-60" alt="Banner" />
+           <div className="relative z-10 text-center px-4">
+             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 bg-white/80 p-4 rounded-lg inline-block">Colección 2026</h1>
+             <p className="text-xl text-gray-800 bg-white/80 px-4 py-2 rounded-lg font-medium shadow-sm">Encuentra tu estilo perfecto</p>
+           </div>
+        </section>
+
+        {/* Nuevas Secciones Automáticas */}
+        <BestSellersSection />
+        <OnSaleSection />
         
-        <p className="text-brand-text mb-6">
-          Has ingresado correctamente al sistema. Este es un placeholder del E-Commerce Home.
-        </p>
-
-        {isAuthenticated && user ? (
-          <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6 text-left text-sm space-y-2">
-            <p><strong>ID:</strong> <span className="font-mono text-xs">{user.id}</span></p>
-            <p><strong>Correo:</strong> {user.email}</p>
-            <p>
-              <strong>Rol Asignado:</strong> 
-              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                {user.role}
-              </span>
-            </p>
-          </div>
-        ) : (
-          <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-6 text-red-700">
-            No hay sesión activa detectada.
-          </div>
-        )}
-
-        <button
-          onClick={handleLogout}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-text hover:bg-brand-accent transition-colors"
-        >
-          Cerrar Sesión
-        </button>
-      </div>
+      </main>
     </div>
   );
 }

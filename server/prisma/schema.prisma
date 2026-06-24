@@ -242,6 +242,7 @@ model ProductVariant {
   product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
   sku             String           @unique // SKU único auto-generado: código_producto-talla-color
   price           Decimal          @default(0) @db.Decimal(10, 2)
+  discountPercent Int              @default(0) // HU-017
   attributesJson  Json? // JSON con los atributos de la variante
   isActive        Boolean          @default(true)
   minStock        Int              @default(5)

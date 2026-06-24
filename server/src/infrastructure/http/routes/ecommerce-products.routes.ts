@@ -1,10 +1,16 @@
 import { Router } from 'express';
 import { ProductSearchController } from '@infrastructure/http/controllers/ecommerce/ProductSearchController';
+import { ProductBestSellersController } from '@infrastructure/http/controllers/ecommerce/ProductBestSellersController';
+import { ProductOnSaleController } from '@infrastructure/http/controllers/ecommerce/ProductOnSaleController';
 
 const router = Router();
-const controller = new ProductSearchController();
+const searchController = new ProductSearchController();
+const bestSellersController = new ProductBestSellersController();
+const onSaleController = new ProductOnSaleController();
 
-// GET /api/v1/ecommerce/products/search — Búsqueda predictiva y filtros avanzados (Público de e-commerce)
-router.get('/ecommerce/products/search', controller.search.bind(controller));
+// Rutas Públicas E-commerce
+router.get('/ecommerce/products/search', searchController.search.bind(searchController));
+router.get('/ecommerce/products/best-sellers', bestSellersController.getBestSellers.bind(bestSellersController));
+router.get('/ecommerce/products/on-sale', onSaleController.getOnSale.bind(onSaleController));
 
 export default router;
