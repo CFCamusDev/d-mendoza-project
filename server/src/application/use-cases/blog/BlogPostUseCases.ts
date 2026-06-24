@@ -140,6 +140,8 @@ export class GetPublicBlogPostBySlugUseCase {
     if (!post || post.status !== 'PUBLISHED') {
       return null;
     }
+    await this.blogPostRepository.incrementViews(post.id);
+    post.views += 1;
     return post;
   }
 }

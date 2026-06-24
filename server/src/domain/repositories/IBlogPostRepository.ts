@@ -26,4 +26,5 @@ export interface IBlogPostRepository {
     }>
   ): Promise<BlogPost>;
   delete(id: number): Promise<void>;
+  incrementViews(id: number): Promise<void>;
 }

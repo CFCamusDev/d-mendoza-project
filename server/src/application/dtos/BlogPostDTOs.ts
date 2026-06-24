@@ -24,6 +24,7 @@ export interface BlogPostResponseDTO {
   status: PostStatus;
   metaTitle: string | null;
   metaDescription: string | null;
+  views: number;
   authorId: number;
   createdAt: Date;
   updatedAt: Date;

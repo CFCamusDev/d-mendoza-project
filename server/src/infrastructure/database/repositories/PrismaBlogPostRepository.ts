@@ -93,4 +93,15 @@ export class PrismaBlogPostRepository implements IBlogPostRepository {
       where: { id },
     });
   }
+
+  async incrementViews(id: number): Promise<void> {
+    await prisma.blogPost.update({
+      where: { id },
+      data: {
+        views: {
+          increment: 1,
+        },
+      },
+    });
+  }
 }
