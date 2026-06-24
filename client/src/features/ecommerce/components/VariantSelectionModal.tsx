@@ -75,8 +75,8 @@ export const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
     if (product && editCartItemId && cart) {
       const itemToEdit = cart.items.find(i => i.id === editCartItemId);
       if (itemToEdit) {
-        setSelectedTalla(itemToEdit.variant.attributesJson.talla || '');
-        setSelectedColor(itemToEdit.variant.attributesJson.color || '');
+        setSelectedTalla(itemToEdit.variant.attributesJson?.talla || '');
+        setSelectedColor(itemToEdit.variant.attributesJson?.color || '');
         setQuantity(itemToEdit.quantity);
       }
     }
@@ -89,8 +89,8 @@ export const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
 
     product.variants.forEach(variant => {
       if (variant.isActive) {
-        if (variant.attributesJson.talla) tallasSet.add(variant.attributesJson.talla);
-        if (variant.attributesJson.color) coloresSet.add(variant.attributesJson.color);
+        if (variant.attributesJson?.talla) tallasSet.add(variant.attributesJson.talla);
+        if (variant.attributesJson?.color) coloresSet.add(variant.attributesJson.color);
       }
     });
 
@@ -104,8 +104,8 @@ export const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
     if (!product || !selectedTalla || !selectedColor) return null;
     return product.variants.find(variant => 
       variant.isActive &&
-      variant.attributesJson.talla?.toUpperCase() === selectedTalla.toUpperCase() &&
-      variant.attributesJson.color?.toUpperCase() === selectedColor.toUpperCase()
+      variant.attributesJson?.talla?.toUpperCase() === selectedTalla.toUpperCase() &&
+      variant.attributesJson?.color?.toUpperCase() === selectedColor.toUpperCase()
     ) || null;
   }, [product, selectedTalla, selectedColor]);
 
@@ -156,7 +156,7 @@ export const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-accent"></div>
           </div>
         ) : product ? (
-          <>
+          <div className="flex flex-col h-full overflow-hidden w-full">
             <div className="p-4 border-b flex items-start justify-between shrink-0">
               <div className="flex gap-4 items-center">
                 <img src={mainImage} alt={product.name} className="w-16 h-16 object-contain rounded-md bg-gray-50 border shrink-0" />
@@ -263,14 +263,14 @@ export const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                 {isSubmitting ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                 ) : (
-                  <>
+                  <span className="flex items-center justify-center gap-2">
                     <ShoppingCart size={20} />
                     {editCartItemId ? 'Actualizar Carrito' : 'Agregar al Carrito'}
-                  </>
+                  </span>
                 )}
               </button>
             </div>
-          </>
+          </div>
         ) : (
           <div className="p-8 text-center text-red-500">Error al cargar el producto.</div>
         )}

@@ -37,7 +37,7 @@ const api = axios.create({
 
 // Interceptor para inyectar token y sessionId
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
+  const token = localStorage.getItem('auth_access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -122,7 +122,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const mergeCart = async () => {
     // Si no hay token, no fusionamos
-    if (!localStorage.getItem('access_token')) return;
+    if (!localStorage.getItem('auth_access_token')) return;
     
     try {
       setIsLoading(true);
