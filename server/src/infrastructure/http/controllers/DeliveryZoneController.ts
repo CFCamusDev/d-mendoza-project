@@ -28,7 +28,7 @@ export class DeliveryZoneController {
 
   static async getByDistrict(req: Request, res: Response) {
     try {
-      const { district } = req.params;
+      const district = req.params.district as string;
       const zone = await getDeliveryZoneByDistrictUseCase.execute(district);
       if (!zone) {
         return res.status(404).json({ error: 'Zona no encontrada para este distrito' });
@@ -56,7 +56,7 @@ export class DeliveryZoneController {
 
   static async update(req: Request, res: Response) {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       const { name, districts, deliveryCost, estimatedDays } = req.body;
       const updatedZone = await updateDeliveryZoneUseCase.execute(id, {
         name,
@@ -72,7 +72,7 @@ export class DeliveryZoneController {
 
   static async delete(req: Request, res: Response) {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       await deleteDeliveryZoneUseCase.execute(id);
       res.status(204).send();
     } catch (error: any) {
