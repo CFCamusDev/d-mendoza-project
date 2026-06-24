@@ -4,7 +4,6 @@ import { toast } from 'react-hot-toast';
 import { ShoppingCart, HeartCrack } from 'lucide-react';
 import { WishlistButton } from './components/WishlistButton';
 import { useAuth } from '@/shared/context/AuthContext';
-import { useCart } from './hooks/useCart';
 import { VariantSelectionModal } from './components/VariantSelectionModal';
 
 interface WishlistItem {
@@ -36,7 +35,6 @@ export const WishlistPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProductSlug, setSelectedProductSlug] = useState<string>('');
   const { isAuthenticated } = useAuth();
-  const { addItem } = useCart();
 
   const fetchWishlist = async () => {
     try {
@@ -62,14 +60,6 @@ export const WishlistPage = () => {
     }
   }, [isAuthenticated]);
 
-  const handleAddToCart = async (variantId: number, productName: string) => {
-    try {
-      await addItem(variantId, 1);
-      toast.success(`"${productName}" agregado al carrito de compras`);
-    } catch (error) {
-      toast.error('Error al agregar al carrito');
-    }
-  };
 
   if (!isAuthenticated) {
     return (

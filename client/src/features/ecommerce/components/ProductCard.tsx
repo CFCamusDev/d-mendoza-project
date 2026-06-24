@@ -13,10 +13,9 @@ interface ProductCardProps {
     };
     discountPercent: number; // Added to interface since it's new
   };
-  onAddToCart?: (variantId: number) => void; // Keep for backwards compatibility if needed
 }
 
-export default function ProductCard({ variant, onAddToCart }: ProductCardProps) {
+export default function ProductCard({ variant }: ProductCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const mainImage = variant.product.images?.find(img => img.isMain)?.url || variant.product.images?.[0]?.url || 'https://via.placeholder.com/300';
   

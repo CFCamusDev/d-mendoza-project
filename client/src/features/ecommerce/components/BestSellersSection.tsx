@@ -8,12 +8,9 @@ import 'swiper/css/pagination';
 import ProductCard from './ProductCard';
 import type { ProductVariant } from '../types';
 
-import { useCart } from '../hooks/useCart';
-
 export default function BestSellersSection() {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [loading, setLoading] = useState(true);
-  const { addItem } = useCart();
 
   useEffect(() => {
     fetch('/api/v1/ecommerce/products/best-sellers?limit=10')
@@ -27,9 +24,7 @@ export default function BestSellersSection() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleAddToCart = (variantId: number) => {
-    addItem(variantId, 1);
-  };
+
 
   if (loading) {
     return <div className="py-8 text-center text-gray-500">Cargando los más vendidos...</div>;
@@ -63,7 +58,7 @@ export default function BestSellersSection() {
         >
           {variants.map((variant) => (
             <SwiperSlide key={variant.id} className="h-auto">
-              <ProductCard variant={variant} onAddToCart={handleAddToCart} />
+              <ProductCard variant={variant} />
             </SwiperSlide>
           ))}
         </Swiper>
