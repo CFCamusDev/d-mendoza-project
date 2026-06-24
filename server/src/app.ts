@@ -34,6 +34,8 @@ import stockTransferRoutes from '@infrastructure/http/routes/stock-transfer.rout
 import adminCrossBranchRoutes from '@infrastructure/http/routes/admin-cross-branch.routes';
 import receiptRoutes from '@infrastructure/http/routes/receipt.routes';
 
+import ecommerceCartRoutes from '@infrastructure/http/routes/ecommerce-cart.routes';
+
 const app = express();
 
 // Initialize Passport with Google OAuth strategy (HU-001 / T-032)
@@ -80,6 +82,7 @@ app.use('/api/v1', cashRegisterRoutes);
 app.use('/api/v1', posProductRoutes);
 app.use('/api/v1', posClientRoutes);
 app.use('/api/v1/wishlist', wishlistRoutes); // HU-010 — Wishlist
+app.use('/api/v1/cart', ecommerceCartRoutes); // HU-041 — Carrito de Compras
 app.use('/api/v1', posStockRoutes);
 app.use('/api/v1', stockTransferRoutes);
 app.use('/api/v1', adminCrossBranchRoutes);
