@@ -5,14 +5,21 @@ import BestSellersSection from './components/BestSellersSection';
 import OnSaleSection from './components/OnSaleSection';
 import { SearchBar } from './components/SearchBar';
 
+import { useCart } from './hooks/useCart';
+import { ShoppingCart } from 'lucide-react';
+import { CartDrawer } from './components/CartDrawer';
+
 export default function HomePage() {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { cart, openCart } = useCart();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  const cartItemsCount = cart?.items.reduce((acc, item) => acc + item.quantity, 0) || 0;
 
   return (
     <div className="min-h-screen bg-white">
@@ -26,9 +33,20 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-4 text-sm">
+            <button
+              onClick={openCart}
+              className="relative p-2 text-brand-accent hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <ShoppingCart className="w-6 h-6" />
+              {cartItemsCount > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 border-2 border-white rounded-full">
+                  {cartItemsCount}
+                </span>
+              )}
+            </button>
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
-                <span className="font-medium text-brand-accent">Hola, {user?.name || user?.email?.split('@')[0]}</span>
+                <span className="font-medium text-brand-accent hidden sm:inline">Hola, {user?.name || user?.email?.split('@')[0]}</span>
                 <button
                   onClick={handleLogout}
                   className="text-gray-500 hover:text-red-500 transition-colors"
@@ -63,6 +81,8 @@ export default function HomePage() {
         <OnSaleSection />
         
       </main>
+
+      <CartDrawer />
     </div>
   );
 }

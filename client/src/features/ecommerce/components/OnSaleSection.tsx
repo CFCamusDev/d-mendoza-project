@@ -8,9 +8,12 @@ import 'swiper/css/pagination';
 import ProductCard from './ProductCard';
 import type { ProductVariant } from '../types';
 
+import { useCart } from '../hooks/useCart';
+
 export default function OnSaleSection() {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [loading, setLoading] = useState(true);
+  const { addItem } = useCart();
 
   useEffect(() => {
     fetch('/api/v1/ecommerce/products/on-sale')
@@ -25,8 +28,7 @@ export default function OnSaleSection() {
   }, []);
 
   const handleAddToCart = (variantId: number) => {
-    // Implement Add to Cart logic
-    console.log('Add to cart', variantId);
+    addItem(variantId, 1);
   };
 
   if (loading) {
