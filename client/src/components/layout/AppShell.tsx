@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/context/AuthContext';
+import { SearchBar } from '@/features/ecommerce/components/SearchBar';
 
 import { 
   Menu, 
@@ -63,6 +64,11 @@ export const AppShell: React.FC = () => {
               <span className="text-xl font-bold tracking-tight text-brand-accent">{brandConfig?.brandName || "D'Mendoza"}</span>
             )}
           </Link>
+          
+          {/* Barra de Búsqueda Predictiva (Desktop) */}
+          <div className="hidden md:block flex-grow max-w-xs lg:max-w-md mx-4 lg:mx-8">
+            <SearchBar />
+          </div>
 
           {/* Menú de Navegación - Pantallas Medianas (Tablet) y Grandes (Desktop) */}
           <nav className="hidden md:flex items-center gap-6">
@@ -154,6 +160,11 @@ export const AppShell: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-6">
+              {/* Barra de Búsqueda (Móvil) */}
+              <div className="pb-4 border-b border-brand-primary/60">
+                <SearchBar />
+              </div>
+
               {/* Enlaces Públicos */}
               <div className="space-y-2">
                 <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Navegación</p>
