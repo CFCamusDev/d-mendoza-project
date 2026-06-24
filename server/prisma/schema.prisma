@@ -625,3 +625,15 @@ model BlogPost {
 
   @@index([authorId])
 }
+
+// ─── HU-054: Configuración de Zonas de Delivery ───────────────────────────────
+
+model DeliveryZone {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  districts     Json     // Almacenado como JSON en MySQL para guardar arreglo de strings
+  deliveryCost  Decimal  @db.Decimal(10, 2)
+  estimatedDays Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
