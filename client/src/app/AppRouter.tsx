@@ -16,6 +16,7 @@ import BranchesPage from '../features/admin/branches/BranchesPage';
 import BrandingPage from '../features/admin/BrandingPage';
 import ClientLinkPage from '../features/admin/ClientLinkPage';
 import BannersPage from '../features/admin/BannersPage';
+import DeliveryZonesPage from '../features/admin/delivery-zones/DeliveryZonesPage';
 import ProductsAdminPage from '../features/admin/ProductsAdminPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
@@ -138,6 +139,14 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <BrandingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/delivery-zones"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <DeliveryZonesPage />
             </ProtectedRoute>
           }
         />
