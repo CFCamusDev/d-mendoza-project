@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import type { Cart } from '../types';
