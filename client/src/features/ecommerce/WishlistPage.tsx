@@ -5,6 +5,7 @@ import { ShoppingCart, HeartCrack } from 'lucide-react';
 import { WishlistButton } from './components/WishlistButton';
 import { useAuth } from '@/shared/context/AuthContext';
 import { useCart } from './hooks/useCart';
+import { VariantSelectionModal } from './components/VariantSelectionModal';
 
 interface WishlistItem {
   id: number;
@@ -18,6 +19,7 @@ interface WishlistItem {
     product: {
       id: number;
       name: string;
+      slug: string;
       description: string;
       images: Array<{
         id: number;
@@ -31,6 +33,8 @@ interface WishlistItem {
 export const WishlistPage = () => {
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProductSlug, setSelectedProductSlug] = useState<string>('');
   const { isAuthenticated } = useAuth();
   const { addItem } = useCart();
 
@@ -147,7 +151,10 @@ export const WishlistPage = () => {
                         S/ {Number(item.variant.price).toFixed(2)}
                       </span>
                       <button
-                        onClick={() => handleAddToCart(item.variantId, product.name)}
+                        onClick={() => {
+                          setSelectedProductSlug(product.slug);
+                          setIsModalOpen(true);
+                        }}
                         className="flex items-center justify-center p-3 bg-gray-100 hover:bg-[#3F3F3F] hover:text-white text-gray-700 rounded-xl transition-all duration-300 group/btn"
                         title="Agregar al carrito"
                       >
@@ -161,6 +168,13 @@ export const WishlistPage = () => {
           </div>
         )}
       </div>
+      {isModalOpen && (
+        <VariantSelectionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          productSlug={selectedProductSlug}
+        />
+      )}
     </div>
   );
 };

@@ -8,6 +8,7 @@ import type { SearchProductItem } from './types/search.types';
 import { toast } from 'react-hot-toast';
 import { ShoppingCart, ShoppingBag, Loader2, Grid3X3, ArrowUpDown } from 'lucide-react';
 import { useCart } from './hooks/useCart';
+import { VariantSelectionModal } from './components/VariantSelectionModal';
 
 export const SearchResultsPage: React.FC = () => {
   const { addItem } = useCart();
@@ -17,6 +18,9 @@ export const SearchResultsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPaginationLoading, setIsPaginationLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProductSlug, setSelectedProductSlug] = useState<string>('');
 
   // Extract query parameters from URL
   const q = searchParams.get('q') || '';
@@ -291,7 +295,10 @@ export const SearchResultsPage: React.FC = () => {
                             </span>
                             {firstVariant && !isOutOfStock && (
                               <button
-                                onClick={() => handleAddToCart(firstVariant.id, product.name)}
+                                onClick={() => {
+                                  setSelectedProductSlug(product.slug);
+                                  setIsModalOpen(true);
+                                }}
                                 className="flex items-center justify-center p-2.5 bg-slate-50 border border-slate-200 hover:bg-brand-accent hover:border-brand-accent hover:text-white text-slate-600 rounded-xl transition-all duration-200 group/btn shadow-sm"
                                 title="Agregar al carrito"
                               >
@@ -329,6 +336,13 @@ export const SearchResultsPage: React.FC = () => {
           </div>
         </div>
       </div>
+      {isModalOpen && (
+        <VariantSelectionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          productSlug={selectedProductSlug}
+        />
+      )}
     </div>
   );
 };

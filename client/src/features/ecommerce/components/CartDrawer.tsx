@@ -1,9 +1,14 @@
 import React from 'react';
-import { X, Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
+import { X, Minus, Plus, Trash2, ShoppingCart, Pencil } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
+import { VariantSelectionModal } from './VariantSelectionModal';
 
 export const CartDrawer = () => {
   const { cart, isOpen, closeCart, updateItem, removeItem, isLoading } = useCart();
+  const navigate = useNavigate();
+  const [editingCartItemId, setEditingCartItemId] = React.useState<number | null>(null);
+  const [editingProductSlug, setEditingProductSlug] = React.useState<string>('');
 
   if (!isOpen) return null;
 
@@ -69,12 +74,24 @@ export const CartDrawer = () => {
                       </h3>
                       <p className="text-sm text-gray-500">SKU: {item.variant.sku}</p>
                     </div>
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingCartItemId(item.id);
+                          setEditingProductSlug(item.variant.product.slug);
+                        }}
+                        className="text-gray-400 hover:text-brand-accent transition-colors"
+                        title="Modificar talla/color"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="text-red-400 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex justify-between items-end mt-2">
@@ -119,12 +136,28 @@ export const CartDrawer = () => {
               <span>Subtotal</span>
               <span>S/ {cart.subtotal.toFixed(2)}</span>
             </div>
-            <button className="w-full bg-brand-accent text-white py-3 rounded-lg font-semibold hover:bg-black transition-colors">
+            <button 
+              onClick={() => {
+                closeCart();
+                navigate('/checkout');
+              }}
+              className="w-full bg-brand-accent text-white py-3 rounded-lg font-semibold hover:bg-black transition-colors"
+            >
               Proceder al Checkout
             </button>
           </div>
         )}
       </div>
+
+      <VariantSelectionModal 
+        isOpen={!!editingCartItemId}
+        onClose={() => {
+          setEditingCartItemId(null);
+          setEditingProductSlug('');
+        }}
+        productSlug={editingProductSlug}
+        editCartItemId={editingCartItemId || undefined}
+      />
     </div>
   );
 };

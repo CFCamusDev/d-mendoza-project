@@ -49,6 +49,7 @@ export class SearchProductsUseCase {
         id: product.id,
         code: product.code,
         name: product.name,
+        slug: product.slug,
         description: product.description,
         categoryId: product.categoryId,
         brandId: product.brandId,
