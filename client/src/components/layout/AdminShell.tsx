@@ -17,6 +17,7 @@ import {
   Bell,
   Boxes,
   ClipboardCheck,
+  MapPin,
   ChevronDown,
   ChevronUp,
   Archive,
@@ -196,6 +197,17 @@ export const AdminShell: React.FC = () => {
                 >
                   <ImageIcon className="w-4 h-4 shrink-0" />
                   {!isCollapsed && <span>Banners</span>}
+                </Link>
+
+                <Link
+                  to="/admin/delivery-zones"
+                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                    isActiveRoute('/admin/delivery-zones') ? activeClass : inactiveClass
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title="Zonas de Envío"
+                >
+                  <MapPin className="w-4 h-4 shrink-0" />
+                  {!isCollapsed && <span>Zonas de Envío</span>}
                 </Link>
 
                 <Link
