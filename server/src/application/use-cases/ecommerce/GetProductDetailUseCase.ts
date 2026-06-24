@@ -97,7 +97,7 @@ export class GetProductDetailUseCase {
       brand: product.brand,
       images: product.images,
       variants: mappedVariants,
-      sizeGuideUrl: null,
+      sizeGuideUrl: product.category?.sizeGuideUrl || null,
     };
   }
 }
