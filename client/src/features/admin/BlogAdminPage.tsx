@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
-import { Loader2, Plus, Pencil, Trash2, FileText, Calendar, User, Search, BookOpen } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, FileText, Calendar, User, Search, BookOpen, Eye } from 'lucide-react';
 import type { BlogPost } from '@/shared/types/blog';
 
 export const BlogAdminPage: React.FC = () => {
@@ -22,41 +22,21 @@ export const BlogAdminPage: React.FC = () => {
       const { data } = await axiosInstance.get('/v1/admin/blog');
       setPosts(data.data || []);
     } catch (error) {
-      // Fallback a posts mock para pruebas locales si la BD está limpia
-      const mockPosts: BlogPost[] = [
-        {
-          id: 1,
-          title: 'Últimas Tendencias de Moda Invierno 2026',
-          slug: 'ultimas-tendencias-moda-invierno-2026',
-          content: '<p>Este invierno la moda viene marcada por abrigos oversize y tonos neutros...</p>',
-          status: 'PUBLISHED',
-          metaTitle: 'Moda Invierno 2026 | Tendencias',
-          metaDescription: 'Descubre los colores y prendas indispensables para este invierno 2026.',
-          authorId: 1,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          author: { name: 'Cristofer Camus' },
-        },
-        {
-          id: 2,
-          title: 'Guía de Cuero: Cómo Cuidar tus Casacas',
-          slug: 'guia-de-cuero-como-cuidar-tus-casacas',
-          content: '<p>Las casacas de cuero son prendas para toda la vida si se cuidan adecuadamente...</p>',
-          status: 'DRAFT',
-          metaTitle: 'Guía de cuidado del cuero',
-          metaDescription: 'Aprende a hidratar, limpiar y guardar tus chaquetas y casacas de cuero.',
-          authorId: 1,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          author: { name: 'Brayni Chavez' },
-        },
-      ];
-      setPosts(mockPosts);
-      toast('Mostrando artículos de demostración local.', {
-        icon: 'ℹ️',
-      });
+      toast.error('No se pudieron cargar los artículos del blog');
+      setPosts([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async (id: number, currentStatus: 'DRAFT' | 'PUBLISHED') => {
+    const newStatus = currentStatus === 'DRAFT' ? 'PUBLISHED' : 'DRAFT';
+    try {
+      await axiosInstance.patch(`/v1/admin/blog/${id}`, { status: newStatus });
+      toast.success(newStatus === 'PUBLISHED' ? 'Artículo publicado' : 'Artículo cambiado a borrador');
+      setPosts((prev) => prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p)));
+    } catch (error) {
+      toast.error('No se pudo actualizar el estado del artículo');
     }
   };
 
@@ -140,6 +120,7 @@ export const BlogAdminPage: React.FC = () => {
                   <th className="px-6 py-4">Artículo</th>
                   <th className="px-6 py-4">Autor</th>
                   <th className="px-6 py-4">Fecha</th>
+                  <th className="px-6 py-4">Vistas</th>
                   <th className="px-6 py-4">Estado</th>
                   <th className="px-6 py-4 text-right">Acciones</th>
                 </tr>
@@ -166,15 +147,23 @@ export const BlogAdminPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold tracking-wide uppercase ${
+                      <div className="flex items-center gap-1 text-xs font-semibold text-gray-700 bg-gray-50 px-2 py-1 rounded-md w-fit border border-gray-100">
+                        <Eye className="w-3.5 h-3.5 text-gray-400" />
+                        <span>{post.views || 0}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => handleToggleStatus(post.id, post.status)}
+                        title="Haga clic para cambiar el estado"
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold tracking-wide uppercase cursor-pointer hover:scale-105 active:scale-95 transition-all select-none border ${
                           post.status === 'PUBLISHED'
-                            ? 'bg-green-50 text-green-700 border border-green-200'
-                            : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                            ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100/50'
+                            : 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100/50'
                         }`}
                       >
                         {post.status === 'PUBLISHED' ? 'Publicado' : 'Borrador'}
-                      </span>
+                      </button>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">

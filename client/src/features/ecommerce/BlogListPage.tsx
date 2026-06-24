@@ -18,26 +18,8 @@ export const BlogListPage: React.FC = () => {
           setPosts(data.data || []);
         }
       } catch (error) {
-        // Fallback demo local si la API falla
-        const mockPosts: BlogPost[] = [
-          {
-            id: 1,
-            title: 'Últimas Tendencias de Moda Invierno 2026',
-            slug: 'ultimas-tendencias-moda-invierno-2026',
-            content: '<p>Este invierno la moda viene marcada por abrigos oversize y tonos neutros...</p>',
-            status: 'PUBLISHED',
-            metaTitle: 'Moda Invierno 2026 | Tendencias',
-            metaDescription: 'Descubre los colores y prendas indispensables para este invierno 2026.',
-            authorId: 1,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            author: { name: 'Cristofer Camus' },
-          }
-        ];
-        setPosts(mockPosts);
-        toast('Mostrando artículos de demostración local.', {
-          icon: 'ℹ️',
-        });
+        toast.error('No se pudieron cargar los artículos del blog');
+        setPosts([]);
       } finally {
         setLoading(false);
       }
