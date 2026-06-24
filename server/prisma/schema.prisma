@@ -36,6 +36,7 @@ model User {
   wishlists       Wishlist[] // HU-010
   carts           Cart[]     // HU-041
   addresses       Address[]
+  blogPosts       BlogPost[]
 }
 
 model Client {
@@ -602,6 +603,27 @@ model Address {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model BlogPost {
+  id              Int        @id @default(autoincrement())
+  title           String
+  slug            String     @unique
+  content         String     @db.Text
+  status          PostStatus @default(DRAFT)
+  metaTitle       String?
+  metaDescription String?
+  authorId        Int
+  author          User       @relation(fields: [authorId], references: [id])
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([authorId])
 }
 
 // ─── HU-054: Configuración de Zonas de Delivery ───────────────────────────────

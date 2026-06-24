@@ -264,6 +264,17 @@ export const AdminShell: React.FC = () => {
                   <UserPlus className="w-4 h-4 shrink-0" />
                   {!isCollapsed && <span>Vincular Clientes</span>}
                 </Link>
+
+                <Link
+                  to="/admin/blog"
+                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                    isActiveRoute('/admin/blog') ? activeClass : inactiveClass
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title="Gestión del Blog"
+                >
+                  <FileText className="w-4 h-4 shrink-0" />
+                  {!isCollapsed && <span>Gestión del Blog</span>}
+                </Link>
               </div>
             )}
           </div>
