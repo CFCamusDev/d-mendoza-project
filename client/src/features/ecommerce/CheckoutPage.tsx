@@ -4,12 +4,14 @@ import { useCart } from './hooks/useCart';
 import { ShoppingCart, MapPin, CreditCard, CheckCircle, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { CouponInput } from './components/CouponInput';
 
 export const CheckoutPage = () => {
   useDocumentTitle('Checkout - Envío y Pago');
   const { cart, isLoading } = useCart();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -183,8 +185,8 @@ export const CheckoutPage = () => {
                       <div>
                         <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">{item.variant.product.name}</h3>
                         <p className="text-xs text-gray-500 mt-0.5">
-                          {item.variant.attributesJson.talla && `Talla: ${item.variant.attributesJson.talla}`}
-                          {item.variant.attributesJson.color && ` • Color: ${item.variant.attributesJson.color}`}
+                          {item.variant.attributesJson?.talla && `Talla: ${item.variant.attributesJson.talla}`}
+                          {item.variant.attributesJson?.color && ` • Color: ${item.variant.attributesJson.color}`}
                         </p>
                       </div>
                       <div className="text-right pl-4">
@@ -204,12 +206,27 @@ export const CheckoutPage = () => {
                   <span>Envío estimado</span>
                   <span className="font-medium text-gray-900">Por calcular</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Descuento (Cupón)</span>
+                    <span className="font-medium">-S/ {discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="border-t pt-4 mb-8">
+              <CouponInput 
+                subtotal={cart.subtotal} 
+                onCouponApplied={(amount) => {
+                  setDiscountAmount(amount);
+                }} 
+              />
+
+              <div className="border-t pt-4 mb-8 mt-4">
                 <div className="flex justify-between items-center text-lg">
                   <span className="font-bold text-gray-900">Total</span>
-                  <span className="font-black text-brand-accent text-xl">S/ {cart.subtotal.toFixed(2)}</span>
+                  <span className="font-black text-brand-accent text-xl">
+                    S/ {Math.max(0, cart.subtotal - discountAmount).toFixed(2)}
+                  </span>
                 </div>
               </div>
 
