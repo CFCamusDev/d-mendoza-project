@@ -58,6 +58,7 @@ const dummyBlogPost = {
   status: 'DRAFT',
   metaTitle: 'SEO Title',
   metaDescription: 'SEO Desc',
+  views: 0,
   authorId: 1,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -206,6 +207,63 @@ describe('Tests de Integración — HU-018: Creación y Publicación de Artícul
       expect(prisma.blogPost.delete).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: 1 } })
       );
+    });
+  });
+
+  describe('GET /api/v1/blog', () => {
+    it('debe retornar únicamente los artículos publicados', async () => {
+      const dummyPublished = { ...dummyBlogPost, status: 'PUBLISHED', views: 5 };
+      (prisma.blogPost.findMany as any).mockResolvedValue([dummyPublished, { ...dummyBlogPost, id: 3, status: 'DRAFT' }]);
+
+      const res = await request(app)
+        .get('/api/v1/blog')
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].id).toBe(1);
+      expect(res.body.data[0].status).toBe('PUBLISHED');
+    });
+  });
+
+  describe('GET /api/v1/blog/:slug', () => {
+    it('debe retornar el artículo, incrementar vistas de forma atómica y devolver el contador sumado', async () => {
+      const dummyPublished = { ...dummyBlogPost, status: 'PUBLISHED', views: 5 };
+      (prisma.blogPost.findUnique as any).mockResolvedValue(dummyPublished);
+      (prisma.blogPost.update as any).mockResolvedValue(dummyPublished);
+
+      const res = await request(app)
+        .get('/api/v1/blog/mi-primer-post')
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.id).toBe(1);
+      expect(res.body.data.views).toBe(6); // views 5 + 1 locally incremented
+
+      expect(prisma.blogPost.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: {
+            views: {
+              increment: 1
+            }
+          }
+        })
+      );
+    });
+
+    it('debe retornar 404 si el artículo no existe o es un borrador', async () => {
+      (prisma.blogPost.findUnique as any).mockResolvedValue(null);
+
+      await request(app)
+        .get('/api/v1/blog/non-existent')
+        .expect(404);
+
+      (prisma.blogPost.findUnique as any).mockResolvedValue({ ...dummyBlogPost, status: 'DRAFT' });
+
+      await request(app)
+        .get('/api/v1/blog/draft-post')
+        .expect(404);
     });
   });
 });

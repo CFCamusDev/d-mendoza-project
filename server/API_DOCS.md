@@ -3487,7 +3487,7 @@ Obtiene la lista de todos los artículos de blog publicados (activos).
 
 ### GET /api/v1/blog/:slug
 
-Obtiene un artículo de blog publicado a partir de su slug único.
+Obtiene un artículo de blog publicado a partir de su slug único. Cada consulta exitosa incrementa el contador de vistas (`views`) del artículo en 1 de forma atómica.
 
 #### 1. Especificación del Endpoint
 
@@ -3510,6 +3510,7 @@ Obtiene un artículo de blog publicado a partir de su slug único.
     "status": "PUBLISHED",
     "metaTitle": "SEO Title",
     "metaDescription": "SEO Desc",
+    "views": 1,
     "authorId": 1,
     "createdAt": "2026-06-24T14:00:00.000Z",
     "updatedAt": "2026-06-24T14:10:00.000Z",

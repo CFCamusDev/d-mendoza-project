@@ -8,6 +8,7 @@ export interface BlogPost {
   status: PostStatus;
   metaTitle: string | null;
   metaDescription: string | null;
+  views?: number;
   authorId: number;
   createdAt: string;
   updatedAt: string;

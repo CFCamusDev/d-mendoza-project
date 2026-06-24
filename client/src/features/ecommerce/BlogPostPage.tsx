@@ -25,37 +25,8 @@ export const BlogPostPage: React.FC = () => {
           navigate('/blog');
         }
       } catch (error) {
-        // Fallback demo local para testing
-        if (slug === 'ultimas-tendencias-moda-invierno-2026') {
-          const mockPost: BlogPost = {
-            id: 1,
-            title: 'Últimas Tendencias de Moda Invierno 2026',
-            slug: 'ultimas-tendencias-moda-invierno-2026',
-            content: `
-              <p>Este invierno la moda viene marcada por abrigos oversize y tonos neutros. En D'Mendoza hemos seleccionado los mejores tejidos para mantenerte abrigado sin perder estilo.</p>
-              <h2>1. Colores de la Temporada</h2>
-              <p>El gris oxford, verde oliva y marrón terracota lideran las tendencias. Son combinables y aportan una elegancia atemporal tanto para looks formales como informales.</p>
-              <h2>2. Prendas Clave</h2>
-              <ul>
-                <li>Casacas de cuero con forro abrigador.</li>
-                <li>Pantalones chinos de gabardina gruesa.</li>
-                <li>Sacos estructurados de lana.</li>
-              </ul>
-              <p>Esperamos que esta guía rápida te ayude a armar tus outfits invernales. Recuerda visitar nuestra sección de stock para encontrar tus tallas perfectas.</p>
-            `,
-            status: 'PUBLISHED',
-            metaTitle: 'Moda Invierno 2026 | Tendencias Oficiales D\'Mendoza',
-            metaDescription: 'Descubre los colores y prendas indispensables para este invierno 2026 de la mano de nuestros diseñadores.',
-            authorId: 1,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            author: { name: 'Cristofer Camus' },
-          };
-          setPost(mockPost);
-        } else {
-          toast.error('Artículo no encontrado');
-          navigate('/blog');
-        }
+        toast.error('Artículo no encontrado');
+        navigate('/blog');
       } finally {
         setLoading(false);
       }
