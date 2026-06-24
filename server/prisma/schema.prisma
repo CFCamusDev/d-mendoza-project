@@ -37,6 +37,7 @@ model User {
   carts           Cart[]     // HU-041
   addresses       Address[]
   blogPosts       BlogPost[]
+  coupons         Coupon[]
 }
 
 model Client {
@@ -637,4 +638,24 @@ model DeliveryZone {
   estimatedDays Int
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model Coupon {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
+  type        CouponType
+  value       Decimal   @db.Decimal(10, 2)
+  expiresAt   DateTime?
+  maxUses     Int?
+  usedCount   Int       @default(0)
+  userId      Int?
+  user        User?     @relation(fields: [userId], references: [id])
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
