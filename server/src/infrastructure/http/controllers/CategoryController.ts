@@ -7,6 +7,7 @@ const repo = new PrismaCategoryRepository();
 const CreateSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio'),
   parentId: z.number().int().positive().nullable().optional(),
+  sizeGuideUrl: z.string().nullable().optional(),
 });
 
 const UpdateSchema = CreateSchema.partial();

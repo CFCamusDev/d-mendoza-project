@@ -21,7 +21,11 @@ export class PrismaCategoryRepository {
 
   async create(data: CreateCategoryDTO): Promise<Category> {
     const record = await prisma.category.create({
-      data: { name: data.name, parentId: data.parentId ?? null },
+      data: {
+        name: data.name,
+        parentId: data.parentId ?? null,
+        sizeGuideUrl: data.sizeGuideUrl ?? null,
+      },
     });
     return record as Category;
   }
