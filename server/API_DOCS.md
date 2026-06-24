@@ -3020,3 +3020,94 @@ Elimina una variante de producto específica de la lista de favoritos.
   "message": "Eliminado de favoritos"
 }
 ```
+
+## E-commerce Public API
+
+### GET /api/v1/ecommerce/products/search
+
+Búsqueda predictiva y filtrado avanzado de productos para el portal público de e-commerce. Retorna productos activos paginados basados en un cursor.
+
+- **Parámetros de consulta (Query Params):**
+  - `q` (string, opcional): Término de búsqueda. Busca coincidencia parcial en nombre de producto, descripción, código base, nombre de categoría, nombre de marca, o SKU de variantes.
+  - `categoryId` (number, opcional): ID de la categoría para filtrar.
+  - `brandId` (number, opcional): ID de la marca para filtrar.
+  - `gender` (string, opcional): Género de la prenda.
+  - `minPrice` (number, opcional): Rango de precio mínimo de la variante.
+  - `maxPrice` (number, opcional): Rango de precio máximo de la variante.
+  - `branchId` (number, opcional): ID de la sucursal. Filtra la disponibilidad de stock a una sucursal específica.
+  - `cursor` (number, opcional): Cursor de paginación. Si el ordenamiento es por precio (`price_asc`, `price_desc`), el cursor representa el `offset` (salto). Si es por relevancia/fecha (`newest`, `relevance`), el cursor representa el ID de producto.
+  - `limit` (number, opcional, por defecto 10): Cantidad de productos a retornar por página.
+  - `orderBy` (string, opcional, por defecto `relevance`): Criterio de ordenamiento. Opciones: `relevance`, `newest`, `price_asc`, `price_desc`.
+
+- **Regla de Negocio de Precios y Stock:**
+  - El filtro de precio (`minPrice`/`maxPrice`) evalúa si alguna variante activa del producto cae en el rango y tiene stock.
+  - Si un producto no tiene stock en ninguna variante/sucursal (o en la sucursal especificada por `branchId`), se oculta y no es retornado.
+  - Si el producto tiene al menos una variante con stock, el producto se devuelve junto con todas sus variantes activas. Las variantes sin stock se marcan con `outOfStock: true`.
+
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "code": "CAM",
+      "name": "Camisa Casual",
+      "description": "Una linda camisa",
+      "categoryId": 2,
+      "brandId": 1,
+      "gender": "UNISEX",
+      "isActive": true,
+      "createdAt": "2026-06-24T00:00:00.000Z",
+      "updatedAt": "2026-06-24T00:00:00.000Z",
+      "category": {
+        "id": 2,
+        "name": "Camisas"
+      },
+      "brand": {
+        "id": 1,
+        "name": "D-Mendoza"
+      },
+      "images": [
+        {
+          "id": 1,
+          "productId": 1,
+          "url": "https://example.com/camisa.jpg",
+          "isMain": true
+        }
+      ],
+      "variants": [
+        {
+          "id": 10,
+          "productId": 1,
+          "sku": "CAM-M-NEGRO",
+          "price": 49.99,
+          "attributesJson": {"talla": "M", "color": "NEGRO"},
+          "isActive": true,
+          "minStock": 5,
+          "createdAt": "2026-06-24T00:00:00.000Z",
+          "updatedAt": "2026-06-24T00:00:00.000Z",
+          "stock": 5,
+          "outOfStock": false
+        },
+        {
+          "id": 11,
+          "productId": 1,
+          "sku": "CAM-S-NEGRO",
+          "price": 49.99,
+          "attributesJson": {"talla": "S", "color": "NEGRO"},
+          "isActive": true,
+          "minStock": 5,
+          "createdAt": "2026-06-24T00:00:00.000Z",
+          "updatedAt": "2026-06-24T00:00:00.000Z",
+          "stock": 0,
+          "outOfStock": true
+        }
+      ]
+    }
+  ],
+  "pagination": {
+    "nextCursor": "1"
+  }
+}
+```

@@ -14,6 +14,7 @@ import brandRoutes from '@infrastructure/http/routes/brand.routes';
 import clientRoutes from '@infrastructure/http/routes/client.routes';
 import bannerRoutes from '@infrastructure/http/routes/banner.routes';
 import productRoutes from '@infrastructure/http/routes/product.routes'; // HU-014 / HU-015
+import ecommerceProductsRoutes from '@infrastructure/http/routes/ecommerce-products.routes';
 import catalogRoutes from '@infrastructure/http/routes/catalog.routes';
 import attributeRoutes from '@infrastructure/http/routes/attribute.routes';
 import kardexRoutes from '@infrastructure/http/routes/kardex.routes';
@@ -64,6 +65,7 @@ app.use('/api/v1', brandRoutes);
 app.use('/api/v1', clientRoutes);
 app.use('/api/v1', bannerRoutes); // HU-019 Banners
 app.use('/api/v1', productRoutes); // HU-014 — Variantes SKU / HU-015 — Inactivación Lógica
+app.use('/api/v1', ecommerceProductsRoutes);
 app.use('/api/v1', catalogRoutes);
 app.use('/api/v1', attributeRoutes);
 app.use('/api/v1', kardexRoutes);
