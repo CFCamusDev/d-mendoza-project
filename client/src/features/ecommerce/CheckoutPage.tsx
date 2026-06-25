@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { useCart } from './hooks/useCart';
-import { ShoppingCart, MapPin, CreditCard, CheckCircle, ChevronRight, Loader2, Plus } from 'lucide-react';
+import { ShoppingCart, MapPin, CreditCard, CheckCircle, ChevronRight, Loader2, Plus, Lock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { CouponInput } from './components/CouponInput';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { AddressFormModal } from './profile/components/AddressFormModal';
 import type { AddressFormData } from './profile/schemas/address.schema';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import { PaymentForm } from './components/PaymentForm';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 interface Address {
   id: number;
@@ -24,6 +29,9 @@ export const CheckoutPage = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
+
+  const [step, setStep] = useState<'shipping' | 'payment'>('shipping');
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
@@ -107,13 +115,20 @@ export const CheckoutPage = () => {
 
     setIsSubmitting(true);
     
-    // Aquí iría la lógica de procesar la orden
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.success('¡Orden generada con éxito!');
-      navigate('/');
-    } catch (error) {
-      toast.error('Ocurrió un error al procesar la orden.');
+      const response = await axiosInstance.post('/v1/checkout/payment-intent', {
+        cartId: cart?.id,
+        addressId: selectedAddressId,
+      });
+      
+      if (response.data.success && response.data.data.clientSecret) {
+        setClientSecret(response.data.data.clientSecret);
+        setStep('payment');
+      } else {
+        toast.error('No se pudo iniciar el proceso de pago.');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Ocurrió un error al preparar el pago.');
     } finally {
       setIsSubmitting(false);
     }
@@ -145,6 +160,8 @@ export const CheckoutPage = () => {
     );
   }
 
+  const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
+
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -155,98 +172,149 @@ export const CheckoutPage = () => {
             <ShoppingCart size={18} /> Carrito
           </span>
           <ChevronRight size={16} />
-          <span className="flex items-center gap-2 text-brand-accent font-bold">
+          <span 
+            className={`flex items-center gap-2 ${
+              step === 'shipping' ? 'text-brand-accent font-bold' : 'cursor-pointer hover:text-brand-accent'
+            }`}
+            onClick={() => {
+              if (step === 'payment') setStep('shipping');
+            }}
+          >
             <MapPin size={18} /> Envío
           </span>
           <ChevronRight size={16} />
-          <span className="flex items-center gap-2 opacity-50">
+          <span className={`flex items-center gap-2 ${step === 'payment' ? 'text-brand-accent font-bold' : 'opacity-50'}`}>
             <CreditCard size={18} /> Pago
           </span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Formulario de Envío */}
-          <div className="lg:col-span-7 xl:col-span-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">Detalles de Envío</h2>
-            
-            <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
-              
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Selecciona una Dirección</h3>
-                  <button
-                    type="button"
-                    onClick={() => setIsAddressModalOpen(true)}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-brand-accent hover:text-black transition-colors"
-                  >
-                    <Plus className="w-4 h-4" /> Nueva Dirección
-                  </button>
-                </div>
+          {/* Main Column: Shipping Form or Stripe Payment Element */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+            {step === 'shipping' ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">Detalles de Envío</h2>
                 
-                {isLoadingAddresses ? (
-                  <div className="flex justify-center p-4">
-                    <Loader2 className="w-6 h-6 animate-spin text-brand-accent" />
-                  </div>
-                ) : addresses.length === 0 ? (
-                  <div className="p-5 bg-yellow-50 border border-yellow-200 rounded-xl flex flex-col items-center text-center gap-3">
-                    <p className="text-yellow-800 text-sm font-medium">
-                      No tienes direcciones guardadas. Por favor agrega una antes de continuar.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setIsAddressModalOpen(true)}
-                      className="px-4 py-2 bg-brand-accent text-white rounded-lg text-sm font-bold shadow-sm hover:bg-black transition-colors"
-                    >
-                      Agregar Dirección
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {addresses.map((addr) => (
-                      <label 
-                        key={addr.id} 
-                        className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${
-                          selectedAddressId === addr.id 
-                            ? 'border-brand-accent bg-brand-accent/5 ring-1 ring-brand-accent' 
-                            : 'border-gray-200 hover:border-brand-accent/50'
-                        }`}
+                <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800">Selecciona una Dirección</h3>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddressModalOpen(true)}
+                        className="flex items-center gap-1.5 text-sm font-semibold text-brand-accent hover:text-black transition-colors"
                       >
-                        <input
-                          type="radio"
-                          name="address"
-                          className="mt-1 w-4 h-4 text-brand-accent focus:ring-brand-accent border-gray-300"
-                          checked={selectedAddressId === addr.id}
-                          onChange={() => handleAddressSelect(addr.id)}
-                        />
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900 flex items-center gap-2">
-                            {addr.alias}
-                            {addr.isDefault && (
-                              <span className="text-[10px] uppercase font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                                Principal
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-sm text-gray-600 mt-1">{addr.fullAddress}</p>
-                          <p className="text-xs text-gray-500 mt-1">{addr.district}</p>
-                          {addr.reference && <p className="text-xs text-gray-400 mt-0.5">Ref: {addr.reference}</p>}
-                        </div>
-                      </label>
-                    ))}
+                        <Plus className="w-4 h-4" /> Nueva Dirección
+                      </button>
+                    </div>
+                    
+                    {isLoadingAddresses ? (
+                      <div className="flex justify-center p-4">
+                        <Loader2 className="w-6 h-6 animate-spin text-brand-accent" />
+                      </div>
+                    ) : addresses.length === 0 ? (
+                      <div className="p-5 bg-yellow-50 border border-yellow-200 rounded-xl flex flex-col items-center text-center gap-3">
+                        <p className="text-yellow-800 text-sm font-medium">
+                          No tienes direcciones guardadas. Por favor agrega una antes de continuar.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddressModalOpen(true)}
+                          className="px-4 py-2 bg-brand-accent text-white rounded-lg text-sm font-bold shadow-sm hover:bg-black transition-colors"
+                        >
+                          Agregar Dirección
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {addresses.map((addr) => (
+                          <label 
+                            key={addr.id} 
+                            className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${
+                              selectedAddressId === addr.id 
+                                ? 'border-brand-accent bg-brand-accent/5 ring-1 ring-brand-accent' 
+                                : 'border-gray-200 hover:border-brand-accent/50'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="address"
+                              className="mt-1 w-4 h-4 text-brand-accent focus:ring-brand-accent border-gray-300"
+                              checked={selectedAddressId === addr.id}
+                              onChange={() => handleAddressSelect(addr.id)}
+                            />
+                            <div className="flex-1">
+                              <p className="font-semibold text-gray-900 flex items-center gap-2">
+                                {addr.alias}
+                                {addr.isDefault && (
+                                  <span className="text-[10px] uppercase font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                    Principal
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-sm text-gray-600 mt-1">{addr.fullAddress}</p>
+                              <p className="text-xs text-gray-500 mt-1">{addr.district}</p>
+                              {addr.reference && <p className="text-xs text-gray-400 mt-0.5">Ref: {addr.reference}</p>}
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {coverageError && (
+                      <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium">
+                        {coverageError}
+                      </div>
+                    )}
                   </div>
-                )}
-                
-                {coverageError && (
-                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium">
-                    {coverageError}
-                  </div>
-                )}
-
-
+                </form>
               </div>
+            ) : (
+              clientSecret && (
+                <div className="space-y-6">
+                  {/* Address Summary */}
+                  <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-brand-accent" />
+                      Dirección de Envío
+                    </h3>
+                    <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl">
+                      <p className="font-semibold text-gray-800">{selectedAddress?.alias}</p>
+                      <p className="text-sm text-gray-600 mt-1">{selectedAddress?.fullAddress}</p>
+                      <p className="text-xs text-gray-500 mt-1">{selectedAddress?.district}</p>
+                      {selectedAddress?.reference && <p className="text-xs text-gray-400 mt-0.5">Ref: {selectedAddress.reference}</p>}
+                    </div>
+                  </div>
 
-            </form>
+                  {/* Stripe Wrapper & PaymentForm */}
+                  <Elements 
+                    stripe={stripePromise} 
+                    options={{ 
+                      clientSecret, 
+                      locale: 'es',
+                      appearance: {
+                        theme: 'stripe',
+                        variables: {
+                          colorPrimary: '#3F3F3F',
+                          colorBackground: '#ffffff',
+                          colorText: '#30313d',
+                          colorDanger: '#df1b41',
+                          fontFamily: 'Ideal Sans, system-ui, sans-serif',
+                          spacingUnit: '4px',
+                          borderRadius: '12px',
+                        }
+                      }
+                    }}
+                  >
+                    <PaymentForm 
+                      total={calculatedTotal !== null ? Math.max(0, calculatedTotal - discountAmount) : Math.max(0, cart.subtotal - discountAmount)}
+                      onBack={() => setStep('shipping')}
+                    />
+                  </Elements>
+                </div>
+              )
+            )}
           </div>
 
           {/* Resumen de la Orden */}
@@ -306,12 +374,14 @@ export const CheckoutPage = () => {
                 )}
               </div>
 
-              <CouponInput 
-                subtotal={cart.subtotal} 
-                onCouponApplied={(amount) => {
-                  setDiscountAmount(amount);
-                }} 
-              />
+              {step === 'shipping' && (
+                <CouponInput 
+                  subtotal={cart.subtotal} 
+                  onCouponApplied={(amount) => {
+                    setDiscountAmount(amount);
+                  }} 
+                />
+              )}
 
               <div className="border-t pt-4 mb-8 mt-4">
                 <div className="flex justify-between items-center text-lg">
@@ -322,21 +392,29 @@ export const CheckoutPage = () => {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                form="checkout-form"
-                disabled={isSubmitting || shippingCost === null || !selectedAddressId}
-                className="w-full flex items-center justify-center gap-2 bg-brand-accent text-white px-6 py-4 rounded-xl font-bold hover:bg-black transition-all shadow-md hover:shadow-lg disabled:opacity-70"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5" />
-                    Continuar al Pago
-                  </>
-                )}
-              </button>
+              {step === 'shipping' ? (
+                <button
+                  type="submit"
+                  form="checkout-form"
+                  disabled={isSubmitting || shippingCost === null || !selectedAddressId}
+                  className="w-full flex items-center justify-center gap-2 bg-brand-accent text-white px-6 py-4 rounded-xl font-bold hover:bg-black transition-all shadow-md hover:shadow-lg disabled:opacity-70"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      Continuar al Pago
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div className="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center gap-2 text-xs text-gray-500">
+                  <Lock className="w-4 h-4 text-green-500" />
+                  <span>Pago seguro y encriptado activo</span>
+                </div>
+              )}
+              
               <p className="text-center text-xs text-gray-400 mt-4 flex items-center justify-center gap-1">
                 Pagos 100% Seguros
               </p>
