@@ -18,4 +18,12 @@ export interface IOrderRepository {
       unitPrice: number;
     }>
   ): Promise<Order>;
+  findByUserId(
+    userId: number,
+    params: {
+      status?: string;
+      skip: number;
+      take: number;
+    }
+  ): Promise<{ orders: Order[]; totalCount: number }>;
 }
