@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { AddressFormModal } from './profile/components/AddressFormModal';
 import type { AddressFormData } from './profile/schemas/address.schema';
+import { CouponInput } from './components/CouponInput';
 
 interface Address {
   id: number;
