@@ -6,6 +6,8 @@ export interface OrderItem {
   variantId: number;
   qty: number;
   unitPrice: number;
+  variantSku?: string;
+  productName?: string;
 }
 
 export interface Order {
@@ -14,7 +16,7 @@ export interface Order {
   status: OrderStatus;
   total: number;
   shippingCost: number;
-  addressSnapshot: any; // Stored as Json snapshot
+  addressSnapshot: any;
   paymentIntentId: string;
   items?: OrderItem[];
   createdAt: Date;

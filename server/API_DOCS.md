@@ -3692,4 +3692,114 @@ Endpoint público que recibe eventos de Stripe (Webhooks). Procesa el evento `pa
 }
 ```
 
+---
+
+## 11. Módulo de Historial de Pedidos y Comprobantes (PDF) — HU-044
+
+### GET /api/v1/orders
+
+Obtiene la lista de pedidos del usuario autenticado de forma paginada y opcionalmente filtrada por estado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta              | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :---------------- | :----------------- | :------------ | :---------------- |
+| `GET`  | `/api/v1/orders`  | JWT `Bearer Token` | Cualquiera    | Ninguno           |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo     | Requerido | Valor por Defecto | Descripción                                                                                   |
+| :-------- | :------- | :-------- | :---------------- | :-------------------------------------------------------------------------------------------- |
+| `status`  | `string` | No        | N/A               | Filtra los pedidos por su estado (`PENDING`, `PAID`, `SHIPPED`, `DELIVERED`, `CANCELLED`).   |
+| `page`    | `number` | No        | `1`               | El número de página para la paginación (debe ser mayor a 0).                                  |
+| `limit`   | `number` | No        | `10`              | El número de elementos por página (debe ser mayor a 0).                                       |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "orders": [
+      {
+        "id": 12,
+        "status": "PAID",
+        "total": 115,
+        "shippingCost": 15,
+        "addressSnapshot": {
+          "alias": "Casa",
+          "fullAddress": "Av Larco 123",
+          "district": "Miraflores",
+          "reference": "Frente al parque"
+        },
+        "paymentIntentId": "pi_123456_secret_7890abc",
+        "createdAt": "2026-06-25T12:00:00.000Z",
+        "items": [
+          {
+            "id": 1,
+            "variantId": 20,
+            "qty": 2,
+            "unitPrice": 50,
+            "variantSku": "SKU-JEAN-M-BLUE",
+            "productName": "Pantalón Jean Slim"
+          }
+        ]
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### GET /api/v1/orders/:id/receipt/pdf
+
+Genera y descarga el comprobante de pago en formato PDF del pedido especificado, devolviendo un stream eficiente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                                  | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :------------------------------------ | :----------------- | :------------ | :---------------- |
+| `GET`  | `/api/v1/orders/:id/receipt/pdf`      | JWT `Bearer Token` | Cualquiera    | Ninguno           |
+
+> [!IMPORTANT]
+> Se valida estrictamente que la orden pertenezca al usuario autenticado (extraído de su JWT). De lo contrario, se retornará HTTP 403.
+
+#### 2. Parámetros de Ruta (Path Params)
+
+| Parámetro | Tipo     | Requerido | Descripción |
+| :-------- | :------- | :-------- | :---------- |
+| `id`      | `number` | Sí        | ID de la orden de la cual se desea descargar el comprobante. |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+- **Content-Type**: `application/pdf`
+- **Content-Disposition**: `attachment; filename=comprobante-pedido-12.pdf`
+- **Body**: Stream de datos binarios del PDF.
+
+##### No Autorizado (HTTP 403 Forbidden)
+
+```json
+{
+  "success": false,
+  "error": "No autorizado para ver este comprobante"
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "Pedido no encontrado"
+}
+```
+
 

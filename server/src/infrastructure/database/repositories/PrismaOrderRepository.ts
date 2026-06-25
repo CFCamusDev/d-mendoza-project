@@ -25,6 +25,8 @@ export class PrismaOrderRepository implements IOrderRepository {
       variantId: item.variantId,
       qty: item.qty,
       unitPrice: Number(item.unitPrice),
+      variantSku: item.variant?.sku,
+      productName: item.variant?.product?.name,
     };
   }
 
@@ -32,7 +34,15 @@ export class PrismaOrderRepository implements IOrderRepository {
     const record = await prisma.order.findUnique({
       where: { id },
       include: {
-        items: true,
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
       },
     });
     return record ? this.toDomain(record) : null;
@@ -42,7 +52,15 @@ export class PrismaOrderRepository implements IOrderRepository {
     const record = await prisma.order.findUnique({
       where: { paymentIntentId },
       include: {
-        items: true,
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
       },
     });
     return record ? this.toDomain(record) : null;
@@ -95,5 +113,50 @@ export class PrismaOrderRepository implements IOrderRepository {
     });
 
     return this.toDomain(record);
+  }
+
+  async findByUserId(
+    userId: number,
+    params: {
+      status?: string;
+      skip: number;
+      take: number;
+    }
+  ): Promise<{ orders: Order[]; totalCount: number }> {
+    const whereClause: any = { userId };
+    
+    if (params.status) {
+      whereClause.status = params.status as any;
+    }
+
+    const [records, totalCount] = await prisma.$transaction([
+      prisma.order.findMany({
+        where: whereClause,
+        include: {
+          items: {
+            include: {
+              variant: {
+                include: {
+                  product: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: params.skip,
+        take: params.take,
+      }),
+      prisma.order.count({
+        where: whereClause,
+      }),
+    ]);
+
+    return {
+      orders: records.map((r) => this.toDomain(r)),
+      totalCount,
+    };
   }
 }

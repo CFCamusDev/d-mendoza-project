@@ -9,6 +9,7 @@ import HomePage from '../features/ecommerce/HomePage';
 import WishlistPage from '../features/ecommerce/WishlistPage';
 import { CheckoutPage } from '@/features/ecommerce/CheckoutPage';
 import { CheckoutSuccessPage } from '@/features/ecommerce/CheckoutSuccessPage';
+import { OrdersPage } from '@/features/ecommerce/OrdersPage';
 import SearchResultsPage from '../features/ecommerce/SearchResultsPage';
 import ProductDetailPage from '../features/ecommerce/ProductDetailPage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
@@ -90,6 +91,7 @@ export const AppRouter = () => {
         >
           <Route index element={<ProfilePage />} />
           <Route path="addresses" element={<AddressesPage />} />
+          <Route path="orders" element={<OrdersPage />} />
         </Route>
       </Route>
 
