@@ -41,6 +41,7 @@ import deliveryZoneRoutes from '@infrastructure/http/routes/delivery-zone.routes
 import checkoutRoutes from '@infrastructure/http/routes/checkout.routes';
 import couponRoutes from '@infrastructure/http/routes/coupon.routes';
 import orderRoutes from '@infrastructure/http/routes/order.routes';
+import { requestContextMiddleware } from '@infrastructure/context/RequestContext';
 
 const app = express();
 
@@ -60,6 +61,7 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
+app.use(requestContextMiddleware);
 
 // Health check endpoint para Docker
 app.get('/api/health', (_req: Request, res: Response) => {

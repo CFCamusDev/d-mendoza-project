@@ -1,6 +1,6 @@
 import prisma from '@infrastructure/database/prisma';
 import { IOrderRepository } from '@domain/repositories/IOrderRepository';
-import { Order, OrderItem } from '@domain/entities/Order';
+import { Order, OrderItem, OrderStatus } from '@domain/entities/Order';
 
 export class PrismaOrderRepository implements IOrderRepository {
   private toDomain(record: any): Order {
@@ -158,5 +158,25 @@ export class PrismaOrderRepository implements IOrderRepository {
       orders: records.map((r) => this.toDomain(r)),
       totalCount,
     };
+  }
+
+  async updateStatus(id: number, status: OrderStatus): Promise<Order> {
+    const record = await prisma.order.update({
+      where: { id },
+      data: { status: status as any },
+      include: {
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return this.toDomain(record);
   }
 }

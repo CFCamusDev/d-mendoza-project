@@ -1,22 +1,35 @@
 import { Request, Response } from 'express';
 import { ListUserOrdersUseCase } from '@application/use-cases/orders/ListUserOrdersUseCase';
 import { GetOrderReceiptPdfUseCase } from '@application/use-cases/orders/GetOrderReceiptPdfUseCase';
+import { UpdateOrderStatusUseCase } from '@application/use-cases/orders/UpdateOrderStatusUseCase';
 import { PrismaOrderRepository } from '@infrastructure/database/repositories/PrismaOrderRepository';
+import { PrismaUserRepository } from '@infrastructure/database/repositories/PrismaUserRepository';
 import { PDFKitReceiptPdfService } from '@infrastructure/services/PDFKitReceiptPdfService';
+import { ResendEmailService } from '@infrastructure/services/ResendEmailService';
 
 export class OrderController {
   private prismaOrderRepository: PrismaOrderRepository;
+  private prismaUserRepository: PrismaUserRepository;
+  private resendEmailService: ResendEmailService;
   private pdfKitReceiptPdfService: PDFKitReceiptPdfService;
   private listUserOrdersUseCase: ListUserOrdersUseCase;
   private getOrderReceiptPdfUseCase: GetOrderReceiptPdfUseCase;
+  private updateOrderStatusUseCase: UpdateOrderStatusUseCase;
 
   constructor() {
     this.prismaOrderRepository = new PrismaOrderRepository();
+    this.prismaUserRepository = new PrismaUserRepository();
+    this.resendEmailService = new ResendEmailService();
     this.pdfKitReceiptPdfService = new PDFKitReceiptPdfService();
     this.listUserOrdersUseCase = new ListUserOrdersUseCase(this.prismaOrderRepository);
     this.getOrderReceiptPdfUseCase = new GetOrderReceiptPdfUseCase(
       this.prismaOrderRepository,
       this.pdfKitReceiptPdfService
+    );
+    this.updateOrderStatusUseCase = new UpdateOrderStatusUseCase(
+      this.prismaOrderRepository,
+      this.prismaUserRepository,
+      this.resendEmailService
     );
   }
 
@@ -96,6 +109,45 @@ export class OrderController {
         return;
       }
       res.status(500).json({ success: false, error: error.message || 'Error al generar el comprobante PDF' });
+    }
+  }
+
+  async updateOrderStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const orderId = parseInt(String(req.params.id), 10);
+      if (isNaN(orderId)) {
+        res.status(400).json({ success: false, error: 'El ID de pedido proporcionado no es válido' });
+        return;
+      }
+
+      const { status } = req.body;
+      if (!status) {
+        res.status(400).json({ success: false, error: 'El estado del pedido es requerido' });
+        return;
+      }
+
+      const allowedStatus = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+      if (!allowedStatus.includes(status)) {
+        res.status(400).json({
+          success: false,
+          error: `Estado de pedido inválido. Los permitidos son: ${allowedStatus.join(', ')}`,
+        });
+        return;
+      }
+
+      const updatedOrder = await this.updateOrderStatusUseCase.execute(orderId, status as any);
+
+      res.status(200).json({
+        success: true,
+        message: 'Estado del pedido actualizado correctamente',
+        data: updatedOrder,
+      });
+    } catch (error: any) {
+      if (error.message.includes('no encontrado') || error.message.includes('No encontrado')) {
+        res.status(404).json({ success: false, error: error.message });
+        return;
+      }
+      res.status(500).json({ success: false, error: error.message || 'Error al actualizar el estado del pedido' });
     }
   }
 }
