@@ -15,6 +15,7 @@ const checkIsAdmin = (req: any, res: any, next: any) => {
 };
 
 // Rutas Públicas
+router.get('/delivery-zones/locations/supported', DeliveryZoneController.getSupportedLocations);
 router.get('/delivery-zones/:district', DeliveryZoneController.getByDistrict);
 
 // Rutas Administrador

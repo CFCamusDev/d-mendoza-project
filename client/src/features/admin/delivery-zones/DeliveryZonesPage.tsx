@@ -7,7 +7,6 @@ import { DeliveryZoneModal } from './components/DeliveryZoneModal';
 
 export interface DeliveryZone {
   id: number;
-  name: string;
   districts: string[];
   deliveryCost: number;
   estimatedDays: number;
@@ -63,7 +62,7 @@ const DeliveryZonesPage = () => {
   };
 
   const filteredZones = zones.filter(zone => 
-    zone.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    zone.id.toString().includes(searchTerm) ||
     zone.districts.some(d => d.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -127,7 +126,7 @@ const DeliveryZonesPage = () => {
                 filteredZones.map(zone => (
                   <tr key={zone.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                      {zone.name}
+                      Zona #{zone.id}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1 max-w-md">

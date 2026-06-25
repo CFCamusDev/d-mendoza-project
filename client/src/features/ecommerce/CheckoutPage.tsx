@@ -1,15 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { useCart } from './hooks/useCart';
 import { ShoppingCart, MapPin, CreditCard, CheckCircle, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '@/shared/api/axiosInstance';
 
 export const CheckoutPage = () => {
   useDocumentTitle('Checkout - Envío y Pago');
   const { cart, isLoading } = useCart();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [supportedLocations, setSupportedLocations] = useState<any[]>([]);
+  const [loadingLocations, setLoadingLocations] = useState(true);
+  const [deliveryCost, setDeliveryCost] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const res = await axiosInstance.get('/v1/delivery-zones/locations/supported');
+        setSupportedLocations(res.data.departments);
+      } catch (error) {
+        console.error('Error fetching supported locations:', error);
+      } finally {
+        setLoadingLocations(false);
+      }
+    };
+    fetchLocations();
+  }, []);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -23,6 +41,26 @@ export const CheckoutPage = () => {
     address: '',
     reference: '',
   });
+
+  const departments = supportedLocations || [];
+  const selectedDept = departments.find((d: any) => d.name === formData.department) as any;
+  const provinces = selectedDept ? selectedDept.provinces : [];
+  
+  const selectedProv = provinces.find((p: any) => p.name === formData.city) as any;
+  const districts = selectedProv ? selectedProv.districts : [];
+
+  useEffect(() => {
+    if (formData.district && districts.length > 0) {
+      const distData = districts.find((d: any) => d.name === formData.district);
+      if (distData) {
+        setDeliveryCost(Number(distData.cost));
+      } else {
+        setDeliveryCost(null);
+      }
+    } else {
+      setDeliveryCost(null);
+    }
+  }, [formData.district, districts]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -46,7 +84,7 @@ export const CheckoutPage = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || loadingLocations) {
     return (
       <div className="min-h-screen pt-20 flex items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-brand-accent" />
@@ -132,20 +170,34 @@ export const CheckoutPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Departamento *</label>
-                    <select required name="department" value={formData.department} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition bg-white">
+                    <select required name="department" value={formData.department} onChange={(e) => {
+                      setFormData({ ...formData, department: e.target.value, city: '', district: '' });
+                    }} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition bg-white">
                       <option value="">Seleccionar...</option>
-                      <option value="Lima">Lima</option>
-                      <option value="Arequipa">Arequipa</option>
-                      <option value="Cusco">Cusco</option>
+                      {departments.map((d: any) => (
+                        <option key={d.name} value={d.name}>{d.name}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Provincia *</label>
-                    <input required type="text" name="city" value={formData.city} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition" placeholder="Ej. Lima" />
+                    <select required name="city" value={formData.city} onChange={(e) => {
+                      setFormData({ ...formData, city: e.target.value, district: '' });
+                    }} disabled={!formData.department} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition bg-white disabled:bg-gray-100 disabled:opacity-70">
+                      <option value="">Seleccionar...</option>
+                      {provinces.map((p: any) => (
+                        <option key={p.name} value={p.name}>{p.name}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Distrito *</label>
-                    <input required type="text" name="district" value={formData.district} onChange={handleChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition" placeholder="Ej. Miraflores" />
+                    <select required name="district" value={formData.district} onChange={handleChange} disabled={!formData.city} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition bg-white disabled:bg-gray-100 disabled:opacity-70">
+                      <option value="">Seleccionar...</option>
+                      {districts.map((d: any) => (
+                        <option key={d.name} value={d.name}>{d.name}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="md:col-span-3">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Dirección Exacta (Calle, Nro) *</label>
@@ -183,8 +235,8 @@ export const CheckoutPage = () => {
                       <div>
                         <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">{item.variant.product.name}</h3>
                         <p className="text-xs text-gray-500 mt-0.5">
-                          {item.variant.attributesJson.talla && `Talla: ${item.variant.attributesJson.talla}`}
-                          {item.variant.attributesJson.color && ` • Color: ${item.variant.attributesJson.color}`}
+                          {item.variant.attributesJson?.talla && `Talla: ${item.variant.attributesJson.talla}`}
+                          {item.variant.attributesJson?.color && ` • Color: ${item.variant.attributesJson.color}`}
                         </p>
                       </div>
                       <div className="text-right pl-4">
@@ -202,21 +254,25 @@ export const CheckoutPage = () => {
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Envío estimado</span>
-                  <span className="font-medium text-gray-900">Por calcular</span>
+                  <span className="font-medium text-gray-900">
+                    {deliveryCost !== null ? `S/ ${deliveryCost.toFixed(2)}` : 'Por calcular'}
+                  </span>
                 </div>
               </div>
 
               <div className="border-t pt-4 mb-8">
                 <div className="flex justify-between items-center text-lg">
                   <span className="font-bold text-gray-900">Total</span>
-                  <span className="font-black text-brand-accent text-xl">S/ {cart.subtotal.toFixed(2)}</span>
+                  <span className="font-black text-brand-accent text-xl">
+                    S/ {(cart.subtotal + (deliveryCost || 0)).toFixed(2)}
+                  </span>
                 </div>
               </div>
 
               <button
                 type="submit"
                 form="checkout-form"
-                disabled={isSubmitting}
+                disabled={isSubmitting || deliveryCost === null}
                 className="w-full flex items-center justify-center gap-2 bg-brand-accent text-white px-6 py-4 rounded-xl font-bold hover:bg-black transition-all shadow-md hover:shadow-lg disabled:opacity-70"
               >
                 {isSubmitting ? (
