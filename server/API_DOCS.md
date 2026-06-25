@@ -2895,9 +2895,69 @@ Obtiene las ventas Cross-Branch que están pendientes de entrega física, agrupa
 }
 ```
 
+### GET /api/v1/admin/dashboard/kpis
+
+Obtiene los indicadores clave de negocio (KPIs) acumulados para el panel de administración. Incluye las ventas del día (POS + e-commerce), conteo de pedidos de e-commerce pendientes, lista de productos/variantes con stock crítico y una comparativa de ventas del día por sucursal física.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/admin/dashboard/kpis` | JWT `Bearer Token` | Permiso `sales:read` |
+
+#### 2. Respuestas (Responses)
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "todaySales": {
+      "total": 1550.50,
+      "pos": 1000.00,
+      "ecommerce": 550.50
+    },
+    "pendingOrdersCount": 3,
+    "criticalStock": {
+      "count": 2,
+      "products": [
+        {
+          "sku": "CAM-M-ROJO",
+          "productName": "Camisa Casual",
+          "branchName": "Sede Miraflores",
+          "currentStock": 2,
+          "minStock": 5
+        },
+        {
+          "sku": "PAN-L-NEGRO",
+          "productName": "Pantalón Denim Negro",
+          "branchName": "Sede San Isidro",
+          "currentStock": 1,
+          "minStock": 5
+        }
+      ]
+    },
+    "salesByBranch": [
+      {
+        "branchId": 1,
+        "branchName": "Sede Miraflores",
+        "totalSales": 600.00
+      },
+      {
+        "branchId": 2,
+        "branchName": "Sede San Isidro",
+        "totalSales": 400.00
+      }
+    ]
+  }
+}
+```
+
 ---
 
 ### GET /api/v1/receipts
+
 
 Consulta de manera paginada y filtrada las ventas/comprobantes electrónicos emitidos en el sistema POS.
 

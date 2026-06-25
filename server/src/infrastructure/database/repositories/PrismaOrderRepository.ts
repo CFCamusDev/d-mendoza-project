@@ -190,4 +190,32 @@ export class PrismaOrderRepository implements IOrderRepository {
 
     return this.toDomain(record);
   }
+
+  async getSalesTotalInRange(start: Date, end: Date): Promise<number> {
+    const result = await prisma.order.aggregate({
+      where: {
+        status: {
+          in: ['PAID', 'SHIPPED', 'DELIVERED'],
+        },
+        createdAt: {
+          gte: start,
+          lte: end,
+        },
+      },
+      _sum: {
+        total: true,
+      },
+    });
+    return result._sum.total ? Number(result._sum.total) : 0;
+  }
+
+  async countPending(): Promise<number> {
+    const count = await prisma.order.count({
+      where: {
+        status: 'PENDING',
+      },
+    });
+    return count;
+  }
 }
+
