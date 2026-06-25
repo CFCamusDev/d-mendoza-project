@@ -1,4 +1,5 @@
 export * from './search.types';
+export * from './order.types';
 
 export interface ProductVariant {
   id: number;

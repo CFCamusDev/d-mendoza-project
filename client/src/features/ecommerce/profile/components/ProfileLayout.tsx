@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { User, MapPin, ChevronRight } from 'lucide-react';
+import { User, MapPin, ChevronRight, ShoppingBag } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import toast from 'react-hot-toast';
 
@@ -99,6 +99,23 @@ export const ProfileLayout = () => {
                 <div className="flex items-center gap-3">
                   <MapPin className="w-4 h-4" />
                   <span>Mis Direcciones</span>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-50" />
+              </NavLink>
+
+              <NavLink
+                to="/profile/orders"
+                className={({ isActive }) =>
+                  `flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${
+                    isActive
+                      ? 'bg-brand-accent text-white shadow-sm'
+                      : 'text-brand-text hover:bg-brand-primary/10 hover:text-brand-accent'
+                  }`
+                }
+              >
+                <div className="flex items-center gap-3">
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Mis Pedidos</span>
                 </div>
                 <ChevronRight className="w-4 h-4 opacity-50" />
               </NavLink>
