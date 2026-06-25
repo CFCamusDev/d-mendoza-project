@@ -32,7 +32,8 @@ import {
   UserPlus,
   Landmark,
   ArrowLeftRight,
-  FileText
+  FileText,
+  LayoutDashboard
 } from 'lucide-react';
 
 export const AdminShell: React.FC = () => {
@@ -138,6 +139,17 @@ export const AdminShell: React.FC = () => {
             <p className={`text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 px-3 ${isCollapsed ? 'text-center' : ''}`}>
               {!isCollapsed ? 'Inicio' : '•'}
             </p>
+            <Link
+              to="/admin/dashboard"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/dashboard') || location.pathname === '/admin' ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Dashboard"
+            >
+              <LayoutDashboard className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Dashboard</span>}
+            </Link>
+
             <Link
               to="/admin/inventory/stock"
               className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
