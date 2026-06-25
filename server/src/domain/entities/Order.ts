@@ -10,6 +10,14 @@ export interface OrderItem {
   productName?: string;
 }
 
+export interface OrderStatusLog {
+  id: number;
+  orderId: number;
+  status: OrderStatus;
+  changedAt: Date;
+  changedBy: string;
+}
+
 export interface Order {
   id: number;
   userId: number;
@@ -19,6 +27,8 @@ export interface Order {
   addressSnapshot: any;
   paymentIntentId: string;
   items?: OrderItem[];
+  statusLogs?: OrderStatusLog[];
   createdAt: Date;
   updatedAt: Date;
 }
+

@@ -14,6 +14,13 @@ export interface OrderItemResponseDTO {
   productName?: string;
 }
 
+export interface OrderStatusLogDTO {
+  id: number;
+  status: string;
+  changedAt: Date;
+  changedBy: string;
+}
+
 export interface OrderResponseDTO {
   id: number;
   status: string;
@@ -23,7 +30,9 @@ export interface OrderResponseDTO {
   paymentIntentId: string;
   createdAt: Date;
   items?: OrderItemResponseDTO[];
+  statusLogs?: OrderStatusLogDTO[];
 }
+
 
 export interface ListOrdersResponseDTO {
   orders: OrderResponseDTO[];

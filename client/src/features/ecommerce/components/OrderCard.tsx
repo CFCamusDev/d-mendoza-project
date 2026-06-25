@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Order } from '../types';
-import { OrderStatusTimeline } from './OrderStatusTimeline';
+import { OrderTimeline } from './OrderTimeline';
 import { orderService } from '../services/orderService';
 import { toast } from 'react-hot-toast';
 import { 
@@ -88,7 +88,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order }) => {
         {/* Timeline Status */}
         <div>
           <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Estado del Pedido</h4>
-          <OrderStatusTimeline status={order.status} />
+          <OrderTimeline order={order} />
         </div>
 
         {/* Address & Actions Grid */}

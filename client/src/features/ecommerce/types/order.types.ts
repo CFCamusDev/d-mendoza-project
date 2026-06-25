@@ -16,6 +16,14 @@ export interface OrderItem {
   productName: string;
 }
 
+export interface OrderStatusLog {
+  id: number;
+  orderId: number;
+  status: OrderStatus;
+  changedAt: string;
+  changedBy: string;
+}
+
 export interface Order {
   id: number;
   status: OrderStatus;
@@ -25,6 +33,7 @@ export interface Order {
   paymentIntentId?: string | null;
   createdAt: string;
   items: OrderItem[];
+  statusLogs?: OrderStatusLog[];
 }
 
 export interface OrdersResponse {
