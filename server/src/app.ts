@@ -51,7 +51,11 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN,
   credentials: true, // Allow cookies cross-origin for OAuth flow
 }));
-app.use(express.json());
+app.use(express.json({
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());

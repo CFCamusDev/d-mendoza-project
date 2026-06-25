@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { X, Loader2 } from 'lucide-react';
 import { addressSchema, type AddressFormData } from '../schemas/address.schema';
 import type { Address } from '../types/address.types';
+import ubigeoData from '@/shared/data/ubigeo.json';
 
 interface AddressFormModalProps {
   isOpen: boolean;
@@ -20,10 +21,15 @@ export const AddressFormModal = ({
   address = null,
   isSaving,
 }: AddressFormModalProps) => {
+  const [selectedDeptName, setSelectedDeptName] = useState('');
+  const [selectedProvName, setSelectedProvName] = useState('');
+  const [selectedDistName, setSelectedDistName] = useState('');
+
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<AddressFormData>({
     resolver: yupResolver(addressSchema),
@@ -36,6 +42,14 @@ export const AddressFormModal = ({
     },
   });
 
+  const allDepartments = (ubigeoData as any).departments || [];
+  const allProvinces = (ubigeoData as any).provinces || [];
+  const allDistricts = (ubigeoData as any).districts || [];
+
+  const departments = allDepartments;
+  const provinces = allProvinces.filter((p: any) => p.department_id === departments.find((d: any) => d.name === selectedDeptName)?.id);
+  const districtsData = allDistricts.filter((d: any) => d.province_id === provinces.find((p: any) => p.name === selectedProvName)?.id);
+
   // Prepopulate form when address prop changes (e.g. edit mode opens)
   useEffect(() => {
     if (address) {
@@ -46,6 +60,24 @@ export const AddressFormModal = ({
         reference: address.reference || '',
         isDefault: address.isDefault,
       });
+
+      // Parse geographical hierarchy if formatted as 'Dept | Prov | Dist'
+      if (address.district && address.district.includes('|')) {
+        const parts = address.district.split('|').map(p => p.trim());
+        if (parts.length === 3) {
+          setSelectedDeptName(parts[0]);
+          setSelectedProvName(parts[1]);
+          setSelectedDistName(parts[2]);
+        } else {
+          setSelectedDeptName('');
+          setSelectedProvName('');
+          setSelectedDistName('');
+        }
+      } else {
+        setSelectedDeptName('');
+        setSelectedProvName('');
+        setSelectedDistName(address.district || '');
+      }
     } else {
       reset({
         alias: '',
@@ -54,8 +86,20 @@ export const AddressFormModal = ({
         reference: '',
         isDefault: false,
       });
+      setSelectedDeptName('');
+      setSelectedProvName('');
+      setSelectedDistName('');
     }
   }, [address, reset, isOpen]);
+
+  // Synchronize form value with selected dropdowns
+  useEffect(() => {
+    if (selectedDeptName && selectedProvName && selectedDistName) {
+      setValue('district', `${selectedDeptName} | ${selectedProvName} | ${selectedDistName}`);
+    } else {
+      setValue('district', '');
+    }
+  }, [selectedDeptName, selectedProvName, selectedDistName, setValue]);
 
   if (!isOpen) return null;
 
@@ -115,24 +159,80 @@ export const AddressFormModal = ({
             )}
           </div>
 
-          {/* District */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="district" className="text-xs font-bold uppercase tracking-wider text-brand-accent">
-              Distrito
-            </label>
-            <input
-              id="district"
-              type="text"
-              className={`w-full px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-accent/20 bg-brand-bg/10 text-brand-accent ${
-                errors.district ? 'border-red-400 focus:ring-red-400/20 focus:border-red-500' : 'border-brand-primary/60 focus:border-brand-accent'
-              }`}
-              placeholder="Ej. Miraflores, San Isidro, Surco"
-              {...register('district')}
-            />
-            {errors.district && (
-              <span className="text-xs text-red-500 font-medium">{errors.district.message}</span>
-            )}
+          {/* Geographical selectors (Ubigeo) */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {/* Department */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="dept" className="text-xs font-bold uppercase tracking-wider text-brand-accent">
+                Departamento
+              </label>
+              <select
+                id="dept"
+                value={selectedDeptName}
+                onChange={(e) => {
+                  setSelectedDeptName(e.target.value);
+                  setSelectedProvName('');
+                  setSelectedDistName('');
+                }}
+                className="w-full px-3 py-2.5 border border-brand-primary/60 rounded-xl focus:border-brand-accent outline-none bg-white text-sm font-semibold text-brand-accent focus:ring-2 focus:ring-brand-accent/20"
+              >
+                <option value="">Selecciona...</option>
+                {departments.map((d: any) => (
+                  <option key={d.name} value={d.name}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Province */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="prov" className="text-xs font-bold uppercase tracking-wider text-brand-accent">
+                Provincia
+              </label>
+              <select
+                id="prov"
+                value={selectedProvName}
+                onChange={(e) => {
+                  setSelectedProvName(e.target.value);
+                  setSelectedDistName('');
+                }}
+                disabled={!selectedDeptName}
+                className="w-full px-3 py-2.5 border border-brand-primary/60 rounded-xl focus:border-brand-accent outline-none bg-white text-sm font-semibold text-brand-accent focus:ring-2 focus:ring-brand-accent/20 disabled:opacity-50"
+              >
+                <option value="">Selecciona...</option>
+                {provinces.map((p: any) => (
+                  <option key={p.name} value={p.name}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* District */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="dist" className="text-xs font-bold uppercase tracking-wider text-brand-accent">
+                Distrito
+              </label>
+              <select
+                id="dist"
+                value={selectedDistName}
+                onChange={(e) => setSelectedDistName(e.target.value)}
+                disabled={!selectedProvName}
+                className="w-full px-3 py-2.5 border border-brand-primary/60 rounded-xl focus:border-brand-accent outline-none bg-white text-sm font-semibold text-brand-accent focus:ring-2 focus:ring-brand-accent/20 disabled:opacity-50"
+              >
+                <option value="">Selecciona...</option>
+                {districtsData.map((d: any) => (
+                  <option key={d.name} value={d.name}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+          {errors.district && (
+            <span className="text-xs text-red-500 font-medium block mt-1">{errors.district.message}</span>
+          )}
 
           {/* Reference */}
           <div className="flex flex-col gap-1.5">

@@ -17,6 +17,8 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "5.2.2",
+    "@stripe/react-stripe-js": "^6.6.0",
+    "@stripe/stripe-js": "^9.8.0",
     "@tailwindcss/vite": "4.2.4",
     "@tiptap/react": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.1",

@@ -8,6 +8,7 @@ import GoogleAuthSuccessPage from '../features/ecommerce/auth/GoogleAuthSuccessP
 import HomePage from '../features/ecommerce/HomePage';
 import WishlistPage from '../features/ecommerce/WishlistPage';
 import { CheckoutPage } from '@/features/ecommerce/CheckoutPage';
+import { CheckoutSuccessPage } from '@/features/ecommerce/CheckoutSuccessPage';
 import SearchResultsPage from '../features/ecommerce/SearchResultsPage';
 import ProductDetailPage from '../features/ecommerce/ProductDetailPage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
@@ -58,6 +59,7 @@ export const AppRouter = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
         <Route path="/search" element={<SearchResultsPage />} />
         <Route path="/products/:slug" element={<ProductDetailPage />} />
         

@@ -6,6 +6,8 @@ WORKDIR /app
 # Definir variables ARG para que Vite pueda inyectarlas en la build
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_STRIPE_PUBLISHABLE_KEY
+ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY
 
 # Instalar pnpm globalmente
 RUN npm install -g pnpm
