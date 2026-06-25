@@ -3629,4 +3629,67 @@ Elimina físicamente o inactiva un artículo de blog.
 | :------- | :------------------------ | :----------------- | :------------ | :---------------- |
 | `DELETE` | `/api/v1/admin/blog/:id`  | JWT `Bearer Token` | `ADMIN`       | `roles:manage`    |
 
+---
+
+## 10. Módulo de Checkout y Pagos (Stripe) — HU-043
+
+### POST /api/v1/checkout/payment-intent
+
+Crea un PaymentIntent en Stripe a partir del carrito y la dirección de envío del usuario autenticado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                              | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :-------------------------------- | :----------------- | :------------ | :---------------- |
+| `POST` | `/api/v1/checkout/payment-intent` | JWT `Bearer Token` | Cualquiera    | Ninguno           |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "cartId": 2,
+  "addressId": 5
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "clientSecret": "pi_123456_secret_7890abc"
+  }
+}
+```
+
+---
+
+### POST /api/v1/checkout/webhook
+
+Endpoint público que recibe eventos de Stripe (Webhooks). Procesa el evento `payment_intent.succeeded` de forma atómica para registrar la orden, decrementar stock de la variante en la sucursal principal, generar el Kardex de salida y vaciar el carrito.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                       | Autenticación     | Rol Requerido |
+| :----- | :------------------------- | :---------------- | :------------ |
+| `POST` | `/api/v1/checkout/webhook` | Ninguna (Público) | Stripe Agent  |
+
+> [!IMPORTANT]
+> Requiere incluir la cabecera `stripe-signature` enviada por Stripe para verificar la autenticidad del payload utilizando la clave secreta configurada.
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "received": true,
+  "processed": true,
+  "orderId": 12
+}
+```
+
 

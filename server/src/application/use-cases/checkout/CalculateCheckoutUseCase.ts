@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@infrastructure/database/prisma';
 
 interface CalculateCheckoutDTO {
   cartId: number;
