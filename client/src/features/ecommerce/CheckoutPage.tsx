@@ -4,6 +4,7 @@ import { useCart } from './hooks/useCart';
 import { ShoppingCart, MapPin, CreditCard, CheckCircle, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { CouponInput } from './components/CouponInput';
 import axiosInstance from '@/shared/api/axiosInstance';
 
 export const CheckoutPage = () => {
@@ -11,6 +12,7 @@ export const CheckoutPage = () => {
   const { cart, isLoading } = useCart();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(0);
   const [supportedLocations, setSupportedLocations] = useState<any[]>([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
   const [deliveryCost, setDeliveryCost] = useState<number | null>(null);
@@ -258,13 +260,26 @@ export const CheckoutPage = () => {
                     {deliveryCost !== null ? `S/ ${deliveryCost.toFixed(2)}` : 'Por calcular'}
                   </span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Descuento (Cupón)</span>
+                    <span className="font-medium">-S/ {discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="border-t pt-4 mb-8">
+              <CouponInput 
+                subtotal={cart.subtotal} 
+                onCouponApplied={(amount) => {
+                  setDiscountAmount(amount);
+                }} 
+              />
+
+              <div className="border-t pt-4 mb-8 mt-4">
                 <div className="flex justify-between items-center text-lg">
                   <span className="font-bold text-gray-900">Total</span>
                   <span className="font-black text-brand-accent text-xl">
-                    S/ {(cart.subtotal + (deliveryCost || 0)).toFixed(2)}
+                    S/ {Math.max(0, cart.subtotal - discountAmount + (deliveryCost || 0)).toFixed(2)}
                   </span>
                 </div>
               </div>
