@@ -142,7 +142,7 @@ export const AppRouter = () => {
         <Route
           path="/admin/dashboard"
           element={
-            <ProtectedRoute allowedPermissions={['sales:read']}>
+            <ProtectedRoute allowedRoles={['ADMIN']}>
               <DashboardPage />
             </ProtectedRoute>
           }
