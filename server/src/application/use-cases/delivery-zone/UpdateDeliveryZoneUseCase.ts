@@ -2,7 +2,6 @@ import { DeliveryZone } from '../../../domain/entities/DeliveryZone';
 import { IDeliveryZoneRepository } from '../../../domain/repositories/IDeliveryZoneRepository';
 
 export interface UpdateDeliveryZoneDTO {
-  name?: string;
   districts?: string[];
   deliveryCost?: number;
   estimatedDays?: number;
@@ -17,10 +16,12 @@ export class UpdateDeliveryZoneUseCase {
       throw new Error(`Zona de delivery con id ${id} no encontrada`);
     }
 
-    if (dto.name && dto.name !== existing.name) {
-      const nameConflict = await this.deliveryZoneRepository.findByName(dto.name);
-      if (nameConflict) {
-        throw new Error(`Ya existe una zona de delivery con el nombre ${dto.name}`);
+    if (dto.districts) {
+      for (const district of dto.districts) {
+        const distExisting = await this.deliveryZoneRepository.findByDistrict(district);
+        if (distExisting && distExisting.id !== id) {
+          throw new Error(`El distrito ${district} ya pertenece a otra zona de envío (ID: ${distExisting.id})`);
+        }
       }
     }
 

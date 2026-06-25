@@ -3,6 +3,7 @@ import { X, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import axiosInstance from '@/shared/api/axiosInstance';
 import type { DeliveryZone } from '../DeliveryZonesPage';
+import ubigeoData from '@/shared/data/ubigeo.json';
 
 interface Props {
   zone: DeliveryZone | null;
@@ -11,18 +12,29 @@ interface Props {
 
 export const DeliveryZoneModal: React.FC<Props> = ({ zone, onClose }) => {
   const [formData, setFormData] = useState({
-    name: '',
     deliveryCost: 0,
     estimatedDays: 1,
   });
   const [districts, setDistricts] = useState<string[]>([]);
-  const [districtInput, setDistrictInput] = useState('');
+  const [selectedDeptName, setSelectedDeptName] = useState('');
+  const [selectedProvName, setSelectedProvName] = useState('');
+  const [selectedDistName, setSelectedDistName] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // We are using the correct full structured JSON now which has a different format.
+  // The geo-peru data is { departments: [...], provinces: [...], districts: [...] }
+  // We need to filter it.
+  const allDepartments = (ubigeoData as any).departments || [];
+  const allProvinces = (ubigeoData as any).provinces || [];
+  const allDistricts = (ubigeoData as any).districts || [];
+
+  const departments = allDepartments;
+  const provinces = allProvinces.filter((p: any) => p.department_id === departments.find((d: any) => d.name === selectedDeptName)?.id);
+  const districtsData = allDistricts.filter((d: any) => d.province_id === provinces.find((p: any) => p.name === selectedProvName)?.id);
 
   useEffect(() => {
     if (zone) {
       setFormData({
-        name: zone.name,
         deliveryCost: Number(zone.deliveryCost),
         estimatedDays: zone.estimatedDays,
       });
@@ -34,12 +46,15 @@ export const DeliveryZoneModal: React.FC<Props> = ({ zone, onClose }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleAddDistrict = (e?: React.KeyboardEvent | React.MouseEvent) => {
-    if (e && 'key' in e && e.key !== 'Enter') return;
+  const handleAddDistrict = (e?: React.MouseEvent | React.FormEvent) => {
     if (e) e.preventDefault();
     
-    const dist = districtInput.trim();
-    if (!dist) return;
+    if (!selectedDeptName || !selectedProvName || !selectedDistName) {
+      toast.error('Selecciona un distrito válido');
+      return;
+    }
+
+    const dist = `${selectedDeptName} | ${selectedProvName} | ${selectedDistName.trim()}`;
 
     if (districts.map(d => d.toLowerCase()).includes(dist.toLowerCase())) {
       toast.error('Este distrito ya está agregado');
@@ -47,7 +62,7 @@ export const DeliveryZoneModal: React.FC<Props> = ({ zone, onClose }) => {
     }
 
     setDistricts([...districts, dist]);
-    setDistrictInput('');
+    setSelectedDistName('');
   };
 
   const handleRemoveDistrict = (distToRemove: string) => {
@@ -65,7 +80,6 @@ export const DeliveryZoneModal: React.FC<Props> = ({ zone, onClose }) => {
     try {
       setLoading(true);
       const payload = {
-        name: formData.name,
         districts,
         deliveryCost: Number(formData.deliveryCost),
         estimatedDays: Number(formData.estimatedDays),
@@ -88,7 +102,7 @@ export const DeliveryZoneModal: React.FC<Props> = ({ zone, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
           <h2 className="text-xl font-bold text-gray-900">
             {zone ? 'Editar Zona de Envío' : 'Nueva Zona de Envío'}
@@ -103,19 +117,6 @@ export const DeliveryZoneModal: React.FC<Props> = ({ zone, onClose }) => {
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
           
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre de la Zona *</label>
-            <input
-              type="text"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Ej. Lima Metropolitana Norte"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Costo de Envío (S/) *</label>
@@ -147,23 +148,44 @@ export const DeliveryZoneModal: React.FC<Props> = ({ zone, onClose }) => {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Distritos Cubiertos *</label>
-            <p className="text-xs text-gray-500 mb-2">Escribe un distrito y presiona Enter para agregarlo.</p>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={districtInput}
-                onChange={(e) => setDistrictInput(e.target.value)}
-                onKeyDown={handleAddDistrict}
-                placeholder="Ej. Miraflores"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleAddDistrict}
-                className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition"
+            <p className="text-xs text-gray-500 mb-2">Selecciona un distrito para agregarlo a la zona.</p>
+            <div className="grid grid-cols-1 gap-2 mb-2 sm:grid-cols-3">
+              <select 
+                value={selectedDeptName} 
+                onChange={(e) => { setSelectedDeptName(e.target.value); setSelectedProvName(''); setSelectedDistName(''); }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent outline-none bg-white text-sm"
               >
-                Agregar
-              </button>
+                <option value="">Departamento...</option>
+                {departments.map((d: any) => <option key={d.name} value={d.name}>{d.name}</option>)}
+              </select>
+              <select 
+                value={selectedProvName} 
+                onChange={(e) => { setSelectedProvName(e.target.value); setSelectedDistName(''); }}
+                disabled={!selectedDeptName}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent outline-none bg-white disabled:bg-gray-100 disabled:opacity-70 text-sm"
+              >
+                <option value="">Provincia...</option>
+                {provinces.map((p: any) => <option key={p.name} value={p.name}>{p.name}</option>)}
+              </select>
+              <div className="flex gap-2">
+                <select 
+                  value={selectedDistName} 
+                  onChange={(e) => setSelectedDistName(e.target.value)}
+                  disabled={!selectedProvName}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-accent outline-none bg-white disabled:bg-gray-100 disabled:opacity-70 text-sm"
+                >
+                  <option value="">Distrito...</option>
+                  {districtsData.map((d: any) => <option key={d.name} value={d.name}>{d.name}</option>)}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleAddDistrict}
+                  disabled={!selectedDistName}
+                  className="px-3 py-2 bg-brand-accent text-white font-medium rounded-lg hover:bg-black transition disabled:opacity-50 text-sm"
+                >
+                  Add
+                </button>
+              </div>
             </div>
             
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 min-h-[100px] flex flex-wrap gap-2 items-start">

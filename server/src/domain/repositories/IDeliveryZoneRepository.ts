@@ -7,5 +7,4 @@ export interface IDeliveryZoneRepository {
   create(data: Omit<DeliveryZone, 'id' | 'createdAt' | 'updatedAt'>): Promise<DeliveryZone>;
   update(id: number, data: Partial<Omit<DeliveryZone, 'id' | 'createdAt' | 'updatedAt'>>): Promise<DeliveryZone>;
   delete(id: number): Promise<void>;
-  findByName(name: string): Promise<DeliveryZone | null>;
 }
