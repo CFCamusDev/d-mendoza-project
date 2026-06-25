@@ -20,6 +20,7 @@ import ClientLinkPage from '../features/admin/ClientLinkPage';
 import BannersPage from '../features/admin/BannersPage';
 import DeliveryZonesPage from '../features/admin/delivery-zones/DeliveryZonesPage';
 import ProductsAdminPage from '../features/admin/ProductsAdminPage';
+import DashboardPage from '../features/admin/DashboardPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
 import { ProfileLayout } from '../features/ecommerce/profile/components/ProfileLayout';
@@ -136,7 +137,15 @@ export const AppRouter = () => {
       <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><AdminShell /></ProtectedRoute>}>
         <Route
           path="/admin"
-          element={<Navigate to="/admin/inventory/stock" replace />}
+          element={<Navigate to="/admin/dashboard" replace />}
+        />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute allowedPermissions={['sales:read']}>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/admin/employees"
