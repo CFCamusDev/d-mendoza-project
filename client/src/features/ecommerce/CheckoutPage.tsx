@@ -4,6 +4,7 @@ import { useCart } from './hooks/useCart';
 import { ShoppingCart, MapPin, CreditCard, CheckCircle, ChevronRight, Loader2, Plus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { CouponInput } from './components/CouponInput';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { AddressFormModal } from './profile/components/AddressFormModal';
 import type { AddressFormData } from './profile/schemas/address.schema';
@@ -22,6 +23,7 @@ export const CheckoutPage = () => {
   const { cart, isLoading } = useCart();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
@@ -296,13 +298,26 @@ export const CheckoutPage = () => {
                     <span className="font-medium text-gray-900 text-xs">Selecciona dirección</span>
                   )}
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Descuento (Cupón)</span>
+                    <span className="font-medium">-S/ {discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="border-t pt-4 mb-8">
+              <CouponInput 
+                subtotal={cart.subtotal} 
+                onCouponApplied={(amount) => {
+                  setDiscountAmount(amount);
+                }} 
+              />
+
+              <div className="border-t pt-4 mb-8 mt-4">
                 <div className="flex justify-between items-center text-lg">
                   <span className="font-bold text-gray-900">Total</span>
                   <span className="font-black text-brand-accent text-xl">
-                    S/ {calculatedTotal !== null ? calculatedTotal.toFixed(2) : cart.subtotal.toFixed(2)}
+                    S/ {calculatedTotal !== null ? Math.max(0, calculatedTotal - discountAmount).toFixed(2) : Math.max(0, cart.subtotal - discountAmount).toFixed(2)}
                   </span>
                 </div>
               </div>
