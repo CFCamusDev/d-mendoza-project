@@ -1,7 +1,8 @@
-import { Order } from '@domain/entities/Order';
+import { Order, OrderStatus } from '@domain/entities/Order';
 
 export interface IOrderRepository {
   findById(id: number): Promise<Order | null>;
+  updateStatus(id: number, status: OrderStatus): Promise<Order>;
   findByPaymentIntentId(paymentIntentId: string): Promise<Order | null>;
   createOrderWithTransaction(
     orderData: {

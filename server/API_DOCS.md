@@ -3802,4 +3802,73 @@ Genera y descarga el comprobante de pago en formato PDF del pedido especificado,
 }
 ```
 
+### PATCH /api/v1/admin/orders/:id/status
+
+Actualiza el estado de un pedido y notifica automáticamente al cliente por correo electrónico vía Resend. Adicionalmente, audita de forma transparente el cambio mediante una extensión de Prisma Client que escribe en la tabla `OrderStatusLog`.
+
+#### 1. Especificación del Endpoint
+
+| Método  | Ruta                                   | Autenticación      | Rol Requerido  | Permiso Requerido |
+| :------ | :------------------------------------- | :----------------- | :------------- | :---------------- |
+| `PATCH` | `/api/v1/admin/orders/:id/status`      | JWT `Bearer Token` | Administrador  | `roles:manage`    |
+
+#### 2. Parámetros de Ruta (Path Params)
+
+| Parámetro | Tipo     | Requerido | Descripción |
+| :-------- | :------- | :-------- | :---------- |
+| `id`      | `number` | Sí        | ID de la orden de la cual se desea actualizar el estado. |
+
+#### 3. Cuerpo de la Petición (Request Body)
+
+- **Content-Type**: `application/json`
+
+```json
+{
+  "status": "SHIPPED"
+}
+```
+
+*Valores válidos para `status`:* `PENDING`, `PAID`, `SHIPPED`, `DELIVERED`, `CANCELLED`.
+
+#### 4. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Estado del pedido actualizado correctamente",
+  "data": {
+    "id": 10,
+    "userId": 1,
+    "status": "SHIPPED",
+    "total": 115.00,
+    "shippingCost": 15.00,
+    "addressSnapshot": { "alias": "Casa", "fullAddress": "Av Larco 123", "district": "Miraflores" },
+    "paymentIntentId": "pi_test_123",
+    "createdAt": "2026-06-25T15:00:00.000Z",
+    "updatedAt": "2026-06-25T15:45:00.000Z"
+  }
+}
+```
+
+##### Solicitud Incorrecta (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Estado de pedido inválido. Los permitidos son: PENDING, PAID, SHIPPED, DELIVERED, CANCELLED"
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "Pedido no encontrado"
+}
+```
+
+
 

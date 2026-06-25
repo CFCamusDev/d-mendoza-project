@@ -35,6 +35,12 @@ export class ListUserOrdersUseCase {
           variantSku: item.variantSku,
           productName: item.productName,
         })),
+        statusLogs: order.statusLogs?.map((log) => ({
+          id: log.id,
+          status: log.status,
+          changedAt: log.changedAt,
+          changedBy: log.changedBy,
+        })),
       })),
       total: totalCount,
       page,

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { JwtService } from '@infrastructure/services/JwtService';
 import prisma from '@infrastructure/database/prisma';
+import { setContextUser } from '@infrastructure/context/RequestContext';
 
 const jwtService = new JwtService();
 
@@ -34,6 +35,7 @@ export const requirePermission = (requiredPermission: string) => {
         email: payload.email,
         role: payload.role,
       };
+      setContextUser(payload.userId, payload.email);
 
       // 3. Fetch deep relational tree: User -> Roles -> Permissions
       const dbUser = await prisma.user.findUnique({
@@ -139,6 +141,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       email: payload.email,
       role: payload.role,
     };
+    setContextUser(payload.userId, payload.email);
 
     next();
   } catch (error: any) {
@@ -186,6 +189,7 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
         email: payload.email,
         role: payload.role,
       };
+      setContextUser(payload.userId, payload.email);
     }
 
     next();

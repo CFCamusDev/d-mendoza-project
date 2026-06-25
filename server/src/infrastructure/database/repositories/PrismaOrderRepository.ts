@@ -1,6 +1,6 @@
 import prisma from '@infrastructure/database/prisma';
 import { IOrderRepository } from '@domain/repositories/IOrderRepository';
-import { Order, OrderItem } from '@domain/entities/Order';
+import { Order, OrderItem, OrderStatus } from '@domain/entities/Order';
 
 export class PrismaOrderRepository implements IOrderRepository {
   private toDomain(record: any): Order {
@@ -15,6 +15,13 @@ export class PrismaOrderRepository implements IOrderRepository {
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
       items: record.items?.map((item: any) => this.toItemDomain(item)),
+      statusLogs: record.statusLogs?.map((log: any) => ({
+        id: log.id,
+        orderId: log.orderId,
+        status: log.status,
+        changedAt: log.changedAt,
+        changedBy: log.changedBy,
+      })),
     };
   }
 
@@ -43,6 +50,7 @@ export class PrismaOrderRepository implements IOrderRepository {
             },
           },
         },
+        statusLogs: true,
       },
     });
     return record ? this.toDomain(record) : null;
@@ -61,6 +69,7 @@ export class PrismaOrderRepository implements IOrderRepository {
             },
           },
         },
+        statusLogs: true,
       },
     });
     return record ? this.toDomain(record) : null;
@@ -142,6 +151,7 @@ export class PrismaOrderRepository implements IOrderRepository {
               },
             },
           },
+          statusLogs: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -158,5 +168,26 @@ export class PrismaOrderRepository implements IOrderRepository {
       orders: records.map((r) => this.toDomain(r)),
       totalCount,
     };
+  }
+
+  async updateStatus(id: number, status: OrderStatus): Promise<Order> {
+    const record = await prisma.order.update({
+      where: { id },
+      data: { status: status as any },
+      include: {
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
+        statusLogs: true,
+      },
+    });
+
+    return this.toDomain(record);
   }
 }

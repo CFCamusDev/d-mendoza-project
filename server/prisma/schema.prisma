@@ -679,6 +679,7 @@ model Order {
   addressSnapshot Json
   paymentIntentId String      @unique
   items           OrderItem[]
+  statusLogs      OrderStatusLog[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -696,4 +697,15 @@ model OrderItem {
 
   @@index([orderId])
   @@index([variantId])
+}
+
+model OrderStatusLog {
+  id        Int         @id @default(autoincrement())
+  orderId   Int
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  changedAt DateTime    @default(now())
+  changedBy String
+
+  @@index([orderId])
 }
