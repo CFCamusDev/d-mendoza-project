@@ -3,15 +3,16 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { ProductFilters } from './components/ProductFilters';
 import { WishlistButton } from './components/WishlistButton';
-import { searchProducts } from './services/search.service';
-import type { SearchProductItem } from './types/search.types';
+import { searchProducts, getCategories } from './services/search.service';
+import type { SearchProductItem, Category } from './types/search.types';
 import { toast } from 'react-hot-toast';
-import { ShoppingCart, Loader2, Grid3X3, ArrowUpDown } from 'lucide-react';
+import { ShoppingCart, Loader2, Grid3X3, ArrowUpDown, Search } from 'lucide-react';
 import { VariantSelectionModal } from './components/VariantSelectionModal';
 
 export const CatalogPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<SearchProductItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPaginationLoading, setIsPaginationLoading] = useState(false);
@@ -28,6 +29,7 @@ export const CatalogPage: React.FC = () => {
   const minPrice = searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined;
   const maxPrice = searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined;
   const branchId = searchParams.get('branchId') ? Number(searchParams.get('branchId')) : undefined;
+  const talla = searchParams.get('talla') || undefined;
   const orderBy = (searchParams.get('orderBy') as 'relevance' | 'newest' | 'price_asc' | 'price_desc') || 'relevance';
 
   // Set document title
@@ -64,6 +66,21 @@ export const CatalogPage: React.FC = () => {
 
     fetchInitialResults();
   }, [q, categoryId, brandId, gender, minPrice, maxPrice, branchId, orderBy]);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategoriesData = async () => {
+      try {
+        const response = await getCategories();
+        if (response.success) {
+          setCategories(response.data);
+        }
+      } catch (err) {
+        console.error('Error fetching categories in CatalogPage:', err);
+      }
+    };
+    fetchCategoriesData();
+  }, []);
 
   // Load more pages (pagination)
   const handleLoadMore = async () => {
@@ -102,6 +119,7 @@ export const CatalogPage: React.FC = () => {
     minPrice?: number;
     maxPrice?: number;
     branchId?: number;
+    talla?: string;
   }) => {
     const nextParams = new URLSearchParams();
     if (q) nextParams.set('q', q);
@@ -111,6 +129,7 @@ export const CatalogPage: React.FC = () => {
     if (newFilters.minPrice !== undefined) nextParams.set('minPrice', newFilters.minPrice.toString());
     if (newFilters.maxPrice !== undefined) nextParams.set('maxPrice', newFilters.maxPrice.toString());
     if (newFilters.branchId !== undefined) nextParams.set('branchId', newFilters.branchId.toString());
+    if (newFilters.talla !== undefined) nextParams.set('talla', newFilters.talla);
     nextParams.set('orderBy', orderBy);
     setSearchParams(nextParams);
   };
@@ -125,6 +144,23 @@ export const CatalogPage: React.FC = () => {
     const nextParams = new URLSearchParams();
     if (q) nextParams.set('q', q);
     nextParams.set('orderBy', 'relevance');
+    setSearchParams(nextParams);
+  };
+
+  // Local state for inline search input
+  const [localSearch, setLocalSearch] = useState(q);
+  useEffect(() => {
+    setLocalSearch(q);
+  }, [q]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const nextParams = new URLSearchParams(searchParams);
+    if (localSearch.trim()) {
+      nextParams.set('q', localSearch.trim());
+    } else {
+      nextParams.delete('q');
+    }
     setSearchParams(nextParams);
   };
 
@@ -151,43 +187,122 @@ export const CatalogPage: React.FC = () => {
     }
   };
 
+  const handleCategoryPillClick = (catId?: number) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (catId !== undefined) {
+      nextParams.set('categoryId', catId.toString());
+    } else {
+      nextParams.delete('categoryId');
+    }
+    setSearchParams(nextParams);
+  };
+
   return (
-    <div className="min-h-screen bg-[#F7F7F5] pb-16">
+    <div className="min-h-screen bg-white pb-20">
       {/* Top Banner Context */}
-      <div className="bg-white border-b border-slate-100 pt-10 pb-8 mb-8 relative">
-        <div className="max-w-[1280px] mx-auto px-4 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
-              {q ? `Resultados para "${q}"` : 'Nuestra Colección'}
-            </h1>
-            <p className="text-slate-400 text-sm mt-2 font-medium">
-              {isLoading ? 'Cargando prendas...' : `${products.length} estilos para ti`}
-            </p>
+      <div className="pt-12 pb-8 max-w-[1280px] mx-auto px-4">
+        <div className="flex flex-col gap-6 border-b border-neutral-100 pb-6">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Colección</span>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-neutral-900 tracking-tight mt-1 uppercase">
+                {q ? `Resultados: "${q}"` : 'Todos los productos'}
+              </h1>
+            </div>
+
+            <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto">
+              <span className="text-neutral-400 text-xs font-medium">
+                {isLoading ? 'Cargando...' : `${products.length} artículos`}
+              </span>
+              
+              {/* Sort Selection */}
+              <div className="flex items-center gap-1.5 border-b border-neutral-200 pb-1 hover:border-neutral-800 transition-colors">
+                <ArrowUpDown className="w-3 h-3 text-neutral-400" />
+                <select
+                  value={orderBy}
+                  onChange={(e) => handleOrderByChange(e.target.value as any)}
+                  className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 bg-transparent border-none outline-none p-0 pr-6 focus:ring-0 cursor-pointer select-none"
+                  style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
+                >
+                  <option value="relevance">Relevancia</option>
+                  <option value="newest">Lo más nuevo</option>
+                  <option value="price_asc">Menor Precio</option>
+                  <option value="price_desc">Mayor Precio</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          {/* Sort Selection */}
-          <div className="flex items-center gap-3 self-start md:self-auto bg-slate-50 border border-slate-200 rounded-full px-4 py-2 hover:border-brand-accent transition-colors">
-            <ArrowUpDown className="w-4 h-4 text-slate-400" />
-            <select
-              value={orderBy}
-              onChange={(e) => handleOrderByChange(e.target.value as any)}
-              className="text-xs font-bold text-slate-700 bg-transparent border-none outline-none focus:ring-0 cursor-pointer"
-            >
-              <option value="relevance">Relevancia</option>
-              <option value="newest">Lo más nuevo</option>
-              <option value="price_asc">Menor Precio</option>
-              <option value="price_desc">Mayor Precio</option>
-            </select>
-          </div>
+          {/* Inline Search Bar */}
+          <form onSubmit={handleSearchSubmit} className="relative max-w-md w-full">
+            <input
+              type="text"
+              placeholder="Buscar prendas en el catálogo..."
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              className="w-full bg-neutral-50 text-xs font-bold text-neutral-800 rounded-full py-3 pl-10 pr-10 border border-neutral-200 focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent/20 transition-all placeholder-neutral-400"
+            />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            {localSearch && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLocalSearch('');
+                  const nextParams = new URLSearchParams(searchParams);
+                  nextParams.delete('q');
+                  setSearchParams(nextParams);
+                }}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-neutral-400 hover:text-brand-accent"
+              >
+                ✕
+              </button>
+            )}
+          </form>
+
+          {/* Horizontal Category Strip (Pills) */}
+          {categories.length > 0 && (
+            <div className="w-full">
+              <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => handleCategoryPillClick(undefined)}
+                  className={`text-[10px] font-bold uppercase tracking-wider py-2 px-4 rounded-full border transition-all ${
+                    !categoryId
+                      ? 'bg-brand-accent border-brand-accent text-white font-black'
+                      : 'bg-transparent border-neutral-200 text-neutral-600 hover:border-brand-accent hover:text-brand-accent'
+                  }`}
+                >
+                  Todos
+                </button>
+                {categories.map((cat) => {
+                  const isActive = categoryId === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => handleCategoryPillClick(cat.id)}
+                      className={`text-[10px] font-bold uppercase tracking-wider py-2 px-4 rounded-full border transition-all ${
+                        isActive
+                          ? 'bg-brand-accent border-brand-accent text-white font-black'
+                          : 'bg-transparent border-neutral-200 text-neutral-600 hover:border-brand-accent hover:text-brand-accent'
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="max-w-[1280px] mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Side Filters Panel */}
           <div className="md:col-span-1">
             <ProductFilters
-              filters={{ categoryId, brandId, gender, minPrice, maxPrice, branchId }}
+              filters={{ categoryId, brandId, gender, minPrice, maxPrice, branchId, talla }}
               onFilterChange={updateFilters}
               onClearFilters={handleClearFilters}
             />
@@ -196,39 +311,39 @@ export const CatalogPage: React.FC = () => {
           {/* Results Grid */}
           <div className="md:col-span-3 flex flex-col">
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 flex flex-col h-[400px]">
-                    <div className="aspect-[4/5] bg-slate-100 animate-pulse"></div>
-                    <div className="p-5 flex flex-col gap-3 flex-grow">
-                      <div className="w-16 h-4 bg-slate-100 animate-pulse rounded"></div>
-                      <div className="w-3/4 h-5 bg-slate-100 animate-pulse rounded"></div>
-                      <div className="w-full h-3 bg-slate-100 animate-pulse rounded mt-auto"></div>
+                  <div key={i} className="bg-transparent flex flex-col h-[400px]">
+                    <div className="aspect-[4/5] bg-neutral-100 animate-pulse rounded-sm"></div>
+                    <div className="pt-4 flex flex-col gap-2 flex-grow">
+                      <div className="w-16 h-3 bg-neutral-100 animate-pulse rounded"></div>
+                      <div className="w-3/4 h-4 bg-neutral-100 animate-pulse rounded"></div>
+                      <div className="w-full h-3 bg-neutral-100 animate-pulse rounded mt-auto"></div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : error ? (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-3xl p-6 text-center text-sm font-semibold">
+              <div className="bg-red-50 text-red-700 p-6 text-center text-sm font-semibold rounded">
                 {error}
               </div>
             ) : products.length === 0 ? (
-              <div className="bg-white border border-slate-100 rounded-3xl p-16 text-center shadow-sm">
-                <Grid3X3 className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-slate-800 mb-2">No se encontraron productos</h3>
-                <p className="text-slate-400 text-xs max-w-sm mx-auto mb-6">
+              <div className="border border-neutral-100 rounded p-16 text-center">
+                <Grid3X3 className="w-12 h-12 text-neutral-200 mx-auto mb-4" />
+                <h3 className="text-base font-bold text-neutral-800 mb-1">No se encontraron productos</h3>
+                <p className="text-neutral-400 text-xs max-w-sm mx-auto mb-6">
                   Intenta cambiar las palabras clave de tu búsqueda o restablecer los filtros para ver más opciones.
                 </p>
                 <button
                   onClick={handleClearFilters}
-                  className="px-6 py-3 bg-slate-800 text-white rounded-full text-xs font-bold hover:bg-black transition-all shadow-sm"
+                  className="px-6 py-2.5 bg-neutral-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-neutral-800 transition-colors"
                 >
                   Restablecer Filtros
                 </button>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
                   {products.map((product) => {
                     const mainImage = product.images.find(img => img.isMain)?.url || product.images[0]?.url || 'https://via.placeholder.com/400x500?text=No+Image';
                     const secondaryImage = product.images.find(img => !img.isMain)?.url;
@@ -239,38 +354,34 @@ export const CatalogPage: React.FC = () => {
                       <Link
                         key={product.id}
                         to={`/products/${product.slug}`}
-                        className="group bg-white rounded-2xl overflow-hidden shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-slate-100 flex flex-col relative"
+                        className="group bg-transparent flex flex-col relative overflow-hidden transition-all duration-300"
                       >
                         {/* Image Wrapper */}
-                        <div className="relative aspect-[4/5] overflow-hidden bg-slate-50">
+                        <div className="relative aspect-[4/5] overflow-hidden bg-neutral-50 rounded-sm">
                           <img
                             src={mainImage}
                             alt={product.name}
-                            className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ${secondaryImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'}`}
+                            className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ${secondaryImage ? 'group-hover:opacity-0' : 'group-hover:scale-102'}`}
                           />
                           {secondaryImage && (
                             <img
                               src={secondaryImage}
                               alt={`${product.name} alternate`}
-                              className="absolute inset-0 w-full h-full object-cover object-center opacity-0 group-hover:opacity-100 transition-all duration-700 scale-105 group-hover:scale-100"
+                              className="absolute inset-0 w-full h-full object-cover object-center opacity-0 group-hover:opacity-100 transition-all duration-750 scale-102 group-hover:scale-100"
                             />
                           )}
 
                           {/* Stock status badge */}
-                          {isOutOfStock ? (
-                            <div className="absolute top-4 left-4 z-10 bg-red-500/95 backdrop-blur text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-sm">
+                          {isOutOfStock && (
+                            <span className="absolute top-3 left-3 z-10 bg-neutral-900/90 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-1">
                               Agotado
-                            </div>
-                          ) : (
-                            <div className="absolute top-4 left-4 z-10 bg-emerald-500/95 backdrop-blur text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-sm">
-                              En Stock
-                            </div>
+                            </span>
                           )}
 
                           {/* Wishlist floating toggle */}
                           {firstVariant && (
-                            <div className="absolute top-4 right-4 z-20 bg-white/95 backdrop-blur-sm rounded-full shadow hover:scale-110 active:scale-95 transition-transform" onClick={(e) => e.preventDefault()}>
-                              <WishlistButton variantId={firstVariant.id} size={18} />
+                            <div className="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-sm hover:scale-110 active:scale-95 transition-transform" onClick={(e) => e.preventDefault()}>
+                              <WishlistButton variantId={firstVariant.id} size={15} />
                             </div>
                           )}
 
@@ -283,38 +394,37 @@ export const CatalogPage: React.FC = () => {
                                   setSelectedProductSlug(product.slug);
                                   setIsModalOpen(true);
                                 }}
-                                className="w-full bg-brand-accent/95 backdrop-blur text-white font-bold text-[11px] uppercase tracking-wider py-3.5 rounded-xl shadow-lg hover:bg-black transition-colors flex items-center justify-center gap-2"
+                                className="w-full bg-white text-neutral-900 border border-neutral-200 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 font-bold text-[10px] uppercase tracking-widest py-3 shadow-md transition-all duration-300 flex items-center justify-center gap-2"
                               >
-                                <ShoppingCart size={16} />
+                                <ShoppingCart size={13} />
                                 Compra Rápida
                               </button>
                             </div>
                           )}
                         </div>
 
-                        {/* Product Detail Info */}
-                        <div className="p-5 flex flex-col flex-grow bg-white z-10 relative">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded uppercase tracking-wider">
-                              {formatGender(product.gender)}
-                            </span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                              {product.brand?.name}
-                            </span>
-                          </div>
-
-                          <h3 className="text-sm font-black text-slate-800 mb-1 line-clamp-2 leading-tight group-hover:text-brand-accent transition-colors">
-                            {product.name}
-                          </h3>
-
-                          <p className="text-[11px] text-slate-400 line-clamp-1 mb-4">
-                            {product.description}
-                          </p>
-
-                          <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
-                            <span className="text-sm font-black text-brand-accent">
-                              {getProductPriceString(product)}
-                            </span>
+                        {/* Product Detail Info (Inline Layout) */}
+                        <div className="pt-4 flex flex-col flex-grow bg-transparent relative">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1 min-w-0">
+                              <span className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest leading-none mb-1">
+                                {product.brand?.name}
+                              </span>
+                              <h3 className="text-[13px] font-bold text-neutral-800 mb-1 line-clamp-1 leading-tight group-hover:text-brand-accent transition-colors">
+                                {product.name}
+                              </h3>
+                              <p className="text-[11px] text-neutral-400 line-clamp-1">
+                                {product.description}
+                              </p>
+                            </div>
+                            <div className="shrink-0 text-right">
+                              <span className="text-xs font-bold text-neutral-900 block">
+                                {getProductPriceString(product)}
+                              </span>
+                              <span className="text-[9px] font-semibold text-neutral-500 uppercase tracking-wider block mt-1">
+                                {formatGender(product.gender)}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </Link>
@@ -328,11 +438,11 @@ export const CatalogPage: React.FC = () => {
                     <button
                       onClick={handleLoadMore}
                       disabled={isPaginationLoading}
-                      className="px-8 py-3.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 rounded-full text-xs font-bold shadow-sm flex items-center gap-2 hover:bg-slate-50 transition-all disabled:opacity-50"
+                      className="px-8 py-3 bg-transparent border border-neutral-200 hover:border-neutral-900 text-neutral-800 text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-neutral-50 transition-all disabled:opacity-50"
                     >
                       {isPaginationLoading ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin text-brand-accent" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-accent" />
                           Cargando más...
                         </>
                       ) : (
