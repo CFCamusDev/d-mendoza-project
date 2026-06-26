@@ -17,6 +17,7 @@ import { clientService } from './services/clientService';
 import type { Client } from './types/client';
 import ConfirmModal from './components/ConfirmModal';
 import { EditClientModal } from './components/EditClientModal';
+import { ExportButton } from '@/shared/components/ExportButton';
 
 export const ClientsPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -145,6 +146,9 @@ export const ClientsPage: React.FC = () => {
           <p className="text-[#3F3F3F]/60 mt-1">
             Consulta y gestiona de forma unificada los clientes registrados desde el POS físico y la tienda E-commerce.
           </p>
+        </div>
+        <div>
+          <ExportButton type="clients" />
         </div>
       </div>
 

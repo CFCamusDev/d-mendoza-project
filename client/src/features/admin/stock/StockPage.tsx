@@ -4,6 +4,7 @@ import { useStock } from './hooks/useStock';
 import { useBranches } from '../branches/hooks/useBranches';
 import { StockTable } from './components/StockTable';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
+import { ExportButton } from '@/shared/components/ExportButton';
 
 export const StockPage: React.FC = () => {
   useDocumentTitle('Control de Stock y Existencias');
@@ -57,6 +58,9 @@ export const StockPage: React.FC = () => {
           <p className="text-sm text-[#6B6B6B] mt-1 max-w-2xl">
             Monitorea el inventario consolidado global y desglosado por cada sede en tiempo real. Configura alertas personalizadas para reabastecimiento rápido.
           </p>
+        </div>
+        <div>
+          <ExportButton type="inventory" />
         </div>
       </div>
 
