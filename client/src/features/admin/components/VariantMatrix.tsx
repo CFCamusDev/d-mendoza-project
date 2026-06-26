@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useVariants } from '../hooks/useVariants';
 import type { ProductVariant } from '../types/variant';
+import axiosInstance from '@/shared/api/axiosInstance';
 
 interface VariantMatrixProps {
   productId: number;
@@ -10,6 +11,14 @@ interface VariantMatrixProps {
 export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, productCode }) => {
   const { variants, loading, fetchVariants, generateVariants, updateVariant } = useVariants(productId);
 
+  // DB Attributes types
+  interface AttributeValue { id: number; value: string; isActive: boolean; }
+  interface Attribute { id: number; name: string; isActive: boolean; values: AttributeValue[]; }
+
+  // Attributes from server
+  const [dbAttributes, setDbAttributes] = useState<Attribute[]>([]);
+  const [loadingAttrs, setLoadingAttrs] = useState<boolean>(true);
+
   // Form visibility state
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   
@@ -17,13 +26,11 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
   const [creationMode, setCreationMode] = useState<'automatic' | 'manual'>('automatic');
 
   // States for automatic generation
-  const [tallasInput, setTallasInput] = useState<string>('S, M, L');
-  const [coloresInput, setColoresInput] = useState<string>('NEGRO, BLANCO');
+  const [selectedAutoValues, setSelectedAutoValues] = useState<Record<string, string[]>>({});
   const [basePrice, setBasePrice] = useState<number>(99.90);
 
   // States for manual input
-  const [manualTalla, setManualTalla] = useState<string>('');
-  const [manualColor, setManualColor] = useState<string>('');
+  const [selectedManualValues, setSelectedManualValues] = useState<Record<string, string>>({});
   const [manualPrice, setManualPrice] = useState<number>(99.90);
   const [manualSku, setManualSku] = useState<string>('');
 
@@ -43,37 +50,92 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
     }
   }, [variants.length]);
 
+  // Fetch attributes
+  useEffect(() => {
+    const fetchDbAttributes = async () => {
+      try {
+        const { data } = await axiosInstance.get('/v1/attributes');
+        if (data.success) {
+          // Filter only active attributes that have at least one active value
+          const activeAttrs = (data.data as Attribute[])
+            .filter((attr) => attr.isActive)
+            .map((attr) => ({
+              ...attr,
+              values: attr.values.filter((val) => val.isActive),
+            }))
+            .filter((attr) => attr.values.length > 0);
+          setDbAttributes(activeAttrs);
+        }
+      } catch (err) {
+        console.error('Error al cargar atributos para variantes:', err);
+      } finally {
+        setLoadingAttrs(false);
+      }
+    };
+    fetchDbAttributes();
+  }, []);
+
+  const handleAutoCheckboxChange = (attrKey: string, value: string, checked: boolean) => {
+    setSelectedAutoValues((prev) => {
+      const current = prev[attrKey] || [];
+      const updated = checked
+        ? [...current, value]
+        : current.filter((v) => v !== value);
+      return { ...prev, [attrKey]: updated };
+    });
+  };
+
+  const handleManualSelectChange = (attrKey: string, value: string) => {
+    setSelectedManualValues((prev) => ({
+      ...prev,
+      [attrKey]: value,
+    }));
+  };
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const tallas = tallasInput
-      .split(',')
-      .map((t) => t.trim().toUpperCase())
-      .filter((t) => t.length > 0);
-    const colores = coloresInput
-      .split(',')
-      .map((c) => c.trim().toUpperCase())
-      .filter((c) => c.length > 0);
+    
+    // Check that we have at least one attribute with a selected value
+    const attributesPayload: Record<string, string[]> = {};
+    Object.entries(selectedAutoValues).forEach(([key, vals]) => {
+      if (vals.length > 0) {
+        attributesPayload[key] = vals;
+      }
+    });
 
-    if (tallas.length === 0 || colores.length === 0) {
-      alert('Debes proporcionar al menos una Talla y un Color.');
+    if (Object.keys(attributesPayload).length === 0) {
+      alert('Debes seleccionar al menos un valor de algún atributo para generar variantes.');
       return;
     }
 
     await generateVariants({
-      attributes: { talla: tallas, color: colores },
+      attributes: attributesPayload,
       basePrice,
     });
   };
 
   const handleGenerateManual = async (e: React.FormEvent) => {
     e.preventDefault();
-    const tallaClean = manualTalla.trim().toUpperCase();
-    const colorClean = manualColor.trim().toUpperCase();
 
-    if (!tallaClean || !colorClean) {
-      alert('Debes proporcionar una Talla y un Color.');
+    // Check that all active attributes have a selected value
+    const attributesPayload: Record<string, string[]> = {};
+    let missingAttribute = false;
+
+    dbAttributes.forEach((attr) => {
+      const attrKey = attr.name.toLowerCase();
+      const val = selectedManualValues[attrKey];
+      if (!val) {
+        missingAttribute = true;
+      } else {
+        attributesPayload[attrKey] = [val];
+      }
+    });
+
+    if (missingAttribute) {
+      alert('Debes seleccionar un valor para cada uno de los atributos activos.');
       return;
     }
+
     if (manualPrice <= 0) {
       alert('El precio debe ser mayor a 0.');
       return;
@@ -81,17 +143,19 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
 
     // Call generateVariants with a single combination
     const newVariants = await generateVariants({
-      attributes: { talla: [tallaClean], color: [colorClean] },
+      attributes: attributesPayload,
       basePrice: manualPrice,
     });
 
     if (newVariants) {
-      // Find the newly created variant (we match by attribute values)
-      const newVar = newVariants.find(
-        (v) =>
-          v.attributesJson.talla?.toUpperCase() === tallaClean &&
-          v.attributesJson.color?.toUpperCase() === colorClean
-      );
+      // Find the newly created variant (we match all attribute values)
+      const newVar = newVariants.find((v) => {
+        return dbAttributes.every((attr) => {
+          const attrKey = attr.name.toLowerCase();
+          const expectedVal = selectedManualValues[attrKey];
+          return v.attributesJson[attrKey]?.toUpperCase() === expectedVal.toUpperCase();
+        });
+      });
 
       if (newVar && manualSku.trim()) {
         const skuClean = manualSku.trim().toUpperCase();
@@ -101,9 +165,8 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
         });
       }
 
-      // Clear inputs
-      setManualTalla('');
-      setManualColor('');
+      // Clear manual selections
+      setSelectedManualValues({});
       setManualSku('');
     }
   };
@@ -195,72 +258,113 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
           </div>
 
           {creationMode === 'automatic' ? (
-            <form onSubmit={handleGenerate}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-xs font-semibold text-brand-text uppercase mb-1">Tallas (Separar con comas)</label>
-                  <input
-                    type="text"
-                    value={tallasInput}
-                    onChange={(e) => setTallasInput(e.target.value)}
-                    placeholder="S, M, L"
-                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
+            <form onSubmit={handleGenerate} className="space-y-6">
+              {loadingAttrs ? (
+                <div className="text-sm text-brand-text">Cargando atributos...</div>
+              ) : dbAttributes.length === 0 ? (
+                <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                  No hay atributos activos registrados en el sistema. Regístralos en la sección de <a href="/admin/attributes" className="underline font-bold">Gestión de Atributos</a>.
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-brand-text uppercase mb-1">Colores (Separar con comas)</label>
-                  <input
-                    type="text"
-                    value={coloresInput}
-                    onChange={(e) => setColoresInput(e.target.value)}
-                    placeholder="NEGRO, BLANCO"
-                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
+              ) : (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-brand-accent uppercase tracking-wider">Valores a combinar para las variantes:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {dbAttributes.map((attr) => {
+                      const attrKey = attr.name.toLowerCase();
+                      return (
+                        <div key={attr.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50/50">
+                          <label className="block text-xs font-extrabold text-brand-accent uppercase mb-2 tracking-wider">
+                            {attr.name}
+                          </label>
+                          {attr.values.length === 0 ? (
+                            <p className="text-xs text-gray-400 italic">Sin valores registrados</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-3">
+                              {attr.values.map((val) => {
+                                const isChecked = (selectedAutoValues[attrKey] || []).includes(val.value);
+                                return (
+                                  <label key={val.id} className="inline-flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 cursor-pointer hover:border-brand-accent transition select-none">
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={(e) => handleAutoCheckboxChange(attrKey, val.value, e.target.checked)}
+                                      className="rounded border-gray-300 text-brand-accent focus:ring-brand-accent"
+                                    />
+                                    <span>{val.value}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4 border-t border-gray-100">
+                <div className="md:col-span-2">
                   <label className="block text-xs font-semibold text-brand-text uppercase mb-1">Precio Base ($)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={basePrice}
                     onChange={(e) => setBasePrice(parseFloat(e.target.value))}
-                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                    className="w-full text-sm border border-gray-300 rounded px-3 py-2.5 focus:ring-1 focus:ring-brand-accent focus:border-brand-accent outline-none"
                   />
+                </div>
+                <div>
+                  <button
+                    type="submit"
+                    disabled={loading || dbAttributes.length === 0}
+                    className="w-full bg-brand-accent hover:opacity-90 text-white text-sm font-bold py-2.5 rounded-xl transition duration-200 disabled:opacity-50"
+                  >
+                    {loading ? 'Generando...' : 'Generar Combinaciones'}
+                  </button>
                 </div>
               </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-5 w-full bg-brand-accent hover:opacity-90 text-white text-sm font-medium py-2.5 rounded transition duration-200 disabled:opacity-50"
-              >
-                {loading ? 'Generando...' : 'Generar Combinaciones Autómaticas'}
-              </button>
             </form>
           ) : (
-            <form onSubmit={handleGenerateManual}>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div>
-                  <label className="block text-xs font-semibold text-brand-text uppercase mb-1">Talla</label>
-                  <input
-                    type="text"
-                    required
-                    value={manualTalla}
-                    onChange={(e) => setManualTalla(e.target.value)}
-                    placeholder="Ej. S"
-                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
+            <form onSubmit={handleGenerateManual} className="space-y-6">
+              {loadingAttrs ? (
+                <div className="text-sm text-brand-text">Cargando atributos...</div>
+              ) : dbAttributes.length === 0 ? (
+                <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                  No hay atributos activos registrados en el sistema. Regístralos en la sección de <a href="/admin/attributes" className="underline font-bold">Gestión de Atributos</a>.
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-brand-text uppercase mb-1">Color</label>
-                  <input
-                    type="text"
-                    required
-                    value={manualColor}
-                    onChange={(e) => setManualColor(e.target.value)}
-                    placeholder="Ej. NEGRO"
-                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
+              ) : (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-brand-accent uppercase tracking-wider">Selecciona los valores de los atributos:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {dbAttributes.map((attr) => {
+                      const attrKey = attr.name.toLowerCase();
+                      return (
+                        <div key={attr.id}>
+                          <label className="block text-xs font-extrabold text-brand-accent uppercase mb-1.5 tracking-wider">
+                            {attr.name}
+                          </label>
+                          <select
+                            required
+                            value={selectedManualValues[attrKey] || ''}
+                            onChange={(e) => handleManualSelectChange(attrKey, e.target.value)}
+                            className="w-full text-sm border border-gray-300 bg-white rounded px-3 py-2.5 focus:ring-1 focus:ring-brand-accent focus:border-brand-accent outline-none font-bold"
+                          >
+                            <option value="">-- Seleccionar {attr.name} --</option>
+                            {attr.values.map((val) => (
+                              <option key={val.id} value={val.value}>
+                                {val.value}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4 border-t border-gray-100">
                 <div>
                   <label className="block text-xs font-semibold text-brand-text uppercase mb-1">Precio ($)</label>
                   <input
@@ -269,7 +373,7 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
                     required
                     value={manualPrice}
                     onChange={(e) => setManualPrice(parseFloat(e.target.value))}
-                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                    className="w-full text-sm border border-gray-300 rounded px-3 py-2.5 focus:ring-1 focus:ring-brand-accent focus:border-brand-accent outline-none"
                   />
                 </div>
                 <div>
@@ -279,17 +383,19 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
                     value={manualSku}
                     onChange={(e) => setManualSku(e.target.value)}
                     placeholder="Ej. SKU-CUSTOM-01"
-                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-brand-accent focus:border-brand-accent outline-none uppercase"
+                    className="w-full text-sm border border-gray-300 rounded px-3 py-2.5 focus:ring-1 focus:ring-brand-accent focus:border-brand-accent outline-none uppercase"
                   />
                 </div>
+                <div>
+                  <button
+                    type="submit"
+                    disabled={loading || dbAttributes.length === 0}
+                    className="w-full bg-brand-accent hover:opacity-90 text-white text-sm font-bold py-2.5 rounded-xl transition duration-200 disabled:opacity-50"
+                  >
+                    {loading ? 'Agregando...' : 'Agregar Variante Manualmente'}
+                  </button>
+                </div>
               </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-5 w-full bg-brand-accent hover:opacity-90 text-white text-sm font-medium py-2.5 rounded transition duration-200 disabled:opacity-50"
-              >
-                {loading ? 'Agregando...' : 'Agregar Variante Manualmente'}
-              </button>
             </form>
           )}
         </div>
