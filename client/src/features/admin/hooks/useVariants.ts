@@ -26,7 +26,7 @@ export const useVariants = (productId: number) => {
     }
   }, [productId]);
 
-  const generateVariants = async (body: GenerateVariantsBody) => {
+  const generateVariants = async (body: GenerateVariantsBody): Promise<ProductVariant[] | null> => {
     setLoading(true);
     setError(null);
     try {
@@ -34,14 +34,15 @@ export const useVariants = (productId: number) => {
       if (response.data.success) {
         toast.success('Variantes generadas exitosamente');
         await fetchVariants();
-        return true;
+        // Since backend returns ProductWithVariantsResponseDTO, we can return its variants.
+        return response.data.data.variants as ProductVariant[];
       }
-      return false;
+      return null;
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Error al generar variantes';
       setError(msg);
       toast.error(msg);
-      return false;
+      return null;
     } finally {
       setLoading(false);
     }
