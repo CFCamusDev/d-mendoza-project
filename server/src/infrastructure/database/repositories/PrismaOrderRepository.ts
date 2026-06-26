@@ -191,6 +191,63 @@ export class PrismaOrderRepository implements IOrderRepository {
     return this.toDomain(record);
   }
 
+  async findAdminOrders(params: {
+    status?: string;
+    from?: Date;
+    to?: Date;
+    cursor?: number;
+    limit: number;
+  }): Promise<{ orders: Order[]; nextCursor: number | null }> {
+    const where: any = {};
+    if (params.status) {
+      where.status = params.status;
+    }
+    if (params.from || params.to) {
+      where.createdAt = {};
+      if (params.from) where.createdAt.gte = params.from;
+      if (params.to) where.createdAt.lte = params.to;
+    }
+
+    const records = await prisma.order.findMany({
+      where,
+      take: params.limit + 1,
+      ...(params.cursor && {
+        cursor: { id: params.cursor },
+      }),
+      orderBy: { id: 'desc' },
+      include: {
+        user: true,
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    let nextCursor: number | null = null;
+    if (records.length > params.limit) {
+      const nextItem = records.pop();
+      nextCursor = nextItem!.id;
+    }
+
+    const orders = records.map((record) => {
+      const order = this.toDomain(record);
+      order.user = {
+        id: record.user.id,
+        name: `${record.user.name || ''} ${record.user.lastName || ''}`.trim(),
+        email: record.user.email,
+      };
+      return order;
+    });
+
+    return { orders, nextCursor };
+  }
+
   async getSalesTotalInRange(start: Date, end: Date): Promise<number> {
     const result = await prisma.order.aggregate({
       where: {

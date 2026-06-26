@@ -27,6 +27,13 @@ export interface IOrderRepository {
       take: number;
     }
   ): Promise<{ orders: Order[]; totalCount: number }>;
+  findAdminOrders(params: {
+    status?: string;
+    from?: Date;
+    to?: Date;
+    cursor?: number;
+    limit: number;
+  }): Promise<{ orders: Order[]; nextCursor: number | null }>;
   getSalesTotalInRange(start: Date, end: Date): Promise<number>;
   countPending(): Promise<number>;
 }
