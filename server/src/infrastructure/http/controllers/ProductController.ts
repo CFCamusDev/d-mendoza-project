@@ -4,8 +4,7 @@ import { PrismaProductRepository } from '@infrastructure/database/repositories/P
 import { GetActiveProductsUseCase } from '@application/use-cases/product/GetActiveProductsUseCase';
 import { ToggleProductStatusUseCase } from '@application/use-cases/product/ToggleProductStatusUseCase';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { CloudinaryStorageService } from '@infrastructure/services/CloudinaryStorageService';
 
 const repo = new PrismaProductRepository();
 const getActiveProductsUseCase = new GetActiveProductsUseCase(repo);
@@ -24,16 +23,8 @@ const CreateProductSchema = z.object({
   gender: z.string().nullable().optional(),
 });
 
-const uploadsDir = path.join(process.cwd(), 'uploads', 'products');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/\s/g, '_')}`),
-});
-
 export const productUpload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
@@ -134,10 +125,12 @@ export class ProductController {
       const isMainParam = req.body.isMain;
       const mainIndex = isMainParam !== undefined ? parseInt(String(isMainParam), 10) : 0;
 
+      const storageService = new CloudinaryStorageService();
+
       for (let i = 0; i < files.length; i++) {
-        const url = `/uploads/products/${files[i].filename}`;
+        const imageUrl = await storageService.uploadImage(files[i].buffer, files[i].originalname, 'products');
         const isMain = i === mainIndex;
-        await repo.addImage(productId, url, isMain);
+        await repo.addImage(productId, imageUrl, isMain);
       }
 
       const updated = await repo.findById(productId);

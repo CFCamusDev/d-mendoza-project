@@ -9,7 +9,7 @@ import { Upload, Star, X, Loader2, Sparkles, Folder, HelpCircle, ArrowLeft } fro
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 
 interface SelectOption { id: number; name: string; }
-interface ImagePreview { file: File; url: string; isMain: boolean; }
+interface ImagePreview { file?: File; url: string; isMain: boolean; }
 
 const schema = yup.object({
   code: yup.string()
@@ -55,7 +55,15 @@ const ProductFormPage: React.FC = () => {
 
     if (isEdit) {
       axiosInstance.get(`/v1/products/${id}`)
-        .then(({ data }) => reset(data.data))
+        .then(({ data }) => {
+          reset(data.data);
+          if (data.data.images) {
+            setImages(data.data.images.map((img: any) => ({
+              url: img.url,
+              isMain: img.isMain,
+            })));
+          }
+        })
         .catch(() => toast.error('Error al cargar producto'));
     }
   }, [id, isEdit, reset]);
@@ -101,11 +109,12 @@ const ProductFormPage: React.FC = () => {
         toast.success('Producto creado');
       }
 
-      if (images.length > 0) {
+      const newImages = images.filter(img => img.file);
+      if (newImages.length > 0) {
         const formData = new FormData();
-        images.forEach(img => formData.append('images', img.file));
-        const mainIndex = images.findIndex(img => img.isMain);
-        formData.append('isMain', String(mainIndex >= 0 ? mainIndex : 0));
+        newImages.forEach(img => formData.append('images', img.file!));
+        const mainNewIndex = newImages.findIndex(img => img.isMain);
+        formData.append('isMain', String(mainNewIndex));
         await axiosInstance.post(`/v1/products/${productId}/images`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
