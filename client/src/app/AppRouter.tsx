@@ -51,6 +51,7 @@ import BlogAdminPage from '../features/admin/BlogAdminPage';
 import BlogEditorPage from '../features/admin/BlogEditorPage';
 import BlogListPage from '../features/ecommerce/BlogListPage';
 import BlogPostPage from '../features/ecommerce/BlogPostPage';
+import { AdminOrdersPage } from '../features/admin/components/AdminOrdersPage';
 
 export const AppRouter = () => {
   return (
@@ -211,6 +212,9 @@ export const AppRouter = () => {
             </ProtectedRoute>
           }
         />
+
+        {/* HU-048 Admin Orders */}
+        <Route path="/admin/orders" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminOrdersPage /></ProtectedRoute>} />
 
         {/* HU-011 */}
         <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['ADMIN']}><CategoriesPage /></ProtectedRoute>} />
