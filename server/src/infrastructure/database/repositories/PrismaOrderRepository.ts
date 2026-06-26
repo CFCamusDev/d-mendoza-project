@@ -278,5 +278,34 @@ export class PrismaOrderRepository implements IOrderRepository {
     });
     return count;
   }
+
+  async findOrdersForExport(params: { from?: Date; to?: Date }): Promise<Order[]> {
+    const { from, to } = params;
+    const where: any = {
+      status: { in: ['PAID', 'SHIPPED', 'DELIVERED'] },
+    };
+    if (from || to) {
+      where.createdAt = {};
+      if (from) where.createdAt.gte = from;
+      if (to) where.createdAt.lte = to;
+    }
+    const records = await prisma.order.findMany({
+      where,
+      include: {
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
+        user: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return records.map((r) => this.toDomain(r));
+  }
 }
 

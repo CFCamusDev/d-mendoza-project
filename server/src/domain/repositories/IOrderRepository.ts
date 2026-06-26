@@ -37,5 +37,6 @@ export interface IOrderRepository {
   }): Promise<{ orders: Order[]; nextCursor: number | null }>;
   getSalesTotalInRange(start: Date, end: Date): Promise<number>;
   countPending(): Promise<number>;
+  findOrdersForExport(params: { from?: Date; to?: Date }): Promise<Order[]>;
 }
 

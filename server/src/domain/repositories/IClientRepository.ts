@@ -15,4 +15,5 @@ export interface IClientRepository {
     take: number;
   }): Promise<{ clients: any[]; totalCount: number }>;
   update(id: number, data: Partial<CreateClientDTO>): Promise<Client>;
+  findForExport(params: { from?: Date; to?: Date }): Promise<any[]>;
 }
