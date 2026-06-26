@@ -59,6 +59,8 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [DELETE /api/v1/admin/blog/:id](#delete-apiv1adminblogid)
 - [Exportación de Reportes — HU-053](#exportación-de-reportes--hu-053)
   - [GET /api/v1/reports/export](#get-apiv1reportsexport)
+- [Conciliación de Transacciones — HU-073](#conciliación-de-transacciones--hu-073)
+  - [POST /api/v1/admin/reconcile/stripe](#post-apiv1adminreconcilestripe)
 
 ---
 
@@ -4092,6 +4094,108 @@ Se emite cuando el usuario autenticado no cuenta con el permiso `sales:read`.
 {
   "success": false,
   "error": "Acceso denegado: Se requiere el permiso 'sales:read'"
+}
+```
+
+## Conciliación de Transacciones — HU-073
+
+### POST /api/v1/admin/reconcile/stripe
+
+Realiza el cruce de transacciones de Stripe y órdenes persistidas en MariaDB para un periodo de fechas determinado, devolviendo las transacciones conciliadas (matched) y las discrepancias (unmatched: stripeOnly y dbOnly).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido | Permiso Requerido |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/admin/reconcile/stripe` | JWT `Bearer Token` | Administrador | `roles:manage` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+- **Content-Type**: `application/json`
+
+```json
+{
+  "from": "2026-06-01T00:00:00.000Z",
+  "to": "2026-06-26T23:59:59.999Z"
+}
+```
+
+*Nota: Ambas fechas deben ser cadenas de fecha ISO 8601 válidas, y `from` debe ser anterior o igual a `to`.*
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+Devuelve las listas de conciliaciones coincidentes (`matched`) y con discrepancia (`unmatched`).
+
+```json
+{
+  "success": true,
+  "data": {
+    "matched": [
+      {
+        "stripePaymentIntentId": "pi_3M7t9zLkdIwHu7ix0yU2jKxR",
+        "orderId": 1024,
+        "stripeAmount": 150.00,
+        "orderAmount": 150.00,
+        "status": "MATCHED"
+      },
+      {
+        "stripePaymentIntentId": "pi_3M7t9zLkdIwHu7ix0yU2jKxS",
+        "orderId": 1025,
+        "stripeAmount": 200.00,
+        "orderAmount": 195.00,
+        "status": "AMOUNT_MISMATCH"
+      }
+    ],
+    "unmatched": {
+      "stripeOnly": [
+        {
+          "id": "pi_3M7t9zLkdIwHu7ix0yU2jKxT",
+          "amount": 75.00,
+          "currency": "pen",
+          "status": "succeeded",
+          "createdAt": "2026-06-20T12:00:00.000Z"
+        }
+      ],
+      "dbOnly": [
+        {
+          "id": 1026,
+          "paymentIntentId": "pi_3M7t9zLkdIwHu7ix0yU2jKxU",
+          "total": 50.00,
+          "status": "PAID",
+          "createdAt": "2026-06-21T10:30:00.000Z"
+        }
+      ]
+    }
+  }
+}
+```
+
+##### Solicitud Incorrecta (HTTP 400 Bad Request)
+
+Se emite cuando la validación de fechas o del body falla.
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "from",
+      "message": "La fecha 'from' debe ser anterior o igual a la fecha 'to'"
+    }
+  ]
+}
+```
+
+##### Acceso Prohibido (HTTP 403 Forbidden)
+
+Se emite cuando el usuario no tiene la sesión activa o carece del permiso `roles:manage`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el permiso 'roles:manage'"
 }
 ```
 
