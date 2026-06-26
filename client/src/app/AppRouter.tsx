@@ -22,6 +22,7 @@ import BannersPage from '../features/admin/BannersPage';
 import DeliveryZonesPage from '../features/admin/delivery-zones/DeliveryZonesPage';
 import ProductsAdminPage from '../features/admin/ProductsAdminPage';
 import DashboardPage from '../features/admin/DashboardPage';
+import ReconcilePage from '../features/admin/ReconcilePage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
 import { ProfileLayout } from '../features/ecommerce/profile/components/ProfileLayout';
@@ -224,6 +225,9 @@ export const AppRouter = () => {
 
         {/* HU-048 Admin Orders */}
         <Route path="/admin/orders" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminOrdersPage /></ProtectedRoute>} />
+
+        {/* HU-073 Reconciliation */}
+        <Route path="/admin/reconcile" element={<ProtectedRoute allowedRoles={['ADMIN']}><ReconcilePage /></ProtectedRoute>} />
 
         {/* HU-011 */}
         <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['ADMIN']}><CategoriesPage /></ProtectedRoute>} />
