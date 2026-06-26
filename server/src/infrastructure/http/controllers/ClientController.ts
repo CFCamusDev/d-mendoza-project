@@ -39,6 +39,20 @@ const GetUnifiedClientsQuerySchema = z.object({
   search: z.string().optional(),
 });
 
+const UpdateClientSchema = z.object({
+  email: z.string().email('Email inválido').nullable().optional(),
+  name: z.string().min(1, 'El nombre es requerido'),
+  lastName: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  documentType: z.string().nullable().optional(),
+  documentId: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+  department: z.string().nullable().optional(),
+  province: z.string().nullable().optional(),
+  district: z.string().nullable().optional(),
+  ubigeo: z.string().nullable().optional(),
+});
+
 
 export class ClientController {
   /**
@@ -112,6 +126,49 @@ export class ClientController {
       });
 
       return res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PUT /api/v1/admin/clients/:id
+   * Update client details.
+   */
+  async updateClient(req: Request, res: Response, next: NextFunction) {
+    try {
+      const clientId = parseInt(String(req.params.id), 10);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ success: false, error: 'ID de cliente inválido' });
+      }
+
+      const validation = UpdateClientSchema.safeParse(req.body);
+      if (!validation.success) {
+        const mappedErrors = validation.error.issues.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        return res.status(400).json({ success: false, error: mappedErrors });
+      }
+
+      const existing = await clientRepository.findById(clientId);
+      if (!existing) {
+        return res.status(404).json({ success: false, error: 'Cliente no encontrado' });
+      }
+
+      // If email is changing, verify it is not already used by another client
+      if (validation.data.email && validation.data.email !== existing.email) {
+        const emailExists = await clientRepository.findByEmail(validation.data.email);
+        if (emailExists && emailExists.id !== clientId) {
+          return res.status(400).json({
+            success: false,
+            error: [{ field: 'email', message: 'El correo electrónico ya está registrado por otro cliente' }],
+          });
+        }
+      }
+
+      const updated = await clientRepository.update(clientId, validation.data);
+      return res.status(200).json({ success: true, data: updated });
     } catch (error) {
       next(error);
     }

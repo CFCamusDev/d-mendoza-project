@@ -12,7 +12,7 @@ export class AdminOrderController {
 
   listOrders = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { status, from, to, cursor, limit } = req.query;
+      const { status, from, to, cursor, limit, userId } = req.query;
       
       const result = await this.listAdminOrdersUseCase.execute({
         status: status as string,
@@ -20,6 +20,7 @@ export class AdminOrderController {
         to: to as string,
         cursor: cursor ? Number(cursor) : undefined,
         limit: limit ? Number(limit) : 20,
+        userId: userId ? Number(userId) : undefined,
       });
 
       res.status(200).json(result);

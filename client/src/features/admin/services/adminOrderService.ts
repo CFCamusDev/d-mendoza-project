@@ -7,6 +7,7 @@ export interface AdminOrderFilters {
   to?: string;
   cursor?: number;
   limit?: number;
+  userId?: number;
 }
 
 export interface AdminOrdersResponse {
@@ -22,6 +23,7 @@ export const adminOrderService = {
     if (filters.to) params.append('to', filters.to);
     if (filters.cursor) params.append('cursor', filters.cursor.toString());
     if (filters.limit) params.append('limit', filters.limit.toString());
+    if (filters.userId) params.append('userId', filters.userId.toString());
 
     const { data } = await axiosInstance.get<AdminOrdersResponse>(`/v1/admin/orders?${params.toString()}`);
     return data;

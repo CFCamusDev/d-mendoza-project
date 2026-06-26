@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Package, Filter, Calendar, Loader2, ChevronDown, RefreshCw } from 'lucide-react';
 import { adminOrderService } from '../services/adminOrderService';
 import type { AdminOrderFilters } from '../services/adminOrderService';
@@ -6,9 +7,15 @@ import type { Order, OrderStatus } from '@/features/ecommerce/types/order.types'
 import { OrderStatusConfirmModal } from './OrderStatusConfirmModal';
 
 export const AdminOrdersPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const userIdParam = searchParams.get('userId');
+  const emailParam = searchParams.get('email');
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<AdminOrderFilters>({});
+  const [filters, setFilters] = useState<AdminOrderFilters>(() => ({
+    userId: userIdParam ? Number(userIdParam) : undefined,
+  }));
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   
@@ -34,7 +41,7 @@ export const AdminOrdersPage: React.FC = () => {
 
   useEffect(() => {
     fetchOrders(filters);
-  }, [filters.status, filters.from, filters.to]);
+  }, [filters.status, filters.from, filters.to, filters.userId]);
 
   const handleFilterChange = (key: keyof AdminOrderFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value || undefined, cursor: undefined }));
@@ -87,6 +94,25 @@ export const AdminOrdersPage: React.FC = () => {
           Actualizar
         </button>
       </div>
+
+      {/* Active User Filter Alert */}
+      {(filters.userId || emailParam) && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl flex items-center justify-between text-sm animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">Filtrado por cliente:</span>
+            <span>{emailParam || `ID de Usuario: ${filters.userId}`}</span>
+          </div>
+          <button
+            onClick={() => {
+              setSearchParams({});
+              setFilters(prev => ({ ...prev, userId: undefined }));
+            }}
+            className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider cursor-pointer"
+          >
+            Limpiar Filtro
+          </button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">

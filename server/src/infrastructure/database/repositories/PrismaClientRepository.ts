@@ -147,6 +147,26 @@ export class PrismaClientRepository implements IClientRepository {
     };
   }
 
+  async update(id: number, data: Partial<CreateClientDTO>): Promise<Client> {
+    const record = await prisma.client.update({
+      where: { id },
+      data: {
+        email: data.email !== undefined ? data.email : undefined,
+        name: data.name !== undefined ? data.name : undefined,
+        lastName: data.lastName !== undefined ? data.lastName : undefined,
+        phone: data.phone !== undefined ? data.phone : undefined,
+        documentType: data.documentType !== undefined ? data.documentType : undefined,
+        documentId: data.documentId !== undefined ? data.documentId : undefined,
+        address: data.address !== undefined ? data.address : undefined,
+        department: data.department !== undefined ? data.department : undefined,
+        province: data.province !== undefined ? data.province : undefined,
+        district: data.district !== undefined ? data.district : undefined,
+        ubigeo: data.ubigeo !== undefined ? data.ubigeo : undefined,
+      },
+    });
+    return this.toDomain(record);
+  }
+
   private toDomain(record: any): Client {
     return {
       id: record.id,

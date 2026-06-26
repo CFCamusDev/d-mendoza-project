@@ -197,10 +197,14 @@ export class PrismaOrderRepository implements IOrderRepository {
     to?: Date;
     cursor?: number;
     limit: number;
+    userId?: number;
   }): Promise<{ orders: Order[]; nextCursor: number | null }> {
     const where: any = {};
     if (params.status) {
       where.status = params.status;
+    }
+    if (params.userId) {
+      where.userId = params.userId;
     }
     if (params.from || params.to) {
       where.createdAt = {};

@@ -41,4 +41,13 @@ router.post(
   clientController.bulkLink.bind(clientController)
 );
 
+/**
+ * T-206: Update client details
+ */
+router.put(
+  '/admin/clients/:id',
+  requirePermission('users:write'),
+  clientController.updateClient.bind(clientController)
+);
+
 export default router;

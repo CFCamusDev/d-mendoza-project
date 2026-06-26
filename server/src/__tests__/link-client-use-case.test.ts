@@ -22,6 +22,7 @@ const makeMockClientRepository = (): jest.Mocked<IClientRepository> => ({
   search: jest.fn<IClientRepository['search']>(),
   countSearch: jest.fn<IClientRepository['countSearch']>(),
   findPaged: jest.fn<IClientRepository['findPaged']>(),
+  update: jest.fn<IClientRepository['update']>(),
 });
 
 const makeMockUserRepository = (): jest.Mocked<IUserRepository> => ({
