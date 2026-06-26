@@ -57,6 +57,8 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/admin/blog](#post-apiv1adminblog)
   - [PATCH /api/v1/admin/blog/:id](#patch-apiv1adminblogid)
   - [DELETE /api/v1/admin/blog/:id](#delete-apiv1adminblogid)
+- [Exportación de Reportes — HU-053](#exportación-de-reportes--hu-053)
+  - [GET /api/v1/reports/export](#get-apiv1reportsexport)
 
 ---
 
@@ -4026,6 +4028,73 @@ Actualiza el estado de un pedido y notifica automáticamente al cliente por corr
   "error": "Pedido no encontrado"
 }
 ```
+
+---
+
+## Exportación de Reportes — HU-053
+
+### GET /api/v1/reports/export
+
+Permite exportar reportes de ventas, inventario y clientes en formatos estándar (PDF, Excel, CSV) con filtros de fecha.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/reports/export` | JWT `Bearer Token` | `sales:read` |
+
+#### 2. Parámetros Query (Query Parameters)
+
+| Parámetro | Tipo | Requerido | Descripción | Valores Permitidos |
+| :--- | :--- | :--- | :--- | :--- |
+| `type` | String | Sí | Tipo de reporte a exportar | `sales`, `inventory`, `clients` |
+| `format` | String | Sí | Formato de archivo a descargar | `pdf`, `excel`, `csv` |
+| `from` | String | No | Fecha de inicio del rango (formato YYYY-MM-DD) | ej. `2026-06-01` |
+| `to` | String | No | Fecha de fin del rango (formato YYYY-MM-DD) | ej. `2026-06-30` |
+
+#### 3. Respuestas del Servidor
+
+##### Exportación Exitosa (HTTP 200 OK)
+
+Devuelve un flujo binario/plano con la cabecera correspondiente al formato:
+
+*   **PDF (`format=pdf`)**:
+    *   `Content-Type: application/pdf`
+    *   `Content-Disposition: attachment; filename="reporte-sales-YYYY-MM-DD.pdf"`
+*   **Excel (`format=excel`)**:
+    *   `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+    *   `Content-Disposition: attachment; filename="reporte-sales-YYYY-MM-DD.xlsx"`
+*   **CSV (`format=csv`)**:
+    *   `Content-Type: text/csv`
+    *   `Content-Disposition: attachment; filename="reporte-sales-YYYY-MM-DD.csv"`
+
+##### Solicitud Incorrecta (HTTP 400 Bad Request)
+
+Se emite cuando algún parámetro requerido falta o no cumple con el formato (por ejemplo, fecha inválida).
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "field": "type",
+      "message": "El tipo de reporte debe ser 'sales', 'inventory' o 'clients'"
+    }
+  ]
+}
+```
+
+##### Acceso Prohibido (HTTP 403 Forbidden)
+
+Se emite cuando el usuario autenticado no cuenta con el permiso `sales:read`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el permiso 'sales:read'"
+}
+```
+
 
 
 

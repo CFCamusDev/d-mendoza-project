@@ -167,6 +167,43 @@ export class PrismaClientRepository implements IClientRepository {
     return this.toDomain(record);
   }
 
+  async findForExport(params: { from?: Date; to?: Date }): Promise<any[]> {
+    const { from, to } = params;
+    const conditions: any[] = [];
+    if (from || to) {
+      const dateCond: any = {};
+      if (from) dateCond.gte = from;
+      if (to) dateCond.lte = to;
+      conditions.push({ createdAt: dateCond });
+    }
+    const whereClause = conditions.length > 0 ? { AND: conditions } : {};
+    
+    const records = await prisma.client.findMany({
+      where: whereClause,
+      include: {
+        user: {
+          select: {
+            isActive: true,
+            _count: {
+              select: { orders: true }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    return records.map((record: any) => {
+      const domainClient = this.toDomain(record);
+      return {
+        ...domainClient,
+        user: record.user ? {
+          isActive: record.user.isActive,
+          ordersCount: record.user._count?.orders ?? 0,
+        } : null,
+      };
+    });
+  }
+
   private toDomain(record: any): Client {
     return {
       id: record.id,

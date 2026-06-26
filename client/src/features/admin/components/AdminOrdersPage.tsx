@@ -5,6 +5,7 @@ import { adminOrderService } from '../services/adminOrderService';
 import type { AdminOrderFilters } from '../services/adminOrderService';
 import type { Order, OrderStatus } from '@/features/ecommerce/types/order.types';
 import { OrderStatusConfirmModal } from './OrderStatusConfirmModal';
+import { ExportButton } from '@/shared/components/ExportButton';
 
 export const AdminOrdersPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -86,13 +87,20 @@ export const AdminOrdersPage: React.FC = () => {
           <p className="text-gray-500 mt-1">Administra todas las órdenes del E-commerce</p>
         </div>
         
-        <button 
-          onClick={() => fetchOrders(filters)}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Actualizar
-        </button>
+        <div className="flex gap-2">
+          <ExportButton 
+            type="sales" 
+            defaultFrom={filters.from} 
+            defaultTo={filters.to} 
+          />
+          <button 
+            onClick={() => fetchOrders(filters)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium cursor-pointer"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Actualizar
+          </button>
+        </div>
       </div>
 
       {/* Active User Filter Alert */}
