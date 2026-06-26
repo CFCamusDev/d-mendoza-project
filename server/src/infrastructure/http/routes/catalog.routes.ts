@@ -34,6 +34,7 @@ router.delete('/categories/:id', requirePermission('products:write'), categories
 router.get('/brands', requirePermission('products:read'), brands.getAll.bind(brands));
 router.get('/brands/:id', requirePermission('products:read'), brands.getOne.bind(brands));
 router.post('/brands', requirePermission('products:write'), brands.create.bind(brands));
+router.post('/brands/upload', requirePermission('products:write'), upload.single('image'), brands.uploadLogo.bind(brands));
 router.patch('/brands/:id', requirePermission('products:write'), brands.update.bind(brands));
 router.delete('/brands/:id', requirePermission('products:write'), brands.deactivate.bind(brands));
 
