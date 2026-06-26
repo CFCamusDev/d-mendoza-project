@@ -48,6 +48,7 @@ export const AppShell: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [openDropdown, setOpenDropdown] = useState<'brands' | 'categories' | 'user' | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch dropdown data
   useEffect(() => {
@@ -72,7 +73,11 @@ export const AppShell: React.FC = () => {
   // Click outside listener
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isOutsideNav = dropdownRef.current && !dropdownRef.current.contains(target);
+      const isOutsideUser = userDropdownRef.current && !userDropdownRef.current.contains(target);
+      
+      if (isOutsideNav && isOutsideUser) {
         setOpenDropdown(null);
       }
     };
@@ -245,7 +250,7 @@ export const AppShell: React.FC = () => {
           </nav>
 
           {/* Área del Usuario (Login/Logout/Perfil) - Desktop */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4" ref={userDropdownRef}>
             {/* Wishlist */}
             {isAuthenticated && (
               <Link
