@@ -9,7 +9,7 @@ import { toast } from 'react-hot-toast';
 import { ShoppingCart, ShoppingBag, Loader2, Grid3X3, ArrowUpDown } from 'lucide-react';
 import { VariantSelectionModal } from './components/VariantSelectionModal';
 
-export const SearchResultsPage: React.FC = () => {
+export const CatalogPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<SearchProductItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export const SearchResultsPage: React.FC = () => {
   const orderBy = (searchParams.get('orderBy') as 'relevance' | 'newest' | 'price_asc' | 'price_desc') || 'relevance';
 
   // Set document title
-  useDocumentTitle(q ? `Buscar: ${q}` : 'Catálogo de Prendas');
+  useDocumentTitle(q ? `Buscar: ${q}` : 'Catálogo de Prendas - D\'Mendoza');
 
   // Trigger search when searchParams change
   useEffect(() => {
@@ -337,4 +337,4 @@ export const SearchResultsPage: React.FC = () => {
   );
 };
 
-export default SearchResultsPage;
+export default CatalogPage;

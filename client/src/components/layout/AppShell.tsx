@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/context/AuthContext';
 import { SearchBar } from '@/features/ecommerce/components/SearchBar';
+import axiosInstance from '@/shared/api/axiosInstance';
 
 import { 
   Menu, 
@@ -9,14 +10,31 @@ import {
   User, 
   LogOut, 
   Shield, 
-  Home,
   Link as LinkIcon,
   ShoppingCart,
-  FileText
+  FileText,
+  Heart,
+  ChevronDown,
+  Grid
 } from 'lucide-react';
 import { useBrand } from '@/shared/context/BrandContext';
 import { useCart } from '@/features/ecommerce/hooks/useCart';
 import { CartDrawer } from '@/features/ecommerce/components/CartDrawer';
+
+interface Category {
+  id: number;
+  name: string;
+  parentId: number | null;
+  children?: Category[];
+  isActive: boolean;
+}
+
+interface Brand {
+  id: number;
+  name: string;
+  logoUrl: string | null;
+  isActive: boolean;
+}
 
 export const AppShell: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -25,6 +43,48 @@ export const AppShell: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { cart, openCart } = useCart();
+
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [openDropdown, setOpenDropdown] = useState<'brands' | 'categories' | 'user' | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch dropdown data
+  useEffect(() => {
+    const fetchNavData = async () => {
+      try {
+        const [brandsRes, catRes] = await Promise.all([
+          axiosInstance.get('/v1/brands'),
+          axiosInstance.get('/v1/categories')
+        ]);
+        if (brandsRes.data.success) setBrands(brandsRes.data.data.filter((b: Brand) => b.isActive));
+        if (catRes.data.success) {
+          const rootCats = catRes.data.data.filter((c: Category) => c.isActive && !c.parentId);
+          setCategories(rootCats);
+        }
+      } catch (err) {
+        console.error('Error fetching navigation data:', err);
+      }
+    };
+    fetchNavData();
+  }, []);
+
+  // Click outside listener
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close dropdown on route change
+  useEffect(() => {
+    setOpenDropdown(null);
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const cartItemsCount = cart?.items.reduce((acc, item) => acc + item.quantity, 0) || 0;
 
@@ -53,11 +113,6 @@ export const AppShell: React.FC = () => {
     return location.pathname === path;
   };
 
-  // Enlaces de navegación pública / e-commerce
-  const publicNavLinks = [
-    { label: 'Inicio', path: '/', icon: <Home className="w-4 h-4" /> },
-    { label: 'Blog', path: '/blog', icon: <FileText className="w-4 h-4" /> },
-  ];
 
   return (
     <div className="min-h-screen bg-brand-bg flex flex-col font-sans selection:bg-brand-accent selection:text-white">
@@ -79,21 +134,101 @@ export const AppShell: React.FC = () => {
           </div>
 
           {/* Menú de Navegación - Pantallas Medianas (Tablet) y Grandes (Desktop) */}
-          <nav className="hidden md:flex items-center gap-6">
-            {publicNavLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
+          <nav ref={dropdownRef} className="hidden md:flex items-center gap-6 relative">
+            <Link
+              to="/catalog"
+              className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${
+                isActiveRoute('/catalog') ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
+              }`}
+            >
+              <Grid className="w-4 h-4" />
+              Catálogo
+            </Link>
+
+            {/* Dropdown Marcas */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'brands' ? null : 'brands')}
                 className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${
-                  isActiveRoute(link.path)
-                    ? 'text-white bg-brand-accent'
-                    : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
+                  openDropdown === 'brands' ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
                 }`}
               >
-                {link.icon}
-                {link.label}
-              </Link>
-            ))}
+                Marcas
+                <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'brands' ? 'rotate-180' : ''}`} />
+              </button>
+              {openDropdown === 'brands' && (
+                <div className="absolute top-full left-0 mt-2 w-[400px] bg-white border border-brand-primary/30 rounded-2xl shadow-xl p-4 grid grid-cols-3 gap-4 z-50">
+                  {brands.map(b => (
+                    <Link
+                      key={b.id}
+                      to={`/catalog?brandId=${b.id}`}
+                      className="flex flex-col items-center p-2 rounded-xl hover:bg-brand-primary/10 transition-colors group"
+                    >
+                      {b.logoUrl ? (
+                        <img src={b.logoUrl} alt={b.name} className="h-10 object-contain mb-2 group-hover:scale-105 transition-transform" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-brand-primary/30 flex items-center justify-center text-brand-accent font-bold mb-2">
+                          {b.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-xs font-semibold text-slate-700 text-center">{b.name}</span>
+                    </Link>
+                  ))}
+                  {brands.length === 0 && <p className="text-xs text-slate-400 col-span-3 text-center py-4">No hay marcas disponibles.</p>}
+                </div>
+              )}
+            </div>
+
+            {/* Dropdown Categorías */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'categories' ? null : 'categories')}
+                className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${
+                  openDropdown === 'categories' ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
+                }`}
+              >
+                Categorías
+                <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'categories' ? 'rotate-180' : ''}`} />
+              </button>
+              {openDropdown === 'categories' && (
+                <div className="absolute top-full left-0 mt-2 w-[300px] bg-white border border-brand-primary/30 rounded-2xl shadow-xl p-4 max-h-[60vh] overflow-y-auto z-50">
+                  {categories.map(c => (
+                    <div key={c.id} className="mb-4 last:mb-0">
+                      <Link
+                        to={`/catalog?categoryId=${c.id}`}
+                        className="block text-sm font-bold text-slate-800 hover:text-brand-accent mb-2"
+                      >
+                        {c.name}
+                      </Link>
+                      {c.children && c.children.length > 0 && (
+                        <div className="pl-4 border-l-2 border-brand-primary/20 space-y-1">
+                          {c.children.map(child => (
+                            <Link
+                              key={child.id}
+                              to={`/catalog?categoryId=${child.id}`}
+                              className="block text-xs font-semibold text-slate-500 hover:text-brand-accent py-1"
+                            >
+                              {child.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {categories.length === 0 && <p className="text-xs text-slate-400 text-center py-4">No hay categorías disponibles.</p>}
+                </div>
+              )}
+            </div>
+
+            <Link
+              to="/blog"
+              className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${
+                isActiveRoute('/blog') ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              Blog
+            </Link>
 
             {/* Enlace al Panel de Control si es ADMIN o SELLER */}
             {isAuthenticated && (user?.role === 'ADMIN' || user?.role === 'SELLER') && (
@@ -111,6 +246,17 @@ export const AppShell: React.FC = () => {
 
           {/* Área del Usuario (Login/Logout/Perfil) - Desktop */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Wishlist */}
+            {isAuthenticated && (
+              <Link
+                to="/wishlist"
+                className="relative p-2 text-brand-text hover:text-brand-accent hover:bg-brand-primary/20 rounded-full transition-all hover:scale-110"
+                title="Favoritos"
+              >
+                <Heart className="w-5 h-5" />
+              </Link>
+            )}
+
             {/* Botón del Carrito */}
             <button
               onClick={openCart}
@@ -124,42 +270,63 @@ export const AppShell: React.FC = () => {
                 </span>
               )}
             </button>
-            {isAuthenticated && user ? (
-              <div className="flex items-center gap-4">
-                <Link 
-                  to="/profile" 
-                  className="flex items-center gap-2 text-sm font-semibold text-brand-accent hover:opacity-80 transition-opacity"
-                >
-                  <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center border border-brand-accent/20">
-                    <User className="w-4 h-4 text-brand-accent" />
-                  </div>
-                  <span className="max-w-[120px] truncate">{user.email}</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-all border border-red-200/50"
-                  title="Cerrar Sesión"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  Salir
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Link
-                  to="/login"
-                  className="text-sm font-semibold text-brand-text hover:text-brand-accent px-3 py-1.5 transition-colors"
-                >
-                  Iniciar Sesión
-                </Link>
-                <Link
-                  to="/register"
-                  className="bg-brand-accent text-white hover:bg-brand-accent/90 px-4 py-2 rounded-xl text-sm font-semibold shadow transition-all scale-100 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Registrarse
-                </Link>
-              </div>
-            )}
+
+            {/* User Menu Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'user' ? null : 'user')}
+                className="flex items-center gap-2 p-1.5 rounded-full hover:bg-brand-primary/20 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center border border-brand-accent/20">
+                  <User className="w-4 h-4 text-brand-accent" />
+                </div>
+              </button>
+              
+              {openDropdown === 'user' && (
+                <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-brand-primary/30 rounded-2xl shadow-xl py-2 z-50">
+                  {isAuthenticated && user ? (
+                    <>
+                      <div className="px-4 py-3 border-b border-brand-primary/20">
+                        <p className="text-xs text-slate-400 font-semibold">Sesión iniciada como</p>
+                        <p className="text-sm font-bold text-slate-800 truncate" title={user.email}>{user.email}</p>
+                      </div>
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-brand-primary/10 hover:text-brand-accent transition-colors"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        <User className="w-4 h-4" />
+                        Mi Cuenta
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Cerrar Sesión
+                      </button>
+                    </>
+                  ) : (
+                    <div className="p-2 space-y-1">
+                      <Link
+                        to="/login"
+                        className="block w-full text-center text-sm font-semibold text-brand-text hover:text-brand-accent p-2 hover:bg-brand-primary/10 rounded-xl transition-colors"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Iniciar Sesión
+                      </Link>
+                      <Link
+                        to="/register"
+                        className="block w-full text-center text-sm font-semibold text-white bg-brand-accent hover:bg-brand-accent/90 p-2 rounded-xl shadow transition-colors"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Crear Cuenta
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Botón de Menú Móvil - Pantallas Pequeñas */}
@@ -187,23 +354,80 @@ export const AppShell: React.FC = () => {
               </div>
 
               {/* Enlaces Públicos */}
-              <div className="space-y-2">
+              <div className="space-y-2 overflow-y-auto max-h-[50vh] pr-2">
                 <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Navegación</p>
-                {publicNavLinks.map((link) => (
+                <Link
+                  to="/catalog"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 text-sm font-semibold p-2.5 rounded-xl transition-all ${
+                    isActiveRoute('/catalog') ? 'text-white bg-brand-accent shadow' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/30'
+                  }`}
+                >
+                  <Grid className="w-4 h-4" />
+                  Catálogo
+                </Link>
+
+                {/* Dropdown Marcas Móvil */}
+                <div className="pt-2">
+                  <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-2">Marcas</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {brands.map(b => (
+                      <Link
+                        key={b.id}
+                        to={`/catalog?brandId=${b.id}`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-xs font-semibold text-brand-text hover:text-brand-accent p-2 rounded-lg hover:bg-brand-primary/20 transition-colors"
+                      >
+                        {b.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Dropdown Categorías Móvil */}
+                <div className="pt-2">
+                  <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-2">Categorías</p>
+                  <div className="space-y-1">
+                    {categories.map(c => (
+                      <div key={c.id}>
+                        <Link
+                          to={`/catalog?categoryId=${c.id}`}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="block text-sm font-bold text-slate-700 hover:text-brand-accent py-1"
+                        >
+                          {c.name}
+                        </Link>
+                        {c.children && c.children.length > 0 && (
+                          <div className="pl-3 border-l-2 border-brand-primary/20 ml-2 space-y-1 mt-1 mb-2">
+                            {c.children.map(child => (
+                              <Link
+                                key={child.id}
+                                to={`/catalog?categoryId=${child.id}`}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="block text-xs font-semibold text-slate-500 hover:text-brand-accent py-1"
+                              >
+                                {child.name}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2">
                   <Link
-                    key={link.path}
-                    to={link.path}
+                    to="/blog"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center gap-3 text-sm font-semibold p-2.5 rounded-xl transition-all ${
-                      isActiveRoute(link.path)
-                        ? 'text-white bg-brand-accent shadow'
-                        : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/30'
+                      isActiveRoute('/blog') ? 'text-white bg-brand-accent shadow' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/30'
                     }`}
                   >
-                    {link.icon}
-                    {link.label}
+                    <FileText className="w-4 h-4" />
+                    Blog
                   </Link>
-                ))}
+                </div>
               </div>
 
               {/* Enlace del Panel de Control en Móvil */}
