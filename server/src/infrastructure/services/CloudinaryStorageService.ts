@@ -10,14 +10,14 @@ export class CloudinaryStorageService implements IStorageService {
     });
   }
 
-  async uploadImage(fileBuffer: Buffer, fileName: string): Promise<string> {
+  async uploadImage(fileBuffer: Buffer, fileName: string, folder: string = 'profiles'): Promise<string> {
     return new Promise((resolve, reject) => {
       // Remove extensions and append timestamp for uniqueness
       const cleanFileName = fileName.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9]/g, '_');
       
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: 'profiles',
+          folder,
           public_id: `${cleanFileName}_${Date.now()}`,
           resource_type: 'image',
         },
