@@ -19,15 +19,6 @@ export class StripePaymentService implements IPaymentService {
     currency: string,
     metadata?: Record<string, any>
   ): Promise<{ clientSecret: string; paymentIntentId: string }> {
-    // Si estamos en entorno de desarrollo con una llave dummy, mockeamos la respuesta
-    // para evitar que la aplicación falle al intentar contactar a Stripe con una llave inválida.
-    if (process.env.STRIPE_SECRET_KEY?.includes('dummy')) {
-      console.warn('⚠️ Usando llave de Stripe dummy. Generando PaymentIntent mockeado.');
-      return {
-        clientSecret: 'pi_mock_secret_12345_test',
-        paymentIntentId: 'pi_mock_12345',
-      };
-    }
 
     const paymentIntent = await this.stripe.paymentIntents.create({
       amount,
