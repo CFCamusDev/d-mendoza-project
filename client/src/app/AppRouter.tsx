@@ -10,7 +10,7 @@ import WishlistPage from '../features/ecommerce/WishlistPage';
 import { CheckoutPage } from '@/features/ecommerce/CheckoutPage';
 import { CheckoutSuccessPage } from '@/features/ecommerce/CheckoutSuccessPage';
 import { OrdersPage } from '@/features/ecommerce/OrdersPage';
-import SearchResultsPage from '../features/ecommerce/SearchResultsPage';
+import CatalogPage from '../features/ecommerce/CatalogPage';
 import ProductDetailPage from '../features/ecommerce/ProductDetailPage';
 import UnauthorizedPage from '../features/admin/UnauthorizedPage';
 import EmployeesPage from '../features/admin/EmployeesPage';
@@ -65,7 +65,8 @@ export const AppRouter = () => {
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
-        <Route path="/search" element={<SearchResultsPage />} />
+        <Route path="/catalog" element={<CatalogPage />} />
+        <Route path="/search" element={<Navigate to="/catalog" replace />} />
         <Route path="/products/:slug" element={<ProductDetailPage />} />
         
         {/* HU-018 Blog */}

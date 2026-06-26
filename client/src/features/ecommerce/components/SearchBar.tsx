@@ -51,13 +51,13 @@ export const SearchBar: React.FC = () => {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+      navigate(`/catalog?q=${encodeURIComponent(query.trim())}`);
       setIsOpen(false);
     }
   };
 
   const handleSuggestionClick = (productName: string) => {
-    navigate(`/search?q=${encodeURIComponent(productName)}`);
+    navigate(`/catalog?q=${encodeURIComponent(productName)}`);
     setQuery(productName);
     setIsOpen(false);
   };
@@ -106,7 +106,7 @@ export const SearchBar: React.FC = () => {
             {results.length > 0 && (
               <button
                 onClick={() => {
-                  navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+                  navigate(`/catalog?q=${encodeURIComponent(query.trim())}`);
                   setIsOpen(false);
                 }}
                 className="text-[10px] font-bold text-brand-accent hover:underline"
