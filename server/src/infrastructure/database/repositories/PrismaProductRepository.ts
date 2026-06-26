@@ -79,4 +79,13 @@ export class PrismaProductRepository implements IProductRepository {
   async countMainImages(productId: number): Promise<number> {
     return prisma.productImage.count({ where: { productId, isMain: true } });
   }
+
+  async deleteImage(productId: number, imageId: number): Promise<void> {
+    await prisma.productImage.delete({
+      where: {
+        id: imageId,
+        productId,
+      },
+    });
+  }
 }
