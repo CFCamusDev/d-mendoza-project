@@ -8,6 +8,7 @@ import { PrismaTransactionManager } from '@infrastructure/database/PrismaTransac
 import { LinkClientUseCase } from '@application/use-cases/admin/LinkClientUseCase';
 import { BulkLinkClientsUseCase } from '@application/use-cases/admin/BulkLinkClientsUseCase';
 import { JwtService } from '@infrastructure/services/JwtService';
+import { GetUnifiedClientsUseCase } from '@application/use-cases/admin/GetUnifiedClientsUseCase';
 
 const clientRepository = new PrismaClientRepository();
 const userRepository = new PrismaUserRepository();
@@ -25,10 +26,19 @@ const linkClientUseCase = new LinkClientUseCase(
   jwtService
 );
 const bulkLinkClientsUseCase = new BulkLinkClientsUseCase(linkClientUseCase);
+const getUnifiedClientsUseCase = new GetUnifiedClientsUseCase(clientRepository);
 
 const BulkLinkSchema = z.object({
   ids: z.array(z.number()),
 });
+
+const GetUnifiedClientsQuerySchema = z.object({
+  page: z.preprocess((val) => (val ? Number(val) : undefined), z.number().int().positive().default(1)),
+  limit: z.preprocess((val) => (val ? Number(val) : undefined), z.number().int().positive().default(10)),
+  type: z.enum(['POS', 'ECOMMERCE', 'ALL']).default('ALL'),
+  search: z.string().optional(),
+});
+
 
 export class ClientController {
   /**
@@ -77,4 +87,34 @@ export class ClientController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/v1/admin/clients
+   * List unified base clients with filters and pagination.
+   */
+  async getUnifiedClients(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validation = GetUnifiedClientsQuerySchema.safeParse(req.query);
+      if (!validation.success) {
+        const mappedErrors = validation.error.issues.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        return res.status(400).json({ success: false, error: mappedErrors });
+      }
+
+      const { page, limit, type, search } = validation.data;
+      const result = await getUnifiedClientsUseCase.execute({
+        page,
+        limit,
+        type,
+        search,
+      });
+
+      return res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
+

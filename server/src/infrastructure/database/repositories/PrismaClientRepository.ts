@@ -75,6 +75,78 @@ export class PrismaClientRepository implements IClientRepository {
     });
   }
 
+  async findPaged(params: {
+    type: 'POS' | 'ECOMMERCE' | 'ALL';
+    search?: string;
+    skip: number;
+    take: number;
+  }): Promise<{ clients: any[]; totalCount: number }> {
+    const { type, search, skip, take } = params;
+    const conditions: any[] = [];
+
+    if (search) {
+      conditions.push({
+        OR: [
+          { name: { contains: search } },
+          { lastName: { contains: search } },
+          { documentId: { contains: search } },
+        ],
+      });
+    }
+
+    if (type === 'POS') {
+      conditions.push({
+        OR: [
+          { userId: null },
+          { user: { isActive: false } },
+        ],
+      });
+    } else if (type === 'ECOMMERCE') {
+      conditions.push({ userId: { not: null } });
+      conditions.push({ user: { isActive: true } });
+    }
+
+    const whereClause = conditions.length > 0 ? { AND: conditions } : {};
+
+    const [records, totalCount] = await prisma.$transaction([
+      prisma.client.findMany({
+        where: whereClause,
+        include: {
+          user: {
+            select: {
+              isActive: true,
+              _count: {
+                select: { orders: true },
+              },
+            },
+          },
+        },
+        skip,
+        take,
+        orderBy: { name: 'asc' },
+      }),
+      prisma.client.count({
+        where: whereClause,
+      }),
+    ]);
+
+    const clientsMapped = records.map((record: any) => {
+      const domainClient = this.toDomain(record);
+      return {
+        ...domainClient,
+        user: record.user ? {
+          isActive: record.user.isActive,
+          ordersCount: record.user._count?.orders ?? 0,
+        } : null,
+      };
+    });
+
+    return {
+      clients: clientsMapped,
+      totalCount,
+    };
+  }
+
   private toDomain(record: any): Client {
     return {
       id: record.id,
@@ -95,3 +167,4 @@ export class PrismaClientRepository implements IClientRepository {
     };
   }
 }
+

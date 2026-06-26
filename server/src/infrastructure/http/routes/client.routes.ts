@@ -6,6 +6,15 @@ const router = Router();
 const clientController = new ClientController();
 
 /**
+ * T-205: List unified clients base
+ */
+router.get(
+  '/admin/clients',
+  requirePermission('users:read'),
+  clientController.getUnifiedClients.bind(clientController)
+);
+
+/**
  * T-059 helper: List clients without account
  */
 router.get(

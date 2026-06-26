@@ -13,6 +13,8 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Control de Acceso por Roles (RBAC)](#control-de-acceso-por-roles-rbac)
   - [POST /api/v1/roles](#post-apiv1roles)
   - [PUT /api/v1/users/:id/role](#put-apiv1usersidrole)
+- [Administración de Clientes](#administración-de-clientes)
+  - [GET /api/v1/admin/clients](#get-apiv1adminclients)
 - [Perfil de Cliente](#perfil-de-cliente)
   - [GET /api/v1/profile](#get-apiv1profile)
   - [PATCH /api/v1/profile](#patch-apiv1profile)
@@ -638,6 +640,101 @@ Emitido cuando el `id` de usuario en la URL no pertenece a ningún registro acti
 {
   "success": false,
   "error": "El rol 'SELLER' no está definido en el sistema"
+}
+```
+
+## Administración de Clientes
+
+Este módulo permite a los administradores gestionar los perfiles de los clientes de la plataforma, listando registros unificados y vinculándolos con cuentas de e-commerce.
+
+### GET /api/v1/admin/clients
+
+Obtiene el listado unificado de clientes registrados en el sistema (POS y e-commerce), con paginación, filtros de tipo y búsqueda predictiva.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :----- | :----------------------- | :----------------- | :---------------- |
+| `GET`  | `/api/v1/admin/clients` | JWT `Bearer Token` | `users:read`      |
+
+#### 2. Parámetros Query (Query Parameters)
+
+| Parámetro | Tipo | Requerido | Descripción | Valores Permitidos | Default |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `page` | `number` | No | Número de página a consultar. | `>= 1` | `1` |
+| `limit` | `number` | No | Cantidad de registros por página. | `>= 1` | `10` |
+| `type` | `string` | No | Filtro de origen/estado de cuenta del cliente. | `POS`, `ECOMMERCE`, `ALL` | `ALL` |
+| `search` | `string` | No | Texto de búsqueda que coincide con DNI/RUC, Nombre o Apellido. | Cualquier cadena de texto | - |
+
+#### 3. Respuestas (Responses)
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "clients": [
+    {
+      "id": 1,
+      "email": "client1@example.com",
+      "name": "Juan",
+      "lastName": "Pérez",
+      "phone": "999888777",
+      "documentType": "DNI",
+      "documentId": "12345678",
+      "address": "Av. Larco 123",
+      "department": "Lima",
+      "province": "Lima",
+      "district": "Miraflores",
+      "ubigeo": "150122",
+      "userId": 10,
+      "isActive": true,
+      "type": "AMBOS",
+      "createdAt": "2026-06-25T15:40:00.000Z",
+      "updatedAt": "2026-06-25T15:40:00.000Z"
+    },
+    {
+      "id": 2,
+      "email": "client2@example.com",
+      "name": "María",
+      "lastName": "Gómez",
+      "phone": null,
+      "documentType": "RUC",
+      "documentId": "20123456789",
+      "address": null,
+      "department": null,
+      "province": null,
+      "district": null,
+      "ubigeo": null,
+      "userId": null,
+      "isActive": true,
+      "type": "POS",
+      "createdAt": "2026-06-25T15:42:00.000Z",
+      "updatedAt": "2026-06-25T15:42:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 2,
+    "page": 1,
+    "totalPages": 1,
+    "limit": 10
+  }
+}
+```
+
+##### Solicitud Incorrecta (HTTP 400 Bad Request)
+
+Se emite cuando algún parámetro query no cumple con las validaciones del esquema (por ejemplo, valor de tipo incorrecto).
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "field": "type",
+      "message": "Invalid enum value. Expected 'POS' | 'ECOMMERCE' | 'ALL', received 'INVALID'"
+    }
+  ]
 }
 ```
 
