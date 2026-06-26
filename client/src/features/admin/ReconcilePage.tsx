@@ -114,6 +114,49 @@ export const ReconcilePage: React.FC = () => {
             </div>
           </div>
 
+          {/* Tabla de Pagos Conciliados Exitosamente */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+              <h3 className="font-extrabold text-emerald-700 text-sm">Pagos Conciliados Exitosamente (Coincidencia Perfecta)</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-white text-gray-500 font-bold text-xs uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4">ID Stripe</th>
+                    <th className="px-6 py-4">ID Pedido (DB)</th>
+                    <th className="px-6 py-4">Monto Stripe</th>
+                    <th className="px-6 py-4">Monto DB</th>
+                    <th className="px-6 py-4 text-right">Estado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-gray-700">
+                  {result.matched.filter(m => m.status === 'MATCHED').length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                        No hay pagos conciliados en el período seleccionado.
+                      </td>
+                    </tr>
+                  ) : (
+                    result.matched.filter(m => m.status === 'MATCHED').map(item => (
+                      <tr key={item.orderId} className="hover:bg-emerald-50/20 transition-colors">
+                        <td className="px-6 py-4 font-mono text-xs text-gray-900">{item.stripePaymentIntentId}</td>
+                        <td className="px-6 py-4 font-mono text-xs text-gray-900">#{item.orderId}</td>
+                        <td className="px-6 py-4 font-semibold text-gray-900">{formatCurrency(item.stripeAmount)}</td>
+                        <td className="px-6 py-4 font-semibold text-gray-900">{formatCurrency(item.orderAmount)}</td>
+                        <td className="px-6 py-4 text-right">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                            OK
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           {/* Tabla de Discrepancias */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
