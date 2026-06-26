@@ -11,6 +11,7 @@ interface ProductFiltersProps {
     minPrice?: number;
     maxPrice?: number;
     branchId?: number;
+    talla?: string;
   };
   onFilterChange: (newFilters: {
     categoryId?: number;
@@ -19,6 +20,7 @@ interface ProductFiltersProps {
     minPrice?: number;
     maxPrice?: number;
     branchId?: number;
+    talla?: string;
   }) => void;
   onClearFilters: () => void;
 }
@@ -31,16 +33,16 @@ interface Branch {
 const FilterSection = ({ title, children, defaultOpen = true }: { title: string, children: React.ReactNode, defaultOpen?: boolean }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-slate-100 pb-5">
+    <div className="border-b border-neutral-100 pb-5 pt-3">
       <button 
         type="button" 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between text-[11px] font-bold text-slate-800 uppercase tracking-widest hover:text-brand-accent transition-colors"
+        className="w-full flex items-center justify-between text-[11px] font-bold text-neutral-900 uppercase tracking-widest hover:text-brand-accent transition-colors"
       >
-        {title}
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <span>{title}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-brand-accent' : ''}`} />
       </button>
-      <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 mt-4 opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 mt-4 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
         {children}
       </div>
     </div>
@@ -117,10 +119,11 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] sticky top-24">
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-        <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
-          <Filter className="w-4 h-4 text-brand-accent" />
+    <div className="sticky top-28 bg-transparent">
+      {/* Header filter title */}
+      <div className="flex items-center justify-between pb-4 border-b border-neutral-100 mb-2">
+        <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-widest flex items-center gap-2">
+          <Filter className="w-3.5 h-3.5 text-neutral-800" />
           Filtros
         </h3>
         <button
@@ -129,39 +132,39 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
             setMaxPriceInput('');
             onClearFilters();
           }}
-          className="text-[10px] uppercase font-bold tracking-widest text-slate-400 hover:text-brand-accent flex items-center gap-1.5 transition-colors"
+          className="text-[10px] uppercase font-bold tracking-wider text-neutral-400 hover:text-brand-accent flex items-center gap-1.5 transition-colors"
         >
-          <RefreshCw className="w-3 h-3" />
+          <RefreshCw className="w-2.5 h-2.5" />
           Limpiar
         </button>
       </div>
 
       {isLoading ? (
-        <div className="space-y-6">
-          <div className="h-12 bg-slate-50 rounded-xl animate-pulse"></div>
-          <div className="h-24 bg-slate-50 rounded-xl animate-pulse"></div>
-          <div className="h-24 bg-slate-50 rounded-xl animate-pulse"></div>
+        <div className="space-y-6 pt-4">
+          <div className="h-10 bg-neutral-50 rounded animate-pulse"></div>
+          <div className="h-20 bg-neutral-50 rounded animate-pulse"></div>
+          <div className="h-20 bg-neutral-50 rounded animate-pulse"></div>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="divide-y divide-neutral-100">
           
           <FilterSection title="Sucursal" defaultOpen={true}>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2.5 pt-1">
               <label className="flex items-center gap-3 cursor-pointer group">
-                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${!filters.branchId ? 'border-brand-accent bg-brand-accent text-white' : 'border-slate-300 bg-transparent group-hover:border-brand-accent'}`}>
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${!filters.branchId ? 'border-brand-accent bg-brand-accent text-white' : 'border-neutral-200 bg-transparent group-hover:border-neutral-400'}`}>
                   {!filters.branchId && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
                 </div>
-                <span className={`text-xs font-semibold ${!filters.branchId ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-800'}`}>
+                <span className={`text-[13px] transition-colors ${!filters.branchId ? 'text-neutral-900 font-bold' : 'text-neutral-500 group-hover:text-neutral-900'}`}>
                   Todas las Sucursales
                 </span>
                 <input type="radio" className="hidden" checked={!filters.branchId} onChange={() => handleBranchChange('')} />
               </label>
               {branches.map(b => (
                 <label key={b.id} className="flex items-center gap-3 cursor-pointer group">
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${filters.branchId === b.id ? 'border-brand-accent bg-brand-accent text-white' : 'border-slate-300 bg-transparent group-hover:border-brand-accent'}`}>
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${filters.branchId === b.id ? 'border-brand-accent bg-brand-accent text-white' : 'border-neutral-200 bg-transparent group-hover:border-neutral-400'}`}>
                     {filters.branchId === b.id && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
                   </div>
-                  <span className={`text-xs font-semibold ${filters.branchId === b.id ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-800'}`}>
+                  <span className={`text-[13px] transition-colors ${filters.branchId === b.id ? 'text-neutral-900 font-bold' : 'text-neutral-500 group-hover:text-neutral-900'}`}>
                     {b.name}
                   </span>
                   <input type="radio" className="hidden" checked={filters.branchId === b.id} onChange={() => handleBranchChange(b.id.toString())} />
@@ -171,77 +174,105 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           </FilterSection>
 
           <FilterSection title="Género" defaultOpen={true}>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 pt-1">
               {[
                 { value: '', label: 'Todos' },
                 { value: 'MALE', label: 'Hombre' },
                 { value: 'FEMALE', label: 'Mujer' },
                 { value: 'UNISEX', label: 'Unisex' },
                 { value: 'KIDS', label: 'Niños' },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleGenderChange(opt.value)}
-                  className={`text-[11px] font-bold py-2 px-3.5 rounded-full transition-all ${
-                    (filters.gender || '') === opt.value
-                      ? 'bg-slate-800 text-white shadow-md shadow-slate-200'
-                      : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              ].map((opt) => {
+                const isActive = (filters.gender || '') === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleGenderChange(opt.value)}
+                    className={`text-[11px] font-bold py-1.5 px-3 border transition-all duration-200 ${
+                      isActive
+                        ? 'bg-neutral-900 border-neutral-900 text-white'
+                        : 'bg-transparent border-neutral-200 text-neutral-600 hover:border-neutral-800 hover:text-neutral-900'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </FilterSection>
+
+          <FilterSection title="Tallas" defaultOpen={true}>
+            <div className="grid grid-cols-3 gap-1.5 pt-1">
+              {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
+                const isActive = filters.talla === size;
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => onFilterChange({ ...filters, talla: isActive ? undefined : size })}
+                    className={`text-[11px] font-bold py-2 border transition-all duration-200 ${
+                      isActive
+                        ? 'bg-brand-accent border-brand-accent text-white font-black'
+                        : 'bg-transparent border-neutral-200 text-neutral-600 hover:border-neutral-800 hover:text-neutral-900'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
             </div>
           </FilterSection>
 
           <FilterSection title="Categorías" defaultOpen={true}>
-            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="flex flex-wrap gap-1.5 pt-1 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
               <button
                 type="button"
                 onClick={() => handleCategoryChange('')}
-                className={`text-[11px] font-bold py-2 px-3.5 rounded-full transition-all ${
+                className={`text-[11px] font-bold py-1.5 px-3 border transition-all duration-200 ${
                   !filters.categoryId
-                    ? 'bg-slate-800 text-white shadow-md shadow-slate-200'
-                    : 'bg-white border border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-800'
+                    ? 'bg-neutral-900 border-neutral-900 text-white'
+                    : 'bg-transparent border-neutral-200 text-neutral-600 hover:border-neutral-800 hover:text-neutral-900'
                 }`}
               >
                 Todas
               </button>
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => handleCategoryChange(c.id.toString())}
-                  className={`text-[11px] font-bold py-2 px-3.5 rounded-full transition-all ${
-                    filters.categoryId === c.id
-                      ? 'bg-slate-800 text-white shadow-md shadow-slate-200'
-                      : 'bg-white border border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-800'
-                  }`}
-                >
-                  {c.name}
-                </button>
-              ))}
+              {categories.map((c) => {
+                const isActive = filters.categoryId === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => handleCategoryChange(c.id.toString())}
+                    className={`text-[11px] font-bold py-1.5 px-3 border transition-all duration-200 ${
+                      isActive
+                        ? 'bg-neutral-900 border-neutral-900 text-white'
+                        : 'bg-transparent border-neutral-200 text-neutral-600 hover:border-neutral-800 hover:text-neutral-900'
+                    }`}
+                  >
+                    {c.name}
+                  </button>
+                );
+              })}
             </div>
           </FilterSection>
 
           <FilterSection title="Marcas" defaultOpen={false}>
-            <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="flex flex-col gap-2.5 pt-1 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
               <label className="flex items-center gap-3 cursor-pointer group">
-                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${!filters.brandId ? 'border-brand-accent bg-brand-accent text-white' : 'border-slate-300 bg-transparent group-hover:border-brand-accent'}`}>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${!filters.brandId ? 'border-brand-accent bg-brand-accent text-white' : 'border-neutral-200 bg-transparent group-hover:border-neutral-400'}`}>
                   {!filters.brandId && <Check className="w-3 h-3" />}
                 </div>
-                <span className={`text-xs font-semibold ${!filters.brandId ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-800'}`}>
+                <span className={`text-[13px] transition-colors ${!filters.brandId ? 'text-neutral-900 font-bold' : 'text-neutral-500 group-hover:text-neutral-900'}`}>
                   Todas las Marcas
                 </span>
                 <input type="radio" className="hidden" checked={!filters.brandId} onChange={() => handleBrandChange('')} />
               </label>
               {brands.map(b => (
                 <label key={b.id} className="flex items-center gap-3 cursor-pointer group">
-                  <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${filters.brandId === b.id ? 'border-brand-accent bg-brand-accent text-white' : 'border-slate-300 bg-transparent group-hover:border-brand-accent'}`}>
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${filters.brandId === b.id ? 'border-brand-accent bg-brand-accent text-white' : 'border-neutral-200 bg-transparent group-hover:border-neutral-400'}`}>
                     {filters.brandId === b.id && <Check className="w-3 h-3" />}
                   </div>
-                  <span className={`text-xs font-semibold ${filters.brandId === b.id ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-800'}`}>
+                  <span className={`text-[13px] transition-colors ${filters.brandId === b.id ? 'text-neutral-900 font-bold' : 'text-neutral-500 group-hover:text-neutral-900'}`}>
                     {b.name}
                   </span>
                   <input type="radio" className="hidden" checked={filters.brandId === b.id} onChange={() => handleBrandChange(b.id.toString())} />
@@ -251,33 +282,36 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           </FilterSection>
 
           <FilterSection title="Precio" defaultOpen={true}>
-            <form onSubmit={handlePriceApply} className="space-y-4">
+            <form onSubmit={handlePriceApply} className="space-y-4 pt-1">
               <div className="flex items-center gap-3">
                 <div className="relative flex-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">S/</span>
+                  <span className="absolute left-0.5 top-1/2 -translate-y-1/2 text-neutral-400 text-xs font-bold">S/</span>
                   <input
                     type="number"
                     placeholder="Min"
                     value={minPriceInput}
                     onChange={(e) => setMinPriceInput(e.target.value)}
                     onBlur={applyPrice}
-                    className="w-full text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 focus:outline-none focus:border-brand-accent focus:bg-white transition-all"
+                    className="w-full text-xs font-bold text-neutral-800 bg-transparent border-b border-neutral-200 py-2 pl-5 pr-1 focus:outline-none focus:border-brand-accent transition-all"
                   />
                 </div>
-                <span className="text-slate-300 font-bold">-</span>
+                <span className="text-neutral-300 font-normal">a</span>
                 <div className="relative flex-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">S/</span>
+                  <span className="absolute left-0.5 top-1/2 -translate-y-1/2 text-neutral-400 text-xs font-bold">S/</span>
                   <input
                     type="number"
                     placeholder="Max"
                     value={maxPriceInput}
                     onChange={(e) => setMaxPriceInput(e.target.value)}
                     onBlur={applyPrice}
-                    className="w-full text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 focus:outline-none focus:border-brand-accent focus:bg-white transition-all"
+                    className="w-full text-xs font-bold text-neutral-800 bg-transparent border-b border-neutral-200 py-2 pl-5 pr-1 focus:outline-none focus:border-brand-accent transition-all"
                   />
                 </div>
               </div>
-              <button type="submit" className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors">
+              <button 
+                type="submit" 
+                className="w-full py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-[11px] font-bold uppercase tracking-wider transition-colors"
+              >
                 Aplicar Rango
               </button>
             </form>
