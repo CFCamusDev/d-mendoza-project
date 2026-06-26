@@ -5,7 +5,6 @@ import {
   Heart,
   Ruler,
   ArrowLeft,
-  Loader2,
   AlertTriangle,
   ChevronRight,
   ChevronLeft
@@ -73,6 +72,7 @@ export const ProductDetailPage: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
 
+  // Gallery Image Load State
   // Modal State
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -85,12 +85,32 @@ export const ProductDetailPage: React.FC = () => {
       setError(null);
       const { data } = await axiosInstance.get(`/v1/ecommerce/products/${slug}`);
       if (data.success && data.data) {
-        setProduct(data.data);
+        const prod = data.data;
         // Find main image index or fallback
-        const mainImgIndex = data.data.images.findIndex((img: ProductImage) => img.isMain);
-        setCurrentImageIndex(mainImgIndex >= 0 ? mainImgIndex : 0);
+        const mainImgIndex = prod.images.findIndex((img: ProductImage) => img.isMain);
+        const activeIdx = mainImgIndex >= 0 ? mainImgIndex : 0;
+        setCurrentImageIndex(activeIdx);
+
+        // Preload main image so it renders instantly when skeleton hides
+        const mainImageUrl = prod.images[activeIdx]?.url;
+        if (mainImageUrl) {
+          const img = new window.Image();
+          img.src = mainImageUrl;
+          img.onload = () => {
+            setProduct(prod);
+            setLoading(false);
+          };
+          img.onerror = () => {
+            setProduct(prod);
+            setLoading(false);
+          };
+        } else {
+          setProduct(prod);
+          setLoading(false);
+        }
       } else {
         setError('No se pudo cargar la información del producto.');
+        setLoading(false);
       }
     } catch (err: any) {
       if (err.response?.status === 404) {
@@ -98,7 +118,6 @@ export const ProductDetailPage: React.FC = () => {
       } else {
         setError('Error de servidor al cargar el producto.');
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -148,6 +167,10 @@ export const ProductDetailPage: React.FC = () => {
       variant.attributesJson.color?.toUpperCase() === selectedColor.toUpperCase()
     ) || null;
   }, [product, selectedTalla, selectedColor]);
+
+  // Base price representation & selected image calculations
+  const displayPrice = product ? (selectedVariant ? selectedVariant.price : (product.variants[0]?.price || 0)) : 0;
+  const selectedImage = product && product.images[currentImageIndex] ? product.images[currentImageIndex].url : 'https://via.placeholder.com/600x600?text=No+Image';
 
   // Handle wishlist toggle
   const toggleWishlist = () => {
@@ -205,9 +228,79 @@ export const ProductDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-10 h-10 text-[#3F3F3F] animate-spin" />
-        <p className="text-sm text-[#6B6B6B] mt-2 font-medium">Cargando detalles de producto...</p>
+      <div className="min-h-screen bg-neutral-50/50 text-neutral-800 pb-10 relative overflow-hidden font-sans">
+        {/* Top Navigation Row Skeleton */}
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-3 pb-1 relative z-20">
+          <div className="flex items-center justify-between gap-4">
+            <div className="w-10 h-10 rounded-full bg-neutral-200 animate-pulse border border-neutral-100" />
+            <div className="h-3 w-48 bg-neutral-200 animate-pulse rounded-md hidden sm:block" />
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 pb-8 relative z-10 flex flex-col justify-between min-h-[78vh]">
+          {/* Hero Section Skeleton */}
+          <div className="relative flex-1 flex flex-col justify-center items-center py-2 md:py-4 my-auto lg:-mt-6">
+            <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-center z-10">
+              
+              {/* Carousel skeleton */}
+              <div className="lg:col-span-8 flex items-center justify-center relative h-[280px] md:h-[350px] lg:h-[430px] w-full bg-neutral-200/40 rounded-2xl animate-pulse" />
+
+              {/* Sidebar skeleton */}
+              <div className="lg:col-span-4 space-y-5 lg:pl-6 flex flex-col justify-center bg-white/60 p-5 rounded-2xl border border-neutral-200/50 shadow-xs z-20 animate-pulse">
+                <div className="space-y-2">
+                  <div className="h-3 w-16 bg-neutral-200 rounded-full" />
+                  <div className="h-6 w-3/4 bg-neutral-200 rounded-md" />
+                  <div className="h-2.5 w-24 bg-neutral-200 rounded-md" />
+                </div>
+
+                <div className="py-3 border-y border-neutral-100 flex items-center justify-between">
+                  <div className="h-5 w-20 bg-neutral-200 rounded-md" />
+                  <div className="h-3.5 w-12 bg-neutral-200 rounded-md" />
+                </div>
+
+                {/* Colors skeleton */}
+                <div className="space-y-2">
+                  <div className="h-2.5 w-28 bg-neutral-200 rounded-md" />
+                  <div className="flex gap-2">
+                    <div className="w-7 h-7 rounded-full bg-neutral-200" />
+                    <div className="w-7 h-7 rounded-full bg-neutral-200" />
+                    <div className="w-7 h-7 rounded-full bg-neutral-200" />
+                  </div>
+                </div>
+
+                {/* Sizes skeleton */}
+                <div className="space-y-2">
+                  <div className="h-2.5 w-24 bg-neutral-200 rounded-md" />
+                  <div className="flex gap-2">
+                    <div className="w-9 h-8 bg-neutral-200 rounded-lg" />
+                    <div className="w-9 h-8 bg-neutral-200 rounded-lg" />
+                    <div className="w-9 h-8 bg-neutral-200 rounded-lg" />
+                    <div className="w-9 h-8 bg-neutral-200 rounded-lg" />
+                  </div>
+                </div>
+
+                {/* Action buttons skeleton */}
+                <div className="space-y-2 pt-2 border-t border-neutral-100">
+                  <div className="w-full h-10 bg-neutral-200 rounded-lg" />
+                  <div className="flex gap-2">
+                    <div className="flex-1 h-9 bg-neutral-200 rounded-lg" />
+                    <div className="w-12 h-9 bg-neutral-200 rounded-lg" />
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          {/* Description skeleton */}
+          <div className="mt-4 pt-4 border-t border-neutral-200 shrink-0 max-w-3xl animate-pulse">
+            <div className="h-3 w-16 bg-neutral-200 rounded-md mb-2" />
+            <div className="space-y-1.5">
+              <div className="h-2.5 w-full bg-neutral-200 rounded-md" />
+              <div className="h-2.5 w-5/6 bg-neutral-200 rounded-md" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -227,10 +320,6 @@ export const ProductDetailPage: React.FC = () => {
       </div>
     );
   }
-
-  // Base price representation
-  const displayPrice = selectedVariant ? selectedVariant.price : (product.variants[0]?.price || 0);
-  const selectedImage = product.images[currentImageIndex]?.url || 'https://via.placeholder.com/600x600?text=No+Image';
 
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text pb-10 animate-in fade-in duration-300 relative overflow-hidden font-sans">
