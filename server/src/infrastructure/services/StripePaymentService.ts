@@ -19,6 +19,7 @@ export class StripePaymentService implements IPaymentService {
     currency: string,
     metadata?: Record<string, any>
   ): Promise<{ clientSecret: string; paymentIntentId: string }> {
+
     const paymentIntent = await this.stripe.paymentIntents.create({
       amount,
       currency,

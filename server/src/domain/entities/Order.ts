@@ -26,6 +26,7 @@ export interface Order {
   shippingCost: number;
   addressSnapshot: any;
   paymentIntentId: string;
+  user?: { id: number; name: string; email: string };
   items?: OrderItem[];
   statusLogs?: OrderStatusLog[];
   createdAt: Date;

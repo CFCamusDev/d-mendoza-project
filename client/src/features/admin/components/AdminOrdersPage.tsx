@@ -1,0 +1,242 @@
+import React, { useEffect, useState } from 'react';
+import { Package, Filter, Calendar, Loader2, ChevronDown, RefreshCw } from 'lucide-react';
+import { adminOrderService } from '../services/adminOrderService';
+import type { AdminOrderFilters } from '../services/adminOrderService';
+import type { Order, OrderStatus } from '@/features/ecommerce/types/order.types';
+import { OrderStatusConfirmModal } from './OrderStatusConfirmModal';
+
+export const AdminOrdersPage: React.FC = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<AdminOrderFilters>({});
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  
+  // Modal state
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  const fetchOrders = async (currentFilters: AdminOrderFilters, append = false) => {
+    try {
+      if (!append) setLoading(true);
+      else setLoadingMore(true);
+
+      const response = await adminOrderService.getOrders(currentFilters);
+      
+      setOrders(prev => append ? [...prev, ...response.orders] : response.orders);
+      setNextCursor(response.nextCursor);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders(filters);
+  }, [filters.status, filters.from, filters.to]);
+
+  const handleFilterChange = (key: keyof AdminOrderFilters, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value || undefined, cursor: undefined }));
+  };
+
+  const loadMore = () => {
+    if (nextCursor) {
+      const newFilters = { ...filters, cursor: nextCursor };
+      fetchOrders(newFilters, true);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: OrderStatus) => {
+    if (!selectedOrder) return;
+    try {
+      await adminOrderService.updateOrderStatus(selectedOrder.id, newStatus);
+      // Update local state
+      setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, status: newStatus } : o));
+    } catch (error) {
+      console.error('Error updating status', error);
+      alert('Error al actualizar el estado del pedido');
+    }
+  };
+
+  const statusColors: Record<OrderStatus, string> = {
+    PENDING: 'bg-yellow-100 text-yellow-800',
+    PAID: 'bg-blue-100 text-blue-800',
+    SHIPPED: 'bg-purple-100 text-purple-800',
+    DELIVERED: 'bg-green-100 text-green-800',
+    CANCELLED: 'bg-red-100 text-red-800',
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Package className="w-6 h-6 text-brand-accent" />
+            Gestión de Pedidos
+          </h1>
+          <p className="text-gray-500 mt-1">Administra todas las órdenes del E-commerce</p>
+        </div>
+        
+        <button 
+          onClick={() => fetchOrders(filters)}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Actualizar
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+            Estado
+          </label>
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <select
+              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-brand-accent/20"
+              value={filters.status || ''}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+            >
+              <option value="">Todos los estados</option>
+              <option value="PENDING">Pendiente</option>
+              <option value="PAID">Pagado</option>
+              <option value="SHIPPED">Enviado</option>
+              <option value="DELIVERED">Entregado</option>
+              <option value="CANCELLED">Cancelado</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
+
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+            Desde
+          </label>
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="date"
+              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/20"
+              value={filters.from || ''}
+              onChange={(e) => handleFilterChange('from', e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+            Hasta
+          </label>
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="date"
+              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/20"
+              value={filters.to || ''}
+              onChange={(e) => handleFilterChange('to', e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
+              <tr>
+                <th className="px-6 py-4 font-medium">Pedido</th>
+                <th className="px-6 py-4 font-medium">Fecha</th>
+                <th className="px-6 py-4 font-medium">Cliente</th>
+                <th className="px-6 py-4 font-medium">Total</th>
+                <th className="px-6 py-4 font-medium">Estado</th>
+                <th className="px-6 py-4 font-medium">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {loading && !loadingMore ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
+                    <p>Cargando pedidos...</p>
+                  </td>
+                </tr>
+              ) : orders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                    <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                    <p>No se encontraron pedidos con los filtros actuales.</p>
+                  </td>
+                </tr>
+              ) : (
+                orders.map((order) => (
+                  <tr key={order.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      #{order.id}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {new Date(order.createdAt).toLocaleDateString('es-PE', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">{order.user?.name || 'Cliente'}</div>
+                      <div className="text-xs text-gray-500">{order.user?.email || 'N/A'}</div>
+                    </td>
+                    <td className="px-6 py-4 font-medium">
+                      S/ {order.total.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[order.status]}`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="text-sm font-medium text-brand-accent hover:text-black transition-colors"
+                      >
+                        Actualizar
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        
+        {nextCursor && (
+          <div className="p-4 border-t border-gray-100 flex justify-center bg-gray-50/50">
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:text-black transition-all font-medium text-sm shadow-sm disabled:opacity-50"
+            >
+              {loadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}
+              Cargar Más
+            </button>
+          </div>
+        )}
+      </div>
+
+      {selectedOrder && (
+        <OrderStatusConfirmModal
+          isOpen={true}
+          onClose={() => setSelectedOrder(null)}
+          onConfirm={handleStatusChange}
+          currentStatus={selectedOrder.status}
+          orderId={selectedOrder.id}
+        />
+      )}
+    </div>
+  );
+};

@@ -1,0 +1,34 @@
+import axiosInstance from '@/shared/api/axiosInstance';
+import type { Order, OrderStatus } from '@/features/ecommerce/types/order.types';
+
+export interface AdminOrderFilters {
+  status?: string;
+  from?: string;
+  to?: string;
+  cursor?: number;
+  limit?: number;
+}
+
+export interface AdminOrdersResponse {
+  orders: Order[];
+  nextCursor: number | null;
+}
+
+export const adminOrderService = {
+  getOrders: async (filters: AdminOrderFilters): Promise<AdminOrdersResponse> => {
+    const params = new URLSearchParams();
+    if (filters.status) params.append('status', filters.status);
+    if (filters.from) params.append('from', filters.from);
+    if (filters.to) params.append('to', filters.to);
+    if (filters.cursor) params.append('cursor', filters.cursor.toString());
+    if (filters.limit) params.append('limit', filters.limit.toString());
+
+    const { data } = await axiosInstance.get<AdminOrdersResponse>(`/v1/admin/orders?${params.toString()}`);
+    return data;
+  },
+
+  updateOrderStatus: async (orderId: number, status: OrderStatus): Promise<Order> => {
+    const { data } = await axiosInstance.patch<Order>(`/v1/admin/orders/${orderId}/status`, { status });
+    return data;
+  },
+};

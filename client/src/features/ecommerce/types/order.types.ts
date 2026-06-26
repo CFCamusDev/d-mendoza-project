@@ -32,6 +32,7 @@ export interface Order {
   addressSnapshot: AddressSnapshot;
   paymentIntentId?: string | null;
   createdAt: string;
+  user?: { id: number; name: string; email: string };
   items: OrderItem[];
   statusLogs?: OrderStatusLog[];
 }
