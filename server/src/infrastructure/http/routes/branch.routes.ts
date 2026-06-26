@@ -5,10 +5,9 @@ import { requirePermission } from '@infrastructure/http/middlewares/auth.middlew
 const router = Router();
 const branchController = new BranchController();
 
-// Listar sucursales (mantenemos permiso users:read)
+// Listar sucursales (mantenemos público para Catálogo/Footer)
 router.get(
   '/branches',
-  requirePermission('users:read'),
   branchController.getBranches.bind(branchController)
 );
 
