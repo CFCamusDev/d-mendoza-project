@@ -123,7 +123,7 @@ export const ClientLinkPage: React.FC = () => {
 
   const filteredClients = clients.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.documentId?.includes(searchTerm)
   );
 

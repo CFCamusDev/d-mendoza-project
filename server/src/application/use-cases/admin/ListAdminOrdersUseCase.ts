@@ -7,6 +7,7 @@ interface ListAdminOrdersDTO {
   to?: string;
   cursor?: number;
   limit?: number;
+  userId?: number;
 }
 
 export class ListAdminOrdersUseCase {
@@ -36,6 +37,7 @@ export class ListAdminOrdersUseCase {
       to: toDate,
       cursor: dto.cursor ? Number(dto.cursor) : undefined,
       limit,
+      userId: dto.userId,
     });
   }
 }

@@ -17,6 +17,7 @@ import EmployeesPage from '../features/admin/EmployeesPage';
 import BranchesPage from '../features/admin/branches/BranchesPage';
 import BrandingPage from '../features/admin/BrandingPage';
 import ClientLinkPage from '../features/admin/ClientLinkPage';
+import ClientsPage from '../features/admin/ClientsPage';
 import BannersPage from '../features/admin/BannersPage';
 import DeliveryZonesPage from '../features/admin/delivery-zones/DeliveryZonesPage';
 import ProductsAdminPage from '../features/admin/ProductsAdminPage';
@@ -185,6 +186,14 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute allowedPermissions={['users:write']}>
               <ClientLinkPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/clients"
+          element={
+            <ProtectedRoute allowedPermissions={['users:read']}>
+              <ClientsPage />
             </ProtectedRoute>
           }
         />

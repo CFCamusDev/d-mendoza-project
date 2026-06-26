@@ -1,7 +1,4 @@
-/**
- * Representa un cliente unificado del sistema (POS, E-commerce o Ambos).
- */
-export interface Client {
+export interface ClientAdminResponseDto {
   id: number;
   email: string | null;
   name: string;
@@ -17,12 +14,12 @@ export interface Client {
   userId: number | null;
   isActive: boolean;
   type: 'POS' | 'ECOMMERCE' | 'AMBOS';
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface UnifiedClientsPagedResponse {
-  clients: Client[];
+  clients: ClientAdminResponseDto[];
   pagination: {
     total: number;
     page: number;

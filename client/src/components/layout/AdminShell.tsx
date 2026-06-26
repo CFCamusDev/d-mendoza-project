@@ -278,6 +278,17 @@ export const AdminShell: React.FC = () => {
                 </Link>
 
                 <Link
+                  to="/admin/clients"
+                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                    isActiveRoute('/admin/clients') && location.pathname === '/admin/clients' ? activeClass : inactiveClass
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title="Clientes"
+                >
+                  <Users className="w-4 h-4 shrink-0" />
+                  {!isCollapsed && <span>Base de Clientes</span>}
+                </Link>
+
+                <Link
                   to="/admin/clients/link"
                   className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
                     isActiveRoute('/admin/clients/link') ? activeClass : inactiveClass

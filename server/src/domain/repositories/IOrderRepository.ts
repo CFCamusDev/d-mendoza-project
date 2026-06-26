@@ -33,6 +33,7 @@ export interface IOrderRepository {
     to?: Date;
     cursor?: number;
     limit: number;
+    userId?: number;
   }): Promise<{ orders: Order[]; nextCursor: number | null }>;
   getSalesTotalInRange(start: Date, end: Date): Promise<number>;
   countPending(): Promise<number>;
