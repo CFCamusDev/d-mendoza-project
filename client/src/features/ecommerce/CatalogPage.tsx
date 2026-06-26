@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { ProductFilters } from './components/ProductFilters';
 import { WishlistButton } from './components/WishlistButton';
 import { searchProducts } from './services/search.service';
 import type { SearchProductItem } from './types/search.types';
 import { toast } from 'react-hot-toast';
-import { ShoppingCart, ShoppingBag, Loader2, Grid3X3, ArrowUpDown } from 'lucide-react';
+import { ShoppingCart, Loader2, Grid3X3, ArrowUpDown } from 'lucide-react';
 import { VariantSelectionModal } from './components/VariantSelectionModal';
 
 export const CatalogPage: React.FC = () => {
@@ -154,30 +154,29 @@ export const CatalogPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F7F7F5] pb-16">
       {/* Top Banner Context */}
-      <div className="bg-white border-b border-slate-100 py-8 mb-8">
-        <div className="max-w-[1280px] mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="bg-white border-b border-slate-100 pt-10 pb-8 mb-8 relative">
+        <div className="max-w-[1280px] mx-auto px-4 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-              <ShoppingBag className="w-7 h-7 text-brand-accent shrink-0" />
-              {q ? `Resultados para "${q}"` : 'Catálogo de Productos'}
+            <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+              {q ? `Resultados para "${q}"` : 'Nuestra Colección'}
             </h1>
-            <p className="text-slate-400 text-xs mt-1 font-medium">
-              {isLoading ? 'Buscando prendas...' : `${products.length} prendas encontradas`}
+            <p className="text-slate-400 text-sm mt-2 font-medium">
+              {isLoading ? 'Cargando prendas...' : `${products.length} estilos para ti`}
             </p>
           </div>
 
           {/* Sort Selection */}
-          <div className="flex items-center gap-3 self-start md:self-auto bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2">
-            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+          <div className="flex items-center gap-3 self-start md:self-auto bg-slate-50 border border-slate-200 rounded-full px-4 py-2 hover:border-brand-accent transition-colors">
+            <ArrowUpDown className="w-4 h-4 text-slate-400" />
             <select
               value={orderBy}
               onChange={(e) => handleOrderByChange(e.target.value as any)}
               className="text-xs font-bold text-slate-700 bg-transparent border-none outline-none focus:ring-0 cursor-pointer"
             >
-              <option value="relevance">Ordenar por: Relevancia</option>
-              <option value="newest">Ordenar por: Lo más nuevo</option>
-              <option value="price_asc">Precio: Menor a Mayor</option>
-              <option value="price_desc">Precio: Mayor a Menor</option>
+              <option value="relevance">Relevancia</option>
+              <option value="newest">Lo más nuevo</option>
+              <option value="price_asc">Menor Precio</option>
+              <option value="price_desc">Mayor Precio</option>
             </select>
           </div>
         </div>
@@ -197,9 +196,17 @@ export const CatalogPage: React.FC = () => {
           {/* Results Grid */}
           <div className="md:col-span-3 flex flex-col">
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-24 gap-3">
-                <Loader2 className="w-10 h-10 animate-spin text-brand-accent" />
-                <p className="text-slate-400 text-xs font-semibold">Cargando catálogo...</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 flex flex-col h-[400px]">
+                    <div className="aspect-[4/5] bg-slate-100 animate-pulse"></div>
+                    <div className="p-5 flex flex-col gap-3 flex-grow">
+                      <div className="w-16 h-4 bg-slate-100 animate-pulse rounded"></div>
+                      <div className="w-3/4 h-5 bg-slate-100 animate-pulse rounded"></div>
+                      <div className="w-full h-3 bg-slate-100 animate-pulse rounded mt-auto"></div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : error ? (
               <div className="bg-red-50 border border-red-200 text-red-700 rounded-3xl p-6 text-center text-sm font-semibold">
@@ -224,80 +231,93 @@ export const CatalogPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {products.map((product) => {
                     const mainImage = product.images.find(img => img.isMain)?.url || product.images[0]?.url || 'https://via.placeholder.com/400x500?text=No+Image';
+                    const secondaryImage = product.images.find(img => !img.isMain)?.url;
                     const isOutOfStock = product.variants.every(v => v.outOfStock);
                     const firstVariant = product.variants[0];
 
                     return (
-                      <div
+                      <Link
                         key={product.id}
-                        className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100/80 flex flex-col"
+                        to={`/products/${product.slug}`}
+                        className="group bg-white rounded-2xl overflow-hidden shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-slate-100 flex flex-col relative"
                       >
                         {/* Image Wrapper */}
                         <div className="relative aspect-[4/5] overflow-hidden bg-slate-50">
                           <img
                             src={mainImage}
                             alt={product.name}
-                            className="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-500"
+                            className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ${secondaryImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'}`}
                           />
+                          {secondaryImage && (
+                            <img
+                              src={secondaryImage}
+                              alt={`${product.name} alternate`}
+                              className="absolute inset-0 w-full h-full object-cover object-center opacity-0 group-hover:opacity-100 transition-all duration-700 scale-105 group-hover:scale-100"
+                            />
+                          )}
 
                           {/* Stock status badge */}
                           {isOutOfStock ? (
-                            <div className="absolute top-4 left-4 z-10 bg-red-500/90 backdrop-blur-sm text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-sm">
+                            <div className="absolute top-4 left-4 z-10 bg-red-500/95 backdrop-blur text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-sm">
                               Agotado
                             </div>
                           ) : (
-                            <div className="absolute top-4 left-4 z-10 bg-emerald-500/90 backdrop-blur-sm text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-sm">
+                            <div className="absolute top-4 left-4 z-10 bg-emerald-500/95 backdrop-blur text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-sm">
                               En Stock
                             </div>
                           )}
 
                           {/* Wishlist floating toggle */}
                           {firstVariant && (
-                            <div className="absolute top-4 right-4 z-10 bg-white/95 backdrop-blur-sm rounded-full shadow-sm hover:scale-105 active:scale-95 transition-all">
+                            <div className="absolute top-4 right-4 z-20 bg-white/95 backdrop-blur-sm rounded-full shadow hover:scale-110 active:scale-95 transition-transform" onClick={(e) => e.preventDefault()}>
                               <WishlistButton variantId={firstVariant.id} size={18} />
+                            </div>
+                          )}
+
+                          {/* Add to cart quick button on hover */}
+                          {firstVariant && !isOutOfStock && (
+                            <div className="absolute inset-x-0 bottom-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-20">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setSelectedProductSlug(product.slug);
+                                  setIsModalOpen(true);
+                                }}
+                                className="w-full bg-brand-accent/95 backdrop-blur text-white font-bold text-[11px] uppercase tracking-wider py-3.5 rounded-xl shadow-lg hover:bg-black transition-colors flex items-center justify-center gap-2"
+                              >
+                                <ShoppingCart size={16} />
+                                Compra Rápida
+                              </button>
                             </div>
                           )}
                         </div>
 
                         {/* Product Detail Info */}
-                        <div className="p-5 flex flex-col flex-grow">
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                        <div className="p-5 flex flex-col flex-grow bg-white z-10 relative">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded uppercase tracking-wider">
                               {formatGender(product.gender)}
                             </span>
-                            <span className="text-[10px] font-semibold text-slate-400">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                               {product.brand?.name}
                             </span>
                           </div>
 
-                          <h3 className="text-sm font-bold text-slate-800 mb-1.5 line-clamp-2 min-h-[40px] group-hover:text-brand-accent transition-colors">
+                          <h3 className="text-sm font-black text-slate-800 mb-1 line-clamp-2 leading-tight group-hover:text-brand-accent transition-colors">
                             {product.name}
                           </h3>
 
-                          <p className="text-[11px] text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+                          <p className="text-[11px] text-slate-400 line-clamp-1 mb-4">
                             {product.description}
                           </p>
 
-                          {/* Pricing and Action */}
-                          <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-                            <span className="text-sm font-black text-slate-800">
+                          <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
+                            <span className="text-sm font-black text-brand-accent">
                               {getProductPriceString(product)}
                             </span>
-                            {firstVariant && !isOutOfStock && (
-                              <button
-                                onClick={() => {
-                                  setSelectedProductSlug(product.slug);
-                                  setIsModalOpen(true);
-                                }}
-                                className="flex items-center justify-center p-2.5 bg-slate-50 border border-slate-200 hover:bg-brand-accent hover:border-brand-accent hover:text-white text-slate-600 rounded-xl transition-all duration-200 group/btn shadow-sm"
-                                title="Agregar al carrito"
-                              >
-                                <ShoppingCart size={16} className="transform group-hover/btn:scale-105 transition-transform" />
-                              </button>
-                            )}
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>
