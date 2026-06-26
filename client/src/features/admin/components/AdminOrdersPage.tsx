@@ -76,15 +76,12 @@ export const AdminOrdersPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Package className="w-6 h-6 text-brand-accent" />
-            Gestión de Pedidos
-          </h1>
-          <p className="text-gray-500 mt-1">Administra todas las órdenes del E-commerce</p>
+          <h1 className="text-2xl font-bold text-gray-900">Gestión de Pedidos</h1>
+          <p className="text-gray-500 text-sm mt-1">Administra todas las órdenes del E-commerce.</p>
         </div>
         
         <div className="flex gap-2">
@@ -95,7 +92,7 @@ export const AdminOrdersPage: React.FC = () => {
           />
           <button 
             onClick={() => fetchOrders(filters)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
             Actualizar
@@ -122,63 +119,63 @@ export const AdminOrdersPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-            Estado
-          </label>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-brand-accent/20"
-              value={filters.status || ''}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-            >
-              <option value="">Todos los estados</option>
-              <option value="PENDING">Pendiente</option>
-              <option value="PAID">Pagado</option>
-              <option value="SHIPPED">Enviado</option>
-              <option value="DELIVERED">Entregado</option>
-              <option value="CANCELLED">Cancelado</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+      {/* Filters and Table Container */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        {/* Filters */}
+        <div className="p-4 border-b border-gray-200 bg-gray-50/30 flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
+              Estado
+            </label>
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <select
+                className="w-full pl-9 pr-4 py-2 bg-white border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent transition-shadow text-sm"
+                value={filters.status || ''}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+              >
+                <option value="">Todos los estados</option>
+                <option value="PENDING">Pendiente</option>
+                <option value="PAID">Pagado</option>
+                <option value="SHIPPED">Enviado</option>
+                <option value="DELIVERED">Entregado</option>
+                <option value="CANCELLED">Cancelado</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
+              Desde
+            </label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="date"
+                className="w-full pl-9 pr-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent transition-shadow text-sm"
+                value={filters.from || ''}
+                onChange={(e) => handleFilterChange('from', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
+              Hasta
+            </label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="date"
+                className="w-full pl-9 pr-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent transition-shadow text-sm"
+                value={filters.to || ''}
+                onChange={(e) => handleFilterChange('to', e.target.value)}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex-1">
-          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-            Desde
-          </label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="date"
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/20"
-              value={filters.from || ''}
-              onChange={(e) => handleFilterChange('from', e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="flex-1">
-          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-            Hasta
-          </label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="date"
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/20"
-              value={filters.to || ''}
-              onChange={(e) => handleFilterChange('to', e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
