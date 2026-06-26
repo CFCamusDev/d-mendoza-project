@@ -43,11 +43,11 @@ export const WishlistButton: React.FC<WishlistButtonProps> = ({
     setIsLoading(true);
     try {
       if (isWishlisted) {
-        await axiosInstance.delete(`/wishlist/${variantId}`);
+        await axiosInstance.delete(`/v1/wishlist/${variantId}`);
         setIsWishlisted(false);
         toast.success('Eliminado de favoritos');
       } else {
-        await axiosInstance.post(`/wishlist/${variantId}`);
+        await axiosInstance.post(`/v1/wishlist/${variantId}`);
         setIsWishlisted(true);
         toast.success('Agregado a favoritos');
       }
