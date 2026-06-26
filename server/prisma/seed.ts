@@ -9,147 +9,95 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱  Starting professional database seeding...');
+  console.log('🌱 Starting professional database seeding...');
 
   // ------------------------------------------------------------------
   // 1. Master Permissions Generation
   // ------------------------------------------------------------------
-  const permissionRolesManage = await prisma.permission.upsert({
-    where: { name: 'roles:manage' },
-    update: {},
-    create: {
-      name: 'roles:manage',
-      description: 'Capacidad para gestionar el catálogo de roles y asignar permisos administrativos.',
-    },
-  });
+  const permissionsData = [
+    { name: 'roles:manage', description: 'Capacidad para gestionar el catálogo de roles, asignar permisos y cambiar el estado de órdenes.' },
+    { name: 'users:read', description: 'Capacidad para listar y visualizar perfiles de usuario.' },
+    { name: 'users:write', description: 'Capacidad para activar/desactivar y modificar cuentas de usuario.' },
+    { name: 'products:read', description: 'Capacidad para listar y visualizar productos, variantes SKU y Kardex.' },
+    { name: 'products:write', description: 'Capacidad para crear, editar y gestionar productos, variantes SKU, marcas y categorías.' },
+    { name: 'inventory:read', description: 'Capacidad para visualizar proveedores, stock, alertas y transferencias.' },
+    { name: 'inventory:write', description: 'Capacidad para crear y modificar proveedores, ingresar mercadería, transferencias y auditorías.' },
+    { name: 'pos:discounts', description: 'Capacidad para aplicar descuentos en el Punto de Venta (POS).' },
+    { name: 'sales:read', description: 'Capacidad para visualizar y consultar comprobantes de venta, KPIs y reportes.' },
+  ];
 
-  const permissionUsersRead = await prisma.permission.upsert({
-    where: { name: 'users:read' },
-    update: {},
-    create: {
-      name: 'users:read',
-      description: 'Capacidad para listar y visualizar perfiles de usuario.',
-    },
-  });
-
-  const permissionUsersWrite = await prisma.permission.upsert({
-    where: { name: 'users:write' },
-    update: {},
-    create: {
-      name: 'users:write',
-      description: 'Capacidad para activar/desactivar y modificar cuentas de usuario.',
-    },
-  });
-
-  // HU-014: Permisos para gestión de productos y variantes SKU
-  const permissionProductsRead = await prisma.permission.upsert({
-    where: { name: 'products:read' },
-    update: {},
-    create: {
-      name: 'products:read',
-      description: 'Capacidad para listar y visualizar productos y sus variantes SKU.',
-    },
-  });
-
-  const permissionProductsWrite = await prisma.permission.upsert({
-    where: { name: 'products:write' },
-    update: {},
-    create: {
-      name: 'products:write',
-      description: 'Capacidad para crear, editar y gestionar productos y variantes SKU.',
-    },
-  });
-
-  // HU-051: Permisos para gestión de inventario, proveedores e ingreso de mercadería
-  const permissionInventoryRead = await prisma.permission.upsert({
-    where: { name: 'inventory:read' },
-    update: {},
-    create: {
-      name: 'inventory:read',
-      description: 'Capacidad para visualizar proveedores e ingreso de mercadería.',
-    },
-  });
-
-  const permissionInventoryWrite = await prisma.permission.upsert({
-    where: { name: 'inventory:write' },
-    update: {},
-    create: {
-      name: 'inventory:write',
-      description: 'Capacidad para crear y modificar proveedores e ingresar mercadería.',
-    },
-  });
-
-  // HU-034: Permisos para Punto de Venta (POS)
-  const permissionPosDiscounts = await prisma.permission.upsert({
-    where: { name: 'pos:discounts' },
-    update: {},
-    create: {
-      name: 'pos:discounts',
-      description: 'Capacidad para aplicar descuentos en el Punto de Venta (POS).',
-    },
-  });
-
-  // HU-055: Permisos para Gestión y Consulta de Comprobantes Electrónicos
-  const permissionSalesRead = await prisma.permission.upsert({
-    where: { name: 'sales:read' },
-    update: {},
-    create: {
-      name: 'sales:read',
-      description: 'Capacidad para visualizar y consultar comprobantes de venta electrónicos.',
-    },
-  });
-
-  console.log('✅ Master permissions registered.');
+  console.log('🌱 Seeding permissions...');
+  const permissions = [];
+  for (const perm of permissionsData) {
+    const p = await prisma.permission.upsert({
+      where: { name: perm.name },
+      update: { description: perm.description },
+      create: { name: perm.name, description: perm.description },
+    });
+    permissions.push(p);
+  }
+  console.log(`✅ ${permissions.length} master permissions registered.`);
 
   // ------------------------------------------------------------------
   // 2. Standard System Roles Aggregation
   // ------------------------------------------------------------------
-  const adminRole = await prisma.role.upsert({
-    where: { name: 'ADMIN' },
-    update: {
-      permissions: {
-        connect: [
-          { id: permissionRolesManage.id },
-          { id: permissionUsersRead.id },
-          { id: permissionUsersWrite.id },
-          { id: permissionProductsRead.id },   // HU-014
-          { id: permissionProductsWrite.id },  // HU-014
-          { id: permissionInventoryRead.id },  // HU-051
-          { id: permissionInventoryWrite.id }, // HU-051
-          { id: permissionPosDiscounts.id },   // HU-034
-          { id: permissionSalesRead.id },      // HU-055
-        ],
-      },
-    },
-    create: {
+  console.log('🌱 Seeding roles...');
+  const rolesConfig = [
+    {
       name: 'ADMIN',
       description: 'Acceso total irrestricto a toda la plataforma.',
-      permissions: {
-        connect: [
-          { id: permissionRolesManage.id },
-          { id: permissionUsersRead.id },
-          { id: permissionUsersWrite.id },
-          { id: permissionProductsRead.id },   // HU-014
-          { id: permissionProductsWrite.id },  // HU-014
-          { id: permissionInventoryRead.id },  // HU-051
-          { id: permissionInventoryWrite.id }, // HU-051
-          { id: permissionPosDiscounts.id },   // HU-034
-          { id: permissionSalesRead.id },      // HU-055
-        ],
-      },
+      permissions: [
+        'roles:manage', 'users:read', 'users:write',
+        'products:read', 'products:write',
+        'inventory:read', 'inventory:write',
+        'pos:discounts', 'sales:read'
+      ],
     },
-  });
-
-  const clientRole = await prisma.role.upsert({
-    where: { name: 'CLIENT' },
-    update: {},
-    create: {
+    {
+      name: 'SELLER',
+      description: 'Rol para vendedores en tienda física (POS).',
+      permissions: ['products:read', 'pos:discounts', 'sales:read', 'users:read'],
+    },
+    {
+      name: 'SUPPLY',
+      description: 'Rol para personal de abastecimiento y control de inventario.',
+      permissions: ['inventory:read', 'inventory:write', 'products:read'],
+    },
+    {
+      name: 'DELIVERY',
+      description: 'Rol para personal de despacho y entrega de pedidos.',
+      permissions: ['sales:read', 'roles:manage', 'users:read'],
+    },
+    {
       name: 'CLIENT',
-      description: 'Rol estándar por defecto para compradores de la plataforma.',
+      description: 'Rol estándar por defecto para compradores de la plataforma (e-commerce).',
+      permissions: [],
     },
-  });
+  ];
 
-  console.log(`✅ Core roles catalog initialized: [${adminRole.name}, ${clientRole.name}]`);
+  for (const roleConf of rolesConfig) {
+    const connectPerms = permissions
+      .filter((p) => roleConf.permissions.includes(p.name))
+      .map((p) => ({ id: p.id }));
+
+    await prisma.role.upsert({
+      where: { name: roleConf.name },
+      update: {
+        description: roleConf.description,
+        permissions: {
+          set: connectPerms,
+        },
+      },
+      create: {
+        name: roleConf.name,
+        description: roleConf.description,
+        permissions: {
+          connect: connectPerms,
+        },
+      },
+    });
+  }
+  console.log(`✅ ${rolesConfig.length} roles initialized successfully.`);
 
   // ------------------------------------------------------------------
   // 3. Seed Bootstrapping Admin User
@@ -158,6 +106,11 @@ async function main() {
   const rawPassword = process.env.SEED_ADMIN_PASSWORD;
   if (!adminEmail || !rawPassword) {
     throw new Error('Missing required environment variables for seed (adminEmail or rawPassword).');
+  }
+
+  const adminRole = await prisma.role.findUnique({ where: { name: 'ADMIN' } });
+  if (!adminRole) {
+    throw new Error('ADMIN role was not created successfully.');
   }
 
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
@@ -177,90 +130,17 @@ async function main() {
     });
     console.log(`✅ Seeded default Administrator: ${adminEmail}`);
   } else {
-    // Ensure existing test admin is promoted correctly
     await prisma.user.update({
       where: { id: existingAdmin.id },
       data: {
-        roles: { connect: { id: adminRole.id } },
         isActive: true,
+        roles: {
+          set: [{ id: adminRole.id }],
+        },
       },
     });
     console.log(`ℹ️ Verified existing administrator promotions.`);
   }
-
-  // ------------------------------------------------------------------
-  // 4. Test Branches and Cash Registers Generation (HU-032 / Local POS Dev)
-  // ------------------------------------------------------------------
-  console.log('🌱 Seeding test branches and cash registers...');
-  
-  // Sede Miraflores
-  let branchMiraflores = await prisma.branch.findFirst({ where: { name: 'Sede Miraflores' } });
-  if (!branchMiraflores) {
-    branchMiraflores = await prisma.branch.create({
-      data: {
-        name: 'Sede Miraflores',
-        address: 'Av. Larco 123, Miraflores',
-        phone: '+511234567',
-        isActive: true,
-      }
-    });
-    await prisma.warehouse.create({
-      data: { branchId: branchMiraflores.id }
-    });
-  }
-
-  // Sede San Isidro
-  let branchSanIsidro = await prisma.branch.findFirst({ where: { name: 'Sede San Isidro' } });
-  if (!branchSanIsidro) {
-    branchSanIsidro = await prisma.branch.create({
-      data: {
-        name: 'Sede San Isidro',
-        address: 'Av. Javier Prado 456, San Isidro',
-        phone: '+511765432',
-        isActive: true,
-      }
-    });
-    await prisma.warehouse.create({
-      data: { branchId: branchSanIsidro.id }
-    });
-  }
-
-  // Seeding Cash Registers for Miraflores
-  const existingRegister1 = await prisma.cashRegister.findUnique({ where: { id: 1 } });
-  if (!existingRegister1) {
-    await prisma.cashRegister.create({
-      data: {
-        id: 1,
-        branchId: branchMiraflores.id,
-        name: 'Caja Principal - Miraflores'
-      }
-    });
-  }
-
-  const existingRegister2 = await prisma.cashRegister.findUnique({ where: { id: 2 } });
-  if (!existingRegister2) {
-    await prisma.cashRegister.create({
-      data: {
-        id: 2,
-        branchId: branchMiraflores.id,
-        name: 'Caja Secundaria - Miraflores'
-      }
-    });
-  }
-
-  // Seeding Cash Registers for San Isidro
-  const existingRegister3 = await prisma.cashRegister.findUnique({ where: { id: 3 } });
-  if (!existingRegister3) {
-    await prisma.cashRegister.create({
-      data: {
-        id: 3,
-        branchId: branchSanIsidro.id,
-        name: 'Caja Principal - San Isidro'
-      }
-    });
-  }
-
-  console.log('✅ Seeded test branches and cash registers successfully.');
 
   console.log('🚀 Seed execution finalized successfully.\n');
 }
