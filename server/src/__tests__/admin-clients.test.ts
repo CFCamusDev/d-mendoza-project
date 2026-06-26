@@ -7,6 +7,8 @@ jest.mock('@infrastructure/database/prisma', () => {
   const mockClient = {
     findMany: jest.fn(),
     count: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
   };
   const mockUser = {
     findUnique: jest.fn(),
@@ -52,6 +54,7 @@ describe('Tests de Integración — HU-052: Gestión Unificada de la Base de Cli
         name: 'ADMIN',
         permissions: [
           { name: 'users:read' },
+          { name: 'users:write' },
         ],
       },
     ],
@@ -241,6 +244,124 @@ describe('Tests de Integración — HU-052: Gestión Unificada de la Base de Cli
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
       expect(response.body.error[0].field).toBe('type');
+    });
+  });
+
+  describe('PUT /api/v1/admin/clients/:id', () => {
+    const dummyClient = {
+      id: 101,
+      email: 'juan@example.com',
+      name: 'Juan',
+      lastName: 'Pérez',
+      phone: '999888777',
+      documentType: 'DNI',
+      documentId: '10000001',
+      userId: null,
+      createdAt: new Date('2026-06-20T10:00:00Z'),
+      updatedAt: new Date('2026-06-20T10:00:00Z'),
+    };
+
+    it('debería actualizar los datos del cliente correctamente', async () => {
+      (prisma.client.findUnique as any)
+        .mockResolvedValueOnce(dummyClient) // findById
+        .mockResolvedValueOnce(null); // findByEmail conflict check
+      
+      const updatedClient = { ...dummyClient, name: 'Juan Carlos', email: 'juancarlos@example.com' };
+      (prisma.client.update as any).mockResolvedValue(updatedClient);
+
+      const response = await request(app)
+        .put('/api/v1/admin/clients/101')
+        .set('Authorization', 'Bearer dummy-admin-token')
+        .send({
+          email: 'juancarlos@example.com',
+          name: 'Juan Carlos',
+          lastName: 'Pérez',
+          phone: '999888777',
+          documentType: 'DNI',
+          documentId: '10000001',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.name).toBe('Juan Carlos');
+      expect(response.body.data.email).toBe('juancarlos@example.com');
+    });
+
+    it('debería retornar HTTP 404 si el cliente no existe', async () => {
+      (prisma.client.findUnique as any).mockResolvedValue(null);
+
+      const response = await request(app)
+        .put('/api/v1/admin/clients/999')
+        .set('Authorization', 'Bearer dummy-admin-token')
+        .send({
+          name: 'Inexistente',
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Cliente no encontrado');
+    });
+
+    it('debería retornar HTTP 400 si el email ya está registrado por otro cliente', async () => {
+      (prisma.client.findUnique as any)
+        .mockResolvedValueOnce(dummyClient) // findById
+        .mockResolvedValueOnce({ id: 102, email: 'conflict@example.com' }); // findByEmail conflict client
+
+      const response = await request(app)
+        .put('/api/v1/admin/clients/101')
+        .set('Authorization', 'Bearer dummy-admin-token')
+        .send({
+          name: 'Juan',
+          email: 'conflict@example.com',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error[0].field).toBe('email');
+      expect(response.body.error[0].message).toContain('ya está registrado por otro cliente');
+    });
+
+    it('debería denegar acceso con HTTP 403 si el usuario carece del permiso users:write', async () => {
+      const dummyClientUser = {
+        id: 2,
+        email: 'client@example.com',
+        isActive: true,
+        roles: [
+          {
+            name: 'CLIENT',
+            permissions: [
+              { name: 'users:read' }
+            ],
+          },
+        ],
+      };
+      (prisma.user.findUnique as any).mockResolvedValue(dummyClientUser);
+
+      const response = await request(app)
+        .put('/api/v1/admin/clients/101')
+        .set('Authorization', 'Bearer dummy-client-token')
+        .send({
+          name: 'Juan',
+        });
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain("Acceso denegado: Se requiere el permiso 'users:write'");
+    });
+
+    it('debería retornar HTTP 400 si se envía un body inválido', async () => {
+      const response = await request(app)
+        .put('/api/v1/admin/clients/101')
+        .set('Authorization', 'Bearer dummy-admin-token')
+        .send({
+          name: '',
+          email: 'not-an-email',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.some((err: any) => err.field === 'name')).toBe(true);
+      expect(response.body.error.some((err: any) => err.field === 'email')).toBe(true);
     });
   });
 });
