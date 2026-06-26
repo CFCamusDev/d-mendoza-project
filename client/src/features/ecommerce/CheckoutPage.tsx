@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { useCart } from './hooks/useCart';
-import { ShoppingCart, MapPin, CreditCard, CheckCircle, ChevronRight, Loader2, Plus, Lock } from 'lucide-react';
+import { ShoppingCart, MapPin, CreditCard, CheckCircle, ChevronRight, Loader2, Plus, Lock, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { CouponInput } from './components/CouponInput';
@@ -288,30 +288,56 @@ export const CheckoutPage = () => {
                   </div>
 
                   {/* Stripe Wrapper & PaymentForm */}
-                  <Elements 
-                    stripe={stripePromise} 
-                    options={{ 
-                      clientSecret, 
-                      locale: 'es',
-                      appearance: {
-                        theme: 'stripe',
-                        variables: {
-                          colorPrimary: '#3F3F3F',
-                          colorBackground: '#ffffff',
-                          colorText: '#30313d',
-                          colorDanger: '#df1b41',
-                          fontFamily: 'Ideal Sans, system-ui, sans-serif',
-                          spacingUnit: '4px',
-                          borderRadius: '12px',
+                  {clientSecret.includes('mock') ? (
+                    <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm text-center">
+                      <div className="mb-4">
+                        <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto" />
+                      </div>
+                      <h2 className="text-xl font-bold text-gray-900 mb-2">Modo Desarrollo: Pago Simulado</h2>
+                      <p className="text-gray-600 mb-6">
+                        No se han configurado llaves de Stripe reales. Haz clic en el botón para simular un pago exitoso.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => window.location.href = '/checkout/success'}
+                        className="w-full py-4 bg-brand-accent text-white rounded-xl font-bold hover:bg-black transition-colors"
+                      >
+                        Simular Pago Exitoso ({calculatedTotal !== null ? Math.max(0, calculatedTotal - discountAmount) : Math.max(0, cart.subtotal - discountAmount)} PEN)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStep('shipping')}
+                        className="mt-4 text-sm font-semibold text-gray-500 hover:text-black transition-colors"
+                      >
+                        Volver a Envío
+                      </button>
+                    </div>
+                  ) : (
+                    <Elements 
+                      stripe={stripePromise} 
+                      options={{ 
+                        clientSecret, 
+                        locale: 'es',
+                        appearance: {
+                          theme: 'stripe',
+                          variables: {
+                            colorPrimary: '#3F3F3F',
+                            colorBackground: '#ffffff',
+                            colorText: '#30313d',
+                            colorDanger: '#df1b41',
+                            fontFamily: 'Ideal Sans, system-ui, sans-serif',
+                            spacingUnit: '4px',
+                            borderRadius: '12px',
+                          }
                         }
-                      }
-                    }}
-                  >
-                    <PaymentForm 
-                      total={calculatedTotal !== null ? Math.max(0, calculatedTotal - discountAmount) : Math.max(0, cart.subtotal - discountAmount)}
-                      onBack={() => setStep('shipping')}
-                    />
-                  </Elements>
+                      }}
+                    >
+                      <PaymentForm 
+                        total={calculatedTotal !== null ? Math.max(0, calculatedTotal - discountAmount) : Math.max(0, cart.subtotal - discountAmount)}
+                        onBack={() => setStep('shipping')}
+                      />
+                    </Elements>
+                  )}
                 </div>
               )
             )}
