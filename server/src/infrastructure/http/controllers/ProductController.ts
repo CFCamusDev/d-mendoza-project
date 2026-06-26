@@ -137,4 +137,20 @@ export class ProductController {
       return res.status(201).json({ success: true, data: updated });
     } catch (e) { next(e); }
   }
+
+  async deleteImage(req: Request, res: Response, next: NextFunction) {
+    try {
+      const productId = parseInt(String(req.params.id), 10);
+      const imageId = parseInt(String(req.params.imageId), 10);
+      if (isNaN(productId) || isNaN(imageId)) {
+        return res.status(400).json({ success: false, error: 'ID inválido' });
+      }
+      const product = await repo.findById(productId);
+      if (!product) {
+        return res.status(404).json({ success: false, error: 'Producto no encontrado' });
+      }
+      await repo.deleteImage(productId, imageId);
+      return res.status(200).json({ success: true, message: 'Imagen eliminada' });
+    } catch (e) { next(e); }
+  }
 }

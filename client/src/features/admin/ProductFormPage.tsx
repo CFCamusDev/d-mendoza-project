@@ -5,11 +5,11 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
-import { Upload, Star, X, Loader2, Sparkles, Folder, HelpCircle, ArrowLeft } from 'lucide-react';
+import { Upload, Star, X, Loader2, Sparkles, Folder, HelpCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 
 interface SelectOption { id: number; name: string; }
-interface ImagePreview { file?: File; url: string; isMain: boolean; }
+interface ImagePreview { id?: number; file?: File; url: string; isMain: boolean; }
 
 const schema = yup.object({
   code: yup.string()
@@ -37,8 +37,11 @@ const ProductFormPage: React.FC = () => {
   const [images, setImages] = useState<ImagePreview[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
+  const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const replaceFileRef = useRef<HTMLInputElement>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: yupResolver(schema) as any,
@@ -59,6 +62,7 @@ const ProductFormPage: React.FC = () => {
           reset(data.data);
           if (data.data.images) {
             setImages(data.data.images.map((img: any) => ({
+              id: img.id,
               url: img.url,
               isMain: img.isMain,
             })));
@@ -82,12 +86,41 @@ const ProductFormPage: React.FC = () => {
   const setMain = (index: number) =>
     setImages(prev => prev.map((img, i) => ({ ...img, isMain: i === index })));
 
-  const removeImage = (index: number) =>
+  const removeImage = (index: number) => {
+    const target = images[index];
+    if (target.id) {
+      setDeletedImageIds(prev => [...prev, target.id!]);
+    }
     setImages(prev => {
       const next = prev.filter((_, i) => i !== index);
       if (next.length > 0 && !next.some(img => img.isMain)) next[0].isMain = true;
       return next;
     });
+  };
+
+  const triggerReplace = (index: number) => {
+    setReplaceIndex(index);
+    replaceFileRef.current?.click();
+  };
+
+  const handleReplaceFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || replaceIndex === null) return;
+    const file = files[0];
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.type)) { toast.error(`${file.name}: solo JPEG/PNG/WEBP`); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name}: máx 5 MB`); return; }
+
+    const url = URL.createObjectURL(file);
+    const oldImage = images[replaceIndex];
+    if (oldImage.id) {
+      setDeletedImageIds(prev => [...prev, oldImage.id!]);
+    }
+
+    setImages(prev => prev.map((img, idx) => idx === replaceIndex ? { file, url, isMain: img.isMain } : img));
+    setReplaceIndex(null);
+    e.target.value = '';
+  };
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -107,6 +140,14 @@ const ProductFormPage: React.FC = () => {
         const { data: res } = await axiosInstance.post('/v1/products', data);
         productId = res.data.id;
         toast.success('Producto creado');
+      }
+
+      if (isEdit && deletedImageIds.length > 0) {
+        await Promise.all(
+          deletedImageIds.map(imageId =>
+            axiosInstance.delete(`/v1/products/${productId}/images/${imageId}`)
+          )
+        );
       }
 
       const newImages = images.filter(img => img.file);
@@ -285,6 +326,7 @@ const ProductFormPage: React.FC = () => {
               <p className="text-[10px] text-gray-400">Archivos permitidos: JPEG, PNG, WEBP (Máx. 5 MB por archivo)</p>
             </div>
             <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => addFiles(e.target.files)} />
+            <input ref={replaceFileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleReplaceFile} />
 
             {images.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
@@ -300,6 +342,14 @@ const ProductFormPage: React.FC = () => {
                         className={`p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-all ${img.isMain ? 'text-yellow-400' : 'text-white'}`}
                       >
                         <Star size={16} fill={img.isMain ? 'currentColor' : 'none'} />
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => triggerReplace(i)} 
+                        title="Reemplazar imagen"
+                        className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white hover:text-blue-400 transition-all"
+                      >
+                        <RefreshCw size={16} />
                       </button>
                       <button 
                         type="button" 
