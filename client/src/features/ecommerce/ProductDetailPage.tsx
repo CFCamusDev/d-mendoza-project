@@ -43,6 +43,7 @@ interface ProductDetail {
   id: number;
   code: string;
   name: string;
+  model: string | null;
   slug: string;
   description: string | null;
   categoryId: number;
@@ -333,7 +334,7 @@ export const ProductDetailPage: React.FC = () => {
       {/* Huge Background Watermark with Gradient at the body/root level */}
       <div className="absolute inset-x-0 top-2 lg:top-4 flex items-center justify-center select-none pointer-events-none z-0 overflow-hidden">
         <h1 className="text-[18vw] lg:text-[260px] font-black uppercase tracking-tighter leading-none select-none text-center whitespace-nowrap bg-gradient-to-r from-brand-primary/60 via-brand-accent/30 to-brand-primary/50 bg-clip-text text-transparent opacity-35">
-          {product.brand.name}
+          {product.model || ''}
         </h1>
       </div>
 
