@@ -9,6 +9,7 @@ interface Product {
   id: number;
   code: string;
   name: string;
+  model: string | null;
   description: string | null;
   isActive: boolean;
 }
@@ -32,8 +33,8 @@ export const ProductsAdminPage: React.FC = () => {
     } catch (error) {
       // Fallback a productos mock para pruebas directas en local si el catálogo está vacío
       const mockProducts: Product[] = [
-        { id: 1, code: 'CAM', name: 'Camisa Formal Slim Fit', description: 'Camisa de algodón premium', isActive: true },
-        { id: 2, code: 'PAN', name: 'Pantalón Chino Elegante', description: 'Pantalón gabardina casual', isActive: true },
+        { id: 1, code: 'CAM', name: 'Camisa Formal Slim Fit', model: 'Slim Fit 2026', description: 'Camisa de algodón premium', isActive: true },
+        { id: 2, code: 'PAN', name: 'Pantalón Chino Elegante', model: 'Gabardina Classic', description: 'Pantalón gabardina casual', isActive: true },
       ];
       setProducts(mockProducts);
       toast('Mostrando productos de demostración local.', {
@@ -90,7 +91,15 @@ export const ProductsAdminPage: React.FC = () => {
                   >
                     <div>
                       <h3 className="text-sm font-semibold text-[#3F3F3F]">{p.name}</h3>
-                      <span className="text-xs font-mono text-[#6B6B6B] mt-1 block">Código: {p.code}</span>
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <span className="text-xs font-mono text-[#6B6B6B]">Código: {p.code}</span>
+                        {p.model && (
+                          <>
+                            <span className="text-[10px] text-gray-300">•</span>
+                            <span className="text-xs text-neutral-500 font-medium">Model: {p.model}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="flex items-center gap-1">
