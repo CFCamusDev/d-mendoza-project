@@ -323,7 +323,7 @@ export const ProductDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-brand-bg text-brand-text pb-10 animate-in fade-in duration-300 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-brand-bg text-brand-text pb-10 animate-in fade-in duration-300 relative font-sans">
       {/* Decorative Lines from the reference design */}
       <div className="absolute inset-0 pointer-events-none opacity-20 select-none">
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -332,8 +332,8 @@ export const ProductDetailPage: React.FC = () => {
       </div>
 
       {/* Huge Background Watermark with Gradient at the body/root level */}
-      <div className="fixed left-0 right-0 top-[20vh] lg:top-32 flex items-center justify-center select-none pointer-events-none z-0 overflow-hidden w-screen">
-        <h1 className="max-w-[100vw] text-[12vw] lg:text-[200px] font-black uppercase tracking-tighter leading-none select-none text-center whitespace-normal break-words bg-gradient-to-r from-brand-primary/60 via-brand-accent/30 to-brand-primary/50 bg-clip-text text-transparent opacity-35">
+      <div className="absolute left-1/2 -translate-x-1/2 top-[10vh] lg:top-[5vh] flex items-center justify-center select-none pointer-events-none z-0 overflow-hidden w-screen">
+        <h1 className="max-w-[90vw] lg:max-w-[95vw] text-[12vw] lg:text-[210px] font-black uppercase tracking-tighter leading-none select-none text-center whitespace-normal break-words bg-gradient-to-r from-brand-primary/60 via-brand-accent/30 to-brand-primary/50 bg-clip-text text-transparent opacity-35">
           {product.model || ''}
         </h1>
       </div>

@@ -120,7 +120,7 @@ export const AppShell: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-brand-bg flex flex-col font-sans selection:bg-brand-accent selection:text-white">
+    <div className="min-h-screen bg-brand-bg flex flex-col font-sans selection:bg-brand-accent selection:text-white overflow-x-hidden">
       {/* HEADER PRINCIPAL RESPONSIVO */}
       <header className="sticky top-0 z-40 bg-white border-b border-brand-primary/50 shadow-sm backdrop-blur-md bg-white/95">
         <div className="max-w-[1280px] mx-auto px-4 h-16 flex items-center justify-between">
