@@ -242,7 +242,7 @@ export const ProductDetailPage: React.FC = () => {
           {/* Hero Section Skeleton */}
           <div className="relative flex-1 flex flex-col justify-center items-center py-2 md:py-4 my-auto lg:-mt-6">
             <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-center z-10">
-              
+
               {/* Carousel skeleton */}
               <div className="lg:col-span-8 flex items-center justify-center relative h-[280px] md:h-[350px] lg:h-[430px] w-full bg-neutral-200/40 rounded-2xl animate-pulse" />
 
@@ -332,14 +332,14 @@ export const ProductDetailPage: React.FC = () => {
       </div>
 
       {/* Huge Background Watermark with Gradient at the body/root level */}
-      <div className="absolute inset-x-0 top-2 lg:top-4 flex items-center justify-center select-none pointer-events-none z-0 overflow-hidden">
-        <h1 className="text-[18vw] lg:text-[260px] font-black uppercase tracking-tighter leading-none select-none text-center whitespace-nowrap bg-gradient-to-r from-brand-primary/60 via-brand-accent/30 to-brand-primary/50 bg-clip-text text-transparent opacity-35">
+      <div className="fixed left-0 right-0 top-[20vh] lg:top-32 flex items-center justify-center select-none pointer-events-none z-0 overflow-hidden w-screen">
+        <h1 className="max-w-[100vw] text-[12vw] lg:text-[200px] font-black uppercase tracking-tighter leading-none select-none text-center whitespace-normal break-words bg-gradient-to-r from-brand-primary/60 via-brand-accent/30 to-brand-primary/50 bg-clip-text text-transparent opacity-35">
           {product.model || ''}
         </h1>
       </div>
 
       {/* Top Navigation Row (Outside the main hero viewport container, closer to header) */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-3 pb-1 relative z-20">
+      <div className="max-w-7xl mx-auto lg:px-8 pt-3 pb-1 relative z-20">
         <div className="flex items-center justify-between gap-4">
           <button
             onClick={() => navigate(-1)}
@@ -359,11 +359,11 @@ export const ProductDetailPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 pb-8 relative z-10 flex flex-col justify-between min-h-[78vh]">
+      <div className="max-w-7xl mx-auto lg:px-8 pb-8 relative z-10 flex flex-col justify-between min-h-[78vh]">
         {/* Hero Section: Centered Floating Image Carousel + Huge Background Text + Side Info */}
         <div className="relative flex-1 flex flex-col justify-center items-center py-2 md:py-4 my-auto lg:-mt-6">
           {/* Core Content Grid */}
-          <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-center z-10">
+          <div className="w-full grid grid-cols-1 lg:grid-cols-12 lg:gap-6 gap-0 items-center z-10">
 
             {/* Interactive Image Carousel Container (Takes 8 Columns) */}
             <div
