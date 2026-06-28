@@ -18,7 +18,7 @@ import {
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 
 interface AttributeValue { id: number; value: string; isActive: boolean; }
-interface Attribute { id: number; name: string; isActive: boolean; values: AttributeValue[]; }
+interface Attribute { id: number; name: string; isActive: boolean; values: AttributeValue[]; isVisualDriver?: boolean; }
 
 const AttributesPage: React.FC = () => {
   useDocumentTitle('Gestión de Atributos - D\'Mendoza');
@@ -30,6 +30,7 @@ const AttributesPage: React.FC = () => {
   const [showAttrModal, setShowAttrModal] = useState(false);
   const [editingAttr, setEditingAttr] = useState<Attribute | null>(null);
   const [attrName, setAttrName] = useState('');
+  const [isVisualDriver, setIsVisualDriver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -54,18 +55,18 @@ const AttributesPage: React.FC = () => {
     return n;
   });
 
-  const openCreate = () => { setEditingAttr(null); setAttrName(''); setShowAttrModal(true); };
-  const openEdit = (a: Attribute) => { setEditingAttr(a); setAttrName(a.name); setShowAttrModal(true); };
+  const openCreate = () => { setEditingAttr(null); setAttrName(''); setIsVisualDriver(false); setShowAttrModal(true); };
+  const openEdit = (a: Attribute) => { setEditingAttr(a); setAttrName(a.name); setIsVisualDriver(!!a.isVisualDriver); setShowAttrModal(true); };
 
   const handleSaveAttr = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       if (editingAttr) {
-        await axiosInstance.patch(`/v1/attributes/${editingAttr.id}`, { name: attrName });
+        await axiosInstance.patch(`/v1/attributes/${editingAttr.id}`, { name: attrName, isVisualDriver });
         toast.success('Atributo actualizado');
       } else {
-        await axiosInstance.post('/v1/attributes', { name: attrName });
+        await axiosInstance.post('/v1/attributes', { name: attrName, isVisualDriver });
         toast.success('Atributo creado');
       }
       setShowAttrModal(false);
@@ -224,7 +225,7 @@ const AttributesPage: React.FC = () => {
                           {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                         </span>
                         <span className={`font-bold text-sm text-[#3F3F3F] truncate ${!attr.isActive ? 'text-gray-400 line-through font-normal' : ''}`}>
-                          {attr.name}
+                          {attr.name} {attr.isVisualDriver && <span title="Atributo Conductor Visual" className="ml-1 text-xs">🖼️</span>}
                         </span>
                         <span className="text-[10px] font-extrabold text-[#6B6B6B] bg-[#FAFAFA] border px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
                           {attr.values.length} valores
@@ -348,6 +349,19 @@ const AttributesPage: React.FC = () => {
                   onChange={e => setAttrName(e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="flex items-center gap-2 py-1">
+                <input
+                  type="checkbox"
+                  id="isVisualDriver"
+                  checked={isVisualDriver}
+                  onChange={e => setIsVisualDriver(e.target.checked)}
+                  className="rounded border-gray-300 text-[#3F3F3F] focus:ring-[#3F3F3F]"
+                />
+                <label htmlFor="isVisualDriver" className="text-xs font-bold text-[#3F3F3F] cursor-pointer select-none">
+                  Atributo Conductor Visual (isVisualDriver) 🖼️
+                </label>
               </div>
 
               <div className="flex gap-3 pt-4 border-t border-[#D9D9D2]/30">

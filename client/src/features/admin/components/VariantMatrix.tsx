@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useVariants } from '../hooks/useVariants';
 import type { ProductVariant } from '../types/variant';
 import axiosInstance from '@/shared/api/axiosInstance';
+import toast from 'react-hot-toast';
+import { Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 
 interface VariantMatrixProps {
   productId: number;
@@ -10,10 +12,11 @@ interface VariantMatrixProps {
 
 export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, productCode }) => {
   const { variants, loading, fetchVariants, generateVariants, updateVariant } = useVariants(productId);
+  const [productImages, setProductImages] = useState<any[]>([]);
 
   // DB Attributes types
   interface AttributeValue { id: number; value: string; isActive: boolean; }
-  interface Attribute { id: number; name: string; isActive: boolean; values: AttributeValue[]; }
+  interface Attribute { id: number; name: string; isActive: boolean; values: AttributeValue[]; isVisualDriver?: boolean; }
 
   // Attributes from server
   const [dbAttributes, setDbAttributes] = useState<Attribute[]>([]);
@@ -42,6 +45,23 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
   useEffect(() => {
     fetchVariants();
   }, [productId, fetchVariants]);
+
+  const fetchProductImages = async () => {
+    try {
+      const { data } = await axiosInstance.get(`/v1/products/${productId}`);
+      if (data.success && data.data.images) {
+        setProductImages(data.data.images);
+      }
+    } catch (err) {
+      console.error('Error fetching product images:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (productId) {
+      fetchProductImages();
+    }
+  }, [productId]);
 
   // Sync panel visibility: show by default if no variants exist
   useEffect(() => {
@@ -179,6 +199,63 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
 
   const cancelEdit = () => {
     setEditingId(null);
+  };
+
+  const visualDriverValues = useMemo(() => {
+    const valuesMap: Record<number, { value: string; attributeName: string }> = {};
+    dbAttributes.forEach(attr => {
+      if (attr.isVisualDriver) {
+        attr.values.forEach(val => {
+          const attrKey = attr.name.toLowerCase();
+          const isUsed = variants.some(v => 
+            v.attributesJson[attrKey]?.toUpperCase() === val.value.toUpperCase()
+          );
+          if (isUsed) {
+            valuesMap[val.id] = { value: val.value, attributeName: attr.name };
+          }
+        });
+      }
+    });
+    return Object.entries(valuesMap).map(([id, info]) => ({
+      id: Number(id),
+      value: info.value,
+      attributeName: info.attributeName,
+    }));
+  }, [dbAttributes, variants]);
+
+  const handleUploadImages = async (valId: number, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const formData = new FormData();
+    Array.from(files).forEach(file => {
+      formData.append('images', file);
+    });
+    formData.append('attributeValueId', String(valId));
+    formData.append('isMain', 'false');
+
+    try {
+      const { data } = await axiosInstance.post(`/v1/products/${productId}/images`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (data.success) {
+        toast.success('Imágenes subidas');
+        fetchProductImages();
+      }
+    } catch {
+      toast.error('Error al subir imágenes');
+    }
+  };
+
+  const handleDeleteImage = async (imageId: number) => {
+    if (!confirm('¿Eliminar esta imagen?')) return;
+    try {
+      const { data } = await axiosInstance.delete(`/v1/products/${productId}/images/${imageId}`);
+      if (data.success) {
+        toast.success('Imagen eliminada');
+        fetchProductImages();
+      }
+    } catch {
+      toast.error('Error al eliminar imagen');
+    }
   };
 
   const handleSave = async (variantId: number) => {
@@ -500,6 +577,73 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
           No hay variantes creadas para este producto. Rellena los campos de arriba para generar la matriz.
         </div>
       )}
+
+      {/* Dynamic Images by Visual Driver Section */}
+      <div className="mt-10 border-t border-gray-200 pt-8">
+        <h3 className="text-xl font-semibold text-brand-accent flex items-center gap-2">
+          <ImageIcon className="w-5 h-5 text-gray-500" />
+          <span>Galería de Imágenes por Atributo Visual (Color)</span>
+        </h3>
+        <p className="text-sm text-brand-text mt-1">
+          Sube imágenes específicas vinculadas a cada variante visual (como colores). Se mostrarán dinámicamente al seleccionar esa opción.
+        </p>
+
+        {visualDriverValues.length === 0 ? (
+          <div className="bg-gray-50 text-center py-8 rounded-lg border border-gray-200 text-gray-400 mt-4 text-xs">
+            No se han detectado variantes con atributos configurados como "Conductor Visual" (ej: Color) para este producto.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 mt-6">
+            {visualDriverValues.map((val) => {
+              const valImages = productImages.filter(img => img.attributeValueId === val.id);
+              return (
+                <div key={val.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                    <span className="font-bold text-sm text-brand-accent uppercase tracking-wider">
+                      {val.attributeName}: <span className="text-gray-700 bg-gray-100 px-2.5 py-1 rounded-md text-xs normal-case">{val.value}</span>
+                    </span>
+                    <span className="text-xs text-gray-400">{valImages.length} imágenes</span>
+                  </div>
+
+                  {/* Thumbnail gallery */}
+                  {valImages.length > 0 && (
+                    <div className="flex flex-wrap gap-3">
+                      {valImages.map((img) => (
+                        <div key={img.id} className="relative group border border-gray-200 rounded-lg overflow-hidden w-20 h-20 bg-gray-50 flex items-center justify-center p-1">
+                          <img src={img.url} alt="" className="max-w-full max-h-full object-contain" />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteImage(img.id)}
+                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white hover:text-red-400"
+                            title="Eliminar imagen"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* File upload input */}
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 bg-gray-50 border border-dashed border-gray-300 hover:border-brand-accent cursor-pointer rounded-lg px-4 py-2 text-xs font-semibold text-gray-600 transition">
+                      <Upload size={14} />
+                      <span>Subir Imágenes para {val.value}</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => handleUploadImages(val.id, e.target.files)}
+                      />
+                    </label>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

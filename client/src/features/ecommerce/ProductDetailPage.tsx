@@ -72,6 +72,15 @@ export const ProductDetailPage: React.FC = () => {
   const [selectedTalla, setSelectedTalla] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
+  const [attributes, setAttributes] = useState<any[]>([]);
+
+  useEffect(() => {
+    axiosInstance.get('/v1/attributes')
+      .then(({ data }) => {
+        if (data.success) setAttributes(data.data);
+      })
+      .catch(console.error);
+  }, []);
 
   // Gallery Image Load State
   // Modal State
@@ -129,16 +138,39 @@ export const ProductDetailPage: React.FC = () => {
     }
   }, [slug]);
 
+  // Reset image index when color changes
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [selectedColor]);
+
+  const selectedColorValueId = useMemo(() => {
+    if (!selectedColor || attributes.length === 0) return null;
+    const colorAttr = attributes.find(a => a.name.toLowerCase() === 'color' || a.isVisualDriver);
+    if (!colorAttr) return null;
+    const valObj = colorAttr.values.find((v: any) => v.value.toUpperCase() === selectedColor.toUpperCase());
+    return valObj ? valObj.id : null;
+  }, [selectedColor, attributes]);
+
+  const filteredImages = useMemo(() => {
+    if (!product) return [];
+    if (!selectedColorValueId) return product.images;
+    const colorImages = product.images.filter(img => (img as any).attributeValueId === selectedColorValueId);
+    if (colorImages.length === 0) {
+      return product.images.filter(img => !(img as any).attributeValueId);
+    }
+    return colorImages;
+  }, [product, selectedColorValueId]);
+
   // Automatic Carousel effect
   useEffect(() => {
-    if (!product || product.images.length <= 1 || isHovered) return;
+    if (!product || filteredImages.length <= 1 || isHovered) return;
 
     const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
+      setCurrentImageIndex((prev) => (prev + 1) % filteredImages.length);
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [product, isHovered]);
+  }, [product, filteredImages, isHovered]);
 
   // Extract unique attributes
   const { tallas, colores } = useMemo(() => {
@@ -171,7 +203,7 @@ export const ProductDetailPage: React.FC = () => {
 
   // Base price representation & selected image calculations
   const displayPrice = product ? (selectedVariant ? selectedVariant.price : (product.variants[0]?.price || 0)) : 0;
-  const selectedImage = product && product.images[currentImageIndex] ? product.images[currentImageIndex].url : 'https://via.placeholder.com/600x600?text=No+Image';
+  const selectedImage = filteredImages[currentImageIndex] ? filteredImages[currentImageIndex].url : 'https://via.placeholder.com/600x600?text=No+Image';
 
   // Handle wishlist toggle
   const toggleWishlist = () => {
@@ -217,14 +249,14 @@ export const ProductDetailPage: React.FC = () => {
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!product || product.images.length === 0) return;
-    setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+    if (filteredImages.length === 0) return;
+    setCurrentImageIndex((prev) => (prev - 1 + filteredImages.length) % filteredImages.length);
   };
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!product || product.images.length === 0) return;
-    setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
+    if (filteredImages.length === 0) return;
+    setCurrentImageIndex((prev) => (prev + 1) % filteredImages.length);
   };
 
   if (loading) {
@@ -372,7 +404,7 @@ export const ProductDetailPage: React.FC = () => {
               onMouseLeave={() => setIsHovered(false)}
             >
               {/* Previous Slide Button */}
-              {product.images.length > 1 && (
+              {filteredImages.length > 1 && (
                 <button
                   type="button"
                   onClick={handlePrevImage}
@@ -384,7 +416,7 @@ export const ProductDetailPage: React.FC = () => {
               )}
 
               {/* Next Slide Button */}
-              {product.images.length > 1 && (
+              {filteredImages.length > 1 && (
                 <button
                   type="button"
                   onClick={handleNextImage}
@@ -411,9 +443,9 @@ export const ProductDetailPage: React.FC = () => {
               </div>
 
               {/* Slide Position Indicator Dots */}
-              {product.images.length > 1 && (
+              {filteredImages.length > 1 && (
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 bg-neutral-900/10 py-1.5 px-3 rounded-full backdrop-blur-xs">
-                  {product.images.map((_, idx) => (
+                  {filteredImages.map((_, idx) => (
                     <button
                       key={idx}
                       type="button"
