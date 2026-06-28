@@ -490,12 +490,21 @@ export const ProductDetailPage: React.FC = () => {
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {colores.map(color => {
+                      const colorAttr = attributes.find(a => a.name.toLowerCase() === 'color' || a.isVisualDriver);
+                      const valObj = colorAttr?.values.find((v: any) => v.value.toUpperCase() === color.toUpperCase());
+                      const valId = valObj ? valObj.id : null;
+                      
+                      const colorImg = valId ? product.images.find(img => (img as any).attributeValueId === valId) : null;
+                      const mainParentImg = product.images.find(img => !(img as any).attributeValueId) || product.images[0];
+                      const thumbUrl = colorImg?.url || mainParentImg?.url;
+                      
                       const COLOR_MAP: Record<string, string> = {
                         'NEGRO': '#000000', 'BLANCO': '#FFFFFF', 'ROJO': '#FF0000', 'AZUL': '#0000FF',
                         'VERDE': '#00FF00', 'AMARILLO': '#FFFF00', 'GRIS': '#808080', 'BEIGE': '#F5F5DC',
                         'MARRON': '#8B4513', 'ROSA': '#FFC0CB', 'MORADO': '#800080', 'NARANJA': '#FFA500'
                       };
                       const hex = COLOR_MAP[color.toUpperCase()] || '#E2E8F0';
+                      
                       return (
                         <button
                           key={color}
@@ -503,13 +512,17 @@ export const ProductDetailPage: React.FC = () => {
                             setSelectedColor(color);
                             setQuantity(1);
                           }}
-                          className={`w-7 h-7 rounded-full transition-all flex items-center justify-center cursor-pointer relative group
+                          className={`w-10 h-10 rounded-full transition-all flex items-center justify-center cursor-pointer relative group overflow-hidden border
                             ${selectedColor === color
-                              ? 'ring-2 ring-brand-accent ring-offset-2 scale-110'
-                              : 'ring-1 ring-slate-200 hover:scale-105'}`}
-                          style={{ backgroundColor: hex }}
+                              ? 'ring-2 ring-brand-accent ring-offset-2 scale-110 border-transparent'
+                              : 'border-slate-200 hover:scale-105'}`}
                           title={color}
                         >
+                          {thumbUrl ? (
+                            <img src={thumbUrl} alt={color} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full" style={{ backgroundColor: hex }} />
+                          )}
                           <div className="absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]"></div>
                         </button>
                       );
