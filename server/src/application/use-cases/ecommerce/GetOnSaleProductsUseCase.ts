@@ -74,6 +74,7 @@ export class GetOnSaleProductsUseCase {
         minPrice,
         maxPrice,
         outOfStock: totalStock <= 0,
+        variants: activeSaleVariants,
       };
     });
   }
