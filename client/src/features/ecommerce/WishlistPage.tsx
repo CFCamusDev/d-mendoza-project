@@ -106,23 +106,16 @@ export const WishlistPage = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((item) => {
-              const mappedVariant = {
-                id: item.variant.id,
-                sku: item.variant.sku,
-                price: item.variant.price,
-                discountPercent: 0,
-                outOfStock: false,
-                product: {
-                  name: item.variant.product.name,
-                  slug: item.variant.product.slug,
-                  images: item.variant.product.images
-                }
-              };
-
               return (
                 <ProductCard 
-                  key={item.id} 
-                  variant={mappedVariant as any}
+                  key={item.id}
+                  variantId={item.variantId}
+                  productSlug={item.variant.product.slug}
+                  productName={item.variant.product.name}
+                  description={item.variant.product.description}
+                  images={item.variant.product.images}
+                  priceString={`S/ ${Number(item.variant.price).toFixed(2)}`}
+                  isOutOfStock={false}
                   initialIsWishlisted={true}
                   onFavoriteToggle={(variantId, isWishlisted) => {
                     if (!isWishlisted) {
