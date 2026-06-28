@@ -100,6 +100,15 @@ export const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
     };
   }, [product]);
 
+  useEffect(() => {
+    if (colores.length > 0 && !selectedColor) {
+      setSelectedColor(colores[0]);
+    }
+    if (tallas.length > 0 && !selectedTalla) {
+      setSelectedTalla(tallas[0]);
+    }
+  }, [colores, tallas, selectedColor, selectedTalla]);
+
   const selectedVariant = useMemo(() => {
     if (!product || !selectedTalla || !selectedColor) return null;
     return product.variants.find(variant => 
