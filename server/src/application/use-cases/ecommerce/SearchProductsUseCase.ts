@@ -30,6 +30,7 @@ export class SearchProductsUseCase {
           productId: variant.productId,
           sku: variant.sku,
           price: Number(variant.price),
+          discountPercent: variant.discountPercent,
           attributesJson: variant.attributesJson,
           isActive: variant.isActive,
           minStock: variant.minStock,

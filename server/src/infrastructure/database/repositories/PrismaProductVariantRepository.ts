@@ -67,6 +67,7 @@ export class PrismaProductVariantRepository implements IProductVariantRepository
         price: data.price,
         isActive: data.isActive,
         minStock: data.minStock,
+        discountPercent: data.discountPercent,
       },
     });
     return this.toDomain(record);
@@ -104,6 +105,7 @@ export class PrismaProductVariantRepository implements IProductVariantRepository
       attributesJson: record.attributesJson as Record<string, string>,
       isActive: record.isActive,
       minStock: record.minStock,
+      discountPercent: record.discountPercent,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };

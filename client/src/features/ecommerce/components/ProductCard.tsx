@@ -12,10 +12,11 @@ interface ProductCardProps {
   gender?: string;
   description?: string;
   images: Array<{ url: string; isMain: boolean; attributeValueId?: number | null }>;
-  priceString: string;
   isOutOfStock?: boolean;
-  discountPercent?: number;
-  originalPriceString?: string; // Optional: to display crossed price
+  minPrice: number;
+  maxPrice: number;
+  minDiscount: number;
+  maxDiscount: number;
   
   initialIsWishlisted?: boolean;
   onFavoriteToggle?: (variantId: number, isWishlisted: boolean) => void;
@@ -29,10 +30,11 @@ export default function ProductCard({
   gender,
   description,
   images,
-  priceString,
   isOutOfStock = false,
-  discountPercent = 0,
-  originalPriceString,
+  minPrice,
+  maxPrice,
+  minDiscount,
+  maxDiscount,
   initialIsWishlisted = false,
   onFavoriteToggle
 }: ProductCardProps) {
@@ -78,9 +80,9 @@ export default function ProductCard({
               Agotado
             </span>
           ) : (
-            discountPercent > 0 && (
+            maxDiscount > 0 && (
               <span className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-1">
-                -{discountPercent}%
+                {minDiscount === maxDiscount ? `-${maxDiscount}%` : `${minDiscount}% - ${maxDiscount}% OFF`}
               </span>
             )
           )}
@@ -134,13 +136,16 @@ export default function ProductCard({
               )}
             </div>
             <div className="shrink-0 text-right">
-              {originalPriceString && (
+              {minPrice === maxPrice && maxDiscount > 0 && (
                 <span className="text-[10px] text-neutral-400 line-through block leading-none mb-1">
-                  {originalPriceString}
+                  S/ {(minPrice / (1 - maxDiscount / 100)).toFixed(2)}
                 </span>
               )}
               <span className="text-xs font-bold text-neutral-900 block">
-                {priceString}
+                {minPrice === maxPrice 
+                  ? `S/ ${minPrice.toFixed(2)}` 
+                  : `S/ ${minPrice.toFixed(2)} - S/ ${maxPrice.toFixed(2)}`
+                }
               </span>
               {gender && (
                 <span className="text-[9px] font-semibold text-neutral-500 uppercase tracking-wider block mt-1">

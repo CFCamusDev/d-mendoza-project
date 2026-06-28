@@ -38,10 +38,14 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
   const [manualPrice, setManualPrice] = useState<number>(99.90);
   const [manualSku, setManualSku] = useState<string>('');
 
-  // States for inline editing
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editPrice, setEditPrice] = useState<number>(0);
   const [editSku, setEditSku] = useState<string>('');
+  const [editDiscount, setEditDiscount] = useState<number>(0);
+
+  // Bulk discount state
+  const [bulkDiscount, setBulkDiscount] = useState<number | ''>('');
+  const [isApplyingBulkDiscount, setIsApplyingBulkDiscount] = useState<boolean>(false);
 
   useEffect(() => {
     fetchVariants();
@@ -196,6 +200,7 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
     setEditingId(v.id);
     setEditPrice(v.price);
     setEditSku(v.sku);
+    setEditDiscount(v.discountPercent ?? 0);
   };
 
   const cancelEdit = () => {
@@ -285,6 +290,10 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
       alert('El precio debe ser mayor a 0');
       return;
     }
+    if (editDiscount < 0 || editDiscount > 99) {
+      alert('El descuento debe estar entre 0 y 99');
+      return;
+    }
     if (!editSku.trim()) {
       alert('El SKU no puede estar vacío');
       return;
@@ -293,11 +302,34 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
     const success = await updateVariant(variantId, {
       price: editPrice,
       sku: editSku,
+      discountPercent: editDiscount,
     });
 
     if (success) {
       setEditingId(null);
     }
+  };
+
+  const handleApplyBulkDiscount = async () => {
+    const discountVal = Number(bulkDiscount);
+    if (discountVal < 0 || discountVal > 99) {
+      alert('El descuento debe estar entre 0 y 99');
+      return;
+    }
+    
+    setIsApplyingBulkDiscount(true);
+    let allSuccess = true;
+    for (const v of variants) {
+      if (v.discountPercent !== discountVal) {
+        const success = await updateVariant(v.id, { discountPercent: discountVal });
+        if (!success) allSuccess = false;
+      }
+    }
+    if (allSuccess) {
+      setBulkDiscount('');
+      toast.success('Descuento masivo aplicado a las variantes');
+    }
+    setIsApplyingBulkDiscount(false);
   };
 
   const handleToggleActive = async (v: ProductVariant) => {
@@ -509,12 +541,35 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
       {loading && variants.length === 0 ? (
         <div className="text-center py-12 text-brand-text text-sm font-medium">Cargando variantes...</div>
       ) : variants.length > 0 ? (
-        <div className="overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm">
-          <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
+        <div className="space-y-4">
+          <div className="flex justify-end bg-gray-50 p-4 rounded-lg border border-gray-200">
+             <div className="flex items-center gap-3">
+               <label className="text-sm font-semibold text-brand-text">Descuento Masivo (%):</label>
+               <input
+                  type="number"
+                  min="0"
+                  max="99"
+                  value={bulkDiscount}
+                  onChange={(e) => setBulkDiscount(e.target.value ? parseFloat(e.target.value) : '')}
+                  placeholder="Ej: 20"
+                  className="border border-gray-300 rounded px-3 py-1.5 focus:ring-1 focus:ring-brand-accent outline-none w-24 text-sm"
+               />
+               <button
+                  onClick={handleApplyBulkDiscount}
+                  disabled={isApplyingBulkDiscount || bulkDiscount === ''}
+                  className="bg-brand-accent hover:opacity-90 text-white text-sm font-semibold px-4 py-1.5 rounded transition disabled:opacity-50"
+               >
+                 {isApplyingBulkDiscount ? 'Aplicando...' : 'Aplicar a Todos'}
+               </button>
+             </div>
+          </div>
+          <div className="overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
             <thead className="bg-brand-primary/20 text-brand-accent font-semibold text-xs uppercase tracking-wider">
               <tr>
                 <th className="px-6 py-3.5">Atributos</th>
                 <th className="px-6 py-3.5">SKU Auto-Generado</th>
+                <th className="px-6 py-3.5">Descuento (%)</th>
                 <th className="px-6 py-3.5">Precio ($)</th>
                 <th className="px-6 py-3.5 text-center">Estado</th>
                 <th className="px-6 py-3.5 text-right">Acciones</th>
@@ -541,6 +596,20 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
                         />
                       ) : (
                         v.sku
+                      )}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          min="0"
+                          max="99"
+                          value={editDiscount}
+                          onChange={(e) => setEditDiscount(parseFloat(e.target.value))}
+                          className="border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-brand-accent outline-none text-xs w-20"
+                        />
+                      ) : (
+                        v.discountPercent ? <span className="text-rose-600 bg-rose-50 px-2 py-0.5 rounded text-xs">{v.discountPercent}%</span> : <span className="text-gray-400 text-xs">Sin desc.</span>
                       )}
                     </td>
                     <td className="px-6 py-4 font-medium text-gray-900">
@@ -597,7 +666,8 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
                 );
               })}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       ) : (
         <div className="bg-white text-center py-16 rounded-lg border border-gray-200 text-gray-400">

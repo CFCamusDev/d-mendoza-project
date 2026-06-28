@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import axiosInstance from '@/shared/api/axiosInstance';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, A11y, Autoplay } from 'swiper/modules';
 import 'swiper/css';
@@ -13,11 +14,10 @@ export default function BestSellersSection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/v1/ecommerce/products/best-sellers?limit=10')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setVariants(data.data);
+    axiosInstance.get('/v1/ecommerce/products/best-sellers', { params: { limit: 10 } })
+      .then(response => {
+        if (response.data?.success) {
+          setVariants(response.data.data);
         }
       })
       .catch(console.error)
@@ -69,9 +69,10 @@ export default function BestSellersSection() {
                   productName={variant.product.name}
                   brandName={variant.product.brand?.name}
                   images={variant.product.images}
-                  priceString={`S/ ${finalPrice.toFixed(2)}`}
-                  originalPriceString={variant.discountPercent > 0 ? `S/ ${price.toFixed(2)}` : undefined}
-                  discountPercent={variant.discountPercent}
+                  minPrice={finalPrice}
+                  maxPrice={finalPrice}
+                  minDiscount={variant.discountPercent}
+                  maxDiscount={variant.discountPercent}
                   isOutOfStock={variant.outOfStock}
                 />
               </SwiperSlide>

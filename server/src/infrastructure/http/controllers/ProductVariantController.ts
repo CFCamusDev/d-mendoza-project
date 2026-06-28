@@ -57,9 +57,14 @@ const UpdateVariantSchema = z
       .max(999999.99, 'El precio no puede exceder 999,999.99')
       .optional(),
     isActive: z.boolean().optional(),
+    discountPercent: z
+      .number()
+      .min(0, 'El descuento no puede ser menor a 0')
+      .max(99, 'El descuento no puede ser mayor a 99')
+      .optional(),
   })
-  .refine((data) => data.sku !== undefined || data.price !== undefined || data.isActive !== undefined, {
-    message: 'Debes proporcionar al menos un campo a actualizar (sku, price o isActive)',
+  .refine((data) => data.sku !== undefined || data.price !== undefined || data.isActive !== undefined || data.discountPercent !== undefined, {
+    message: 'Debes proporcionar al menos un campo a actualizar (sku, price, discountPercent o isActive)',
   });
 
 const UpdateVariantMinStockSchema = z.object({

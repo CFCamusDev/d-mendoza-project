@@ -14,6 +14,7 @@ interface WishlistItem {
     id: number;
     sku: string;
     price: string;
+    discountPercent?: number;
     product: {
       id: number;
       name: string;
@@ -114,7 +115,10 @@ export const WishlistPage = () => {
                   productName={item.variant.product.name}
                   description={item.variant.product.description}
                   images={item.variant.product.images}
-                  priceString={`S/ ${Number(item.variant.price).toFixed(2)}`}
+                  minPrice={Number(item.variant.price) * (1 - (item.variant.discountPercent || 0) / 100)}
+                  maxPrice={Number(item.variant.price) * (1 - (item.variant.discountPercent || 0) / 100)}
+                  minDiscount={item.variant.discountPercent || 0}
+                  maxDiscount={item.variant.discountPercent || 0}
                   isOutOfStock={false}
                   initialIsWishlisted={true}
                   onFavoriteToggle={(variantId, isWishlisted) => {

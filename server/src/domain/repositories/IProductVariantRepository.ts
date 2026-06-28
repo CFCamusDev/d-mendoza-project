@@ -13,6 +13,7 @@ export interface UpdateVariantDTO {
   price?: number;  // Editar precio
   isActive?: boolean;
   minStock?: number;
+  discountPercent?: number;
 }
 
 // Repositorio de productos: solo lo necesario para HU-014 / HU-015

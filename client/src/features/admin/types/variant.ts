@@ -3,6 +3,7 @@ export interface ProductVariant {
   productId: number;
   sku: string;
   price: number;
+  discountPercent?: number;
   attributesJson: Record<string, string>;
   isActive: boolean;
   createdAt?: string;
@@ -22,5 +23,6 @@ export interface GenerateVariantsBody {
 export interface UpdateVariantBody {
   sku?: string;
   price?: number;
+  discountPercent?: number;
   isActive?: boolean;
 }

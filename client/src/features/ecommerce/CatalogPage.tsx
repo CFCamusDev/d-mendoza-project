@@ -161,18 +161,6 @@ export const CatalogPage: React.FC = () => {
   };
 
 
-  const getProductPriceString = (product: SearchProductItem) => {
-    const activeVariants = product.variants.filter(v => v.isActive);
-    if (activeVariants.length === 0) return 'N/A';
-    const prices = activeVariants.map(v => Number(v.price));
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    if (minPrice === maxPrice) {
-      return `S/ ${minPrice.toFixed(2)}`;
-    }
-    return `S/ ${minPrice.toFixed(2)} - S/ ${maxPrice.toFixed(2)}`;
-  };
-
   const handleCategoryPillClick = (catId?: number) => {
     const nextParams = new URLSearchParams(searchParams);
     if (catId !== undefined) {
@@ -334,6 +322,20 @@ export const CatalogPage: React.FC = () => {
                     const isOutOfStock = product.variants.every(v => v.outOfStock);
                     const firstVariant = product.variants[0];
 
+                    const activeVariants = product.variants.filter(v => v.isActive);
+                    const finalPrices = activeVariants.map((v) => {
+                      const price = Number(v.price);
+                      const discountPercent = (v as any).discountPercent || 0;
+                      const discountAmount = (price * discountPercent) / 100;
+                      return price - discountAmount;
+                    });
+                    const minPrice = finalPrices.length > 0 ? Math.min(...finalPrices) : 0;
+                    const maxPrice = finalPrices.length > 0 ? Math.max(...finalPrices) : 0;
+
+                    const discounts = activeVariants.map((v) => (v as any).discountPercent || 0);
+                    const minDiscount = discounts.length > 0 ? Math.min(...discounts) : 0;
+                    const maxDiscount = discounts.length > 0 ? Math.max(...discounts) : 0;
+
                     return (
                       <ProductCard
                         key={product.id}
@@ -344,7 +346,10 @@ export const CatalogPage: React.FC = () => {
                         gender={product.gender}
                         description={product.description}
                         images={product.images}
-                        priceString={getProductPriceString(product)}
+                        minPrice={minPrice}
+                        maxPrice={maxPrice}
+                        minDiscount={minDiscount}
+                        maxDiscount={maxDiscount}
                         isOutOfStock={isOutOfStock}
                       />
                     );
