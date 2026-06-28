@@ -27,6 +27,7 @@ interface Variant {
   isActive: boolean;
   stock: number;
   outOfStock: boolean;
+  discountPercent?: number;
 }
 
 interface ProductDetail {
@@ -155,6 +156,10 @@ export const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
     }
   };
 
+  const basePrice = selectedVariant ? selectedVariant.price : (product?.variants[0]?.price || 0);
+  const discountPercent = selectedVariant ? (selectedVariant.discountPercent || 0) : (product?.variants[0]?.discountPercent || 0);
+  const finalPrice = discountPercent > 0 ? basePrice * (1 - discountPercent / 100) : basePrice;
+
   if (!isOpen) return null;
 
   return (
@@ -171,9 +176,21 @@ export const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
                 <img src={mainImage} alt={product.name} className="w-16 h-16 object-contain rounded-md bg-gray-50 border shrink-0" />
                 <div>
                   <h3 className="font-bold text-lg text-brand-accent line-clamp-1">{product.name}</h3>
-                  <p className="text-xl font-black text-brand-accent mt-1">
-                    S/ {selectedVariant ? Number(selectedVariant.price).toFixed(2) : '---'}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xl font-black text-brand-accent">
+                      S/ {Number(finalPrice).toFixed(2)}
+                    </p>
+                    {discountPercent > 0 && (
+                      <>
+                        <p className="text-sm font-bold text-gray-400 line-through">
+                          S/ {Number(basePrice).toFixed(2)}
+                        </p>
+                        <span className="text-[10px] font-black text-white bg-red-600 px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                          -{discountPercent}%
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
               <button onClick={onClose} className="p-1 text-gray-400 hover:text-black rounded-full hover:bg-gray-100 transition shrink-0">
