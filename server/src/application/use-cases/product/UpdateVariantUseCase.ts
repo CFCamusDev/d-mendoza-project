@@ -46,6 +46,7 @@ export class UpdateVariantUseCase {
       attributesJson: variant.attributesJson,
       isActive: variant.isActive,
       minStock: variant.minStock,
+      discountPercent: variant.discountPercent,
       createdAt: variant.createdAt,
       updatedAt: variant.updatedAt,
     };

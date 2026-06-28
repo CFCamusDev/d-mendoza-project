@@ -14,6 +14,7 @@ export interface UpdateVariantRequestDTO {
   price?: number;
   isActive?: boolean;
   minStock?: number;
+  discountPercent?: number;
 }
 
 export interface UpdateVariantMinStockRequestDTO {
@@ -28,6 +29,7 @@ export interface VariantResponseDTO {
   attributesJson: Record<string, string>;
   isActive: boolean;
   minStock: number;
+  discountPercent?: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
