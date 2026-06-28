@@ -5,8 +5,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
-import { Upload, Star, X, Loader2, Sparkles, Folder, HelpCircle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Upload, Star, X, Loader2, Sparkles, Folder, HelpCircle, ArrowLeft, RefreshCw, Layers, Image as ImageIcon } from 'lucide-react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
+import { VariantMatrix } from './components/VariantMatrix';
 
 interface SelectOption { id: number; name: string; }
 interface ImagePreview { id?: number; file?: File; url: string; isMain: boolean; }
@@ -40,6 +41,8 @@ const ProductFormPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
+  const [productCode, setProductCode] = useState('');
+  const [activeTab, setActiveTab] = useState<'general' | 'variants' | 'images'>('general');
   const dropRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const replaceFileRef = useRef<HTMLInputElement>(null);
@@ -61,8 +64,10 @@ const ProductFormPage: React.FC = () => {
       axiosInstance.get(`/v1/products/${id}`)
         .then(({ data }) => {
           reset(data.data);
+          setProductCode(data.data.code);
           if (data.data.images) {
-            setImages(data.data.images.map((img: any) => ({
+            const parentImages = data.data.images.filter((img: any) => !img.attributeValueId);
+            setImages(parentImages.map((img: any) => ({
               id: img.id,
               url: img.url,
               isMain: img.isMain,
@@ -213,7 +218,47 @@ const ProductFormPage: React.FC = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Tabs */}
+      {isEdit && (
+        <div className="flex border-b border-[#D9D9D2]/40 gap-6">
+          <button
+            onClick={() => setActiveTab('general')}
+            className={`pb-3 px-1 text-sm font-semibold border-b-2 transition duration-150 flex items-center gap-2 ${
+              activeTab === 'general'
+                ? 'border-[#3F3F3F] text-[#3F3F3F] border-[#3F3F3F]'
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <Folder className="w-4 h-4" />
+            <span>Ficha General</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('variants')}
+            className={`pb-3 px-1 text-sm font-semibold border-b-2 transition duration-150 flex items-center gap-2 ${
+              activeTab === 'variants'
+                ? 'border-[#3F3F3F] text-[#3F3F3F] border-[#3F3F3F]'
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span>Variantes y Stock</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('images')}
+            className={`pb-3 px-1 text-sm font-semibold border-b-2 transition duration-150 flex items-center gap-2 ${
+              activeTab === 'images'
+                ? 'border-[#3F3F3F] text-[#3F3F3F] border-[#3F3F3F]'
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <ImageIcon className="w-4 h-4" />
+            <span>Fotos por Color</span>
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'general' && (
+        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left Side fields */}
         <div className="lg:col-span-2 space-y-6">
@@ -457,7 +502,20 @@ const ProductFormPage: React.FC = () => {
           </div>
         </div>
 
-      </form>
+        </form>
+      )}
+
+      {activeTab === 'variants' && isEdit && (
+        <div className="bg-white rounded-2xl border border-[#D9D9D2]/30 p-6 shadow-sm">
+          <VariantMatrix productId={Number(id)} productCode={productCode} mode="variants" />
+        </div>
+      )}
+
+      {activeTab === 'images' && isEdit && (
+        <div className="bg-white rounded-2xl border border-[#D9D9D2]/30 p-6 shadow-sm">
+          <VariantMatrix productId={Number(id)} productCode={productCode} mode="images" />
+        </div>
+      )}
     </div>
   );
 };

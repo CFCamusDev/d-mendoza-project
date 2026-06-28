@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import type { ProductVariant } from '../types';
 import { WishlistButton } from './WishlistButton';
@@ -17,7 +17,20 @@ interface ProductCardProps {
 
 export default function ProductCard({ variant }: ProductCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const mainImage = variant.product.images?.find(img => img.isMain)?.url || variant.product.images?.[0]?.url || 'https://via.placeholder.com/300';
+  const [isHovered, setIsHovered] = useState(false);
+
+  const globalImages = useMemo(() => {
+    return (variant.product.images || []).filter((img: any) => !img.attributeValueId);
+  }, [variant.product.images]);
+
+  const activeImage = useMemo(() => {
+    const mainImg = globalImages.find(img => img.isMain) || globalImages[0] || variant.product.images?.[0];
+    if (isHovered && globalImages.length > 1) {
+      const hoverImg = globalImages.find(img => img.id !== mainImg?.id) || globalImages[1];
+      if (hoverImg) return hoverImg.url;
+    }
+    return mainImg?.url || 'https://via.placeholder.com/300';
+  }, [globalImages, isHovered, variant.product.images]);
   
   const price = Number(variant.price);
   const discountAmount = variant.discountPercent > 0 ? (price * variant.discountPercent) / 100 : 0;
@@ -30,7 +43,11 @@ export default function ProductCard({ variant }: ProductCardProps) {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow border border-gray-100 overflow-hidden hover:shadow-md transition-shadow relative flex flex-col h-full group">
+      <div 
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="bg-white rounded-lg shadow border border-gray-100 overflow-hidden hover:shadow-md transition-shadow relative flex flex-col h-full group"
+      >
         {/* Badge de Oferta */}
         {variant.discountPercent > 0 && (
           <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-sm">
@@ -46,7 +63,7 @@ export default function ProductCard({ variant }: ProductCardProps) {
         {/* Imagen (Lazy loading nativo) */}
         <div className="w-full aspect-square overflow-hidden bg-gray-50 relative flex items-center justify-center">
           <img 
-            src={mainImage} 
+            src={activeImage} 
             alt={variant.product.name} 
             loading="lazy"
             className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300 p-4"
@@ -65,7 +82,9 @@ export default function ProductCard({ variant }: ProductCardProps) {
           <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1 flex-grow">
             {variant.product.name}
           </h3>
-          <p className="text-xs text-gray-500 mb-2">SKU: {variant.sku}</p>
+          <p className="text-xs text-gray-500 mb-1">SKU: {variant.sku}</p>
+          
+
           
           <div className="flex items-center justify-between mt-auto">
             <div>

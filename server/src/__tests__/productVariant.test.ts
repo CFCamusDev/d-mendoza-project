@@ -34,10 +34,15 @@ jest.mock('@infrastructure/database/prisma', () => {
     findUnique: jest.fn(),
   };
 
+  const mockAttribute = {
+    findMany: jest.fn(),
+  };
+
   const mockPrisma: any = {
     product: mockProduct,
     productVariant: mockProductVariant,
     user: mockUser,
+    attribute: mockAttribute,
     $transaction: jest.fn().mockImplementation(async (cb: any): Promise<any> => cb(mockPrisma)),
   };
 
@@ -102,6 +107,26 @@ describe('Módulo ProductVariant — HU-014 (T-077, T-078, T-080)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (prisma.user.findUnique as any).mockResolvedValue(mockAdminUser);
+    (prisma.attribute.findMany as any).mockResolvedValue([
+      {
+        id: 1,
+        name: 'talla',
+        isActive: true,
+        values: [
+          { id: 10, value: 'S', isActive: true },
+          { id: 11, value: 'M', isActive: true },
+        ],
+      },
+      {
+        id: 2,
+        name: 'color',
+        isActive: true,
+        values: [
+          { id: 20, value: 'NEGRO', isActive: true },
+          { id: 21, value: 'BLANCO', isActive: true },
+        ],
+      },
+    ]);
   });
 
   // ─────────────────────────────────────────────────────────────────────────

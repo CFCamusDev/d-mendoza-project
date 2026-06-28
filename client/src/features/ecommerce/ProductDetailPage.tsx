@@ -72,6 +72,15 @@ export const ProductDetailPage: React.FC = () => {
   const [selectedTalla, setSelectedTalla] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
+  const [attributes, setAttributes] = useState<any[]>([]);
+
+  useEffect(() => {
+    axiosInstance.get('/v1/attributes')
+      .then(({ data }) => {
+        if (data.success) setAttributes(data.data);
+      })
+      .catch(console.error);
+  }, []);
 
   // Gallery Image Load State
   // Modal State
@@ -129,16 +138,39 @@ export const ProductDetailPage: React.FC = () => {
     }
   }, [slug]);
 
+  // Reset image index when color changes
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [selectedColor]);
+
+  const selectedColorValueId = useMemo(() => {
+    if (!selectedColor || attributes.length === 0) return null;
+    const colorAttr = attributes.find(a => a.name.toLowerCase() === 'color' || a.isVisualDriver);
+    if (!colorAttr) return null;
+    const valObj = colorAttr.values.find((v: any) => v.value.toUpperCase() === selectedColor.toUpperCase());
+    return valObj ? valObj.id : null;
+  }, [selectedColor, attributes]);
+
+  const filteredImages = useMemo(() => {
+    if (!product) return [];
+    if (!selectedColorValueId) return product.images;
+    const colorImages = product.images.filter(img => (img as any).attributeValueId === selectedColorValueId);
+    if (colorImages.length === 0) {
+      return product.images.filter(img => !(img as any).attributeValueId);
+    }
+    return colorImages;
+  }, [product, selectedColorValueId]);
+
   // Automatic Carousel effect
   useEffect(() => {
-    if (!product || product.images.length <= 1 || isHovered) return;
+    if (!product || filteredImages.length <= 1 || isHovered) return;
 
     const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
+      setCurrentImageIndex((prev) => (prev + 1) % filteredImages.length);
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [product, isHovered]);
+  }, [product, filteredImages, isHovered]);
 
   // Extract unique attributes
   const { tallas, colores } = useMemo(() => {
@@ -171,7 +203,7 @@ export const ProductDetailPage: React.FC = () => {
 
   // Base price representation & selected image calculations
   const displayPrice = product ? (selectedVariant ? selectedVariant.price : (product.variants[0]?.price || 0)) : 0;
-  const selectedImage = product && product.images[currentImageIndex] ? product.images[currentImageIndex].url : 'https://via.placeholder.com/600x600?text=No+Image';
+  const selectedImage = filteredImages[currentImageIndex] ? filteredImages[currentImageIndex].url : 'https://via.placeholder.com/600x600?text=No+Image';
 
   // Handle wishlist toggle
   const toggleWishlist = () => {
@@ -217,14 +249,14 @@ export const ProductDetailPage: React.FC = () => {
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!product || product.images.length === 0) return;
-    setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+    if (filteredImages.length === 0) return;
+    setCurrentImageIndex((prev) => (prev - 1 + filteredImages.length) % filteredImages.length);
   };
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!product || product.images.length === 0) return;
-    setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
+    if (filteredImages.length === 0) return;
+    setCurrentImageIndex((prev) => (prev + 1) % filteredImages.length);
   };
 
   if (loading) {
@@ -372,7 +404,7 @@ export const ProductDetailPage: React.FC = () => {
               onMouseLeave={() => setIsHovered(false)}
             >
               {/* Previous Slide Button */}
-              {product.images.length > 1 && (
+              {filteredImages.length > 1 && (
                 <button
                   type="button"
                   onClick={handlePrevImage}
@@ -384,7 +416,7 @@ export const ProductDetailPage: React.FC = () => {
               )}
 
               {/* Next Slide Button */}
-              {product.images.length > 1 && (
+              {filteredImages.length > 1 && (
                 <button
                   type="button"
                   onClick={handleNextImage}
@@ -411,9 +443,9 @@ export const ProductDetailPage: React.FC = () => {
               </div>
 
               {/* Slide Position Indicator Dots */}
-              {product.images.length > 1 && (
+              {filteredImages.length > 1 && (
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 bg-neutral-900/10 py-1.5 px-3 rounded-full backdrop-blur-xs">
-                  {product.images.map((_, idx) => (
+                  {filteredImages.map((_, idx) => (
                     <button
                       key={idx}
                       type="button"
@@ -458,12 +490,21 @@ export const ProductDetailPage: React.FC = () => {
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {colores.map(color => {
+                      const colorAttr = attributes.find(a => a.name.toLowerCase() === 'color' || a.isVisualDriver);
+                      const valObj = colorAttr?.values.find((v: any) => v.value.toUpperCase() === color.toUpperCase());
+                      const valId = valObj ? valObj.id : null;
+                      
+                      const colorImg = valId ? product.images.find(img => (img as any).attributeValueId === valId) : null;
+                      const mainParentImg = product.images.find(img => !(img as any).attributeValueId) || product.images[0];
+                      const thumbUrl = colorImg?.url || mainParentImg?.url;
+                      
                       const COLOR_MAP: Record<string, string> = {
                         'NEGRO': '#000000', 'BLANCO': '#FFFFFF', 'ROJO': '#FF0000', 'AZUL': '#0000FF',
                         'VERDE': '#00FF00', 'AMARILLO': '#FFFF00', 'GRIS': '#808080', 'BEIGE': '#F5F5DC',
                         'MARRON': '#8B4513', 'ROSA': '#FFC0CB', 'MORADO': '#800080', 'NARANJA': '#FFA500'
                       };
                       const hex = COLOR_MAP[color.toUpperCase()] || '#E2E8F0';
+                      
                       return (
                         <button
                           key={color}
@@ -471,13 +512,17 @@ export const ProductDetailPage: React.FC = () => {
                             setSelectedColor(color);
                             setQuantity(1);
                           }}
-                          className={`w-7 h-7 rounded-full transition-all flex items-center justify-center cursor-pointer relative group
+                          className={`w-10 h-10 rounded-full transition-all flex items-center justify-center cursor-pointer relative group overflow-hidden border
                             ${selectedColor === color
-                              ? 'ring-2 ring-brand-accent ring-offset-2 scale-110'
-                              : 'ring-1 ring-slate-200 hover:scale-105'}`}
-                          style={{ backgroundColor: hex }}
+                              ? 'ring-2 ring-brand-accent ring-offset-2 scale-110 border-transparent'
+                              : 'border-slate-200 hover:scale-105'}`}
                           title={color}
                         >
+                          {thumbUrl ? (
+                            <img src={thumbUrl} alt={color} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full" style={{ backgroundColor: hex }} />
+                          )}
                           <div className="absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]"></div>
                         </button>
                       );
