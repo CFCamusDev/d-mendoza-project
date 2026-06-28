@@ -191,6 +191,16 @@ export const ProductDetailPage: React.FC = () => {
     };
   }, [product]);
 
+  // Pre-select first color and size if none are selected
+  useEffect(() => {
+    if (colores.length > 0 && !selectedColor) {
+      setSelectedColor(colores[0]);
+    }
+    if (tallas.length > 0 && !selectedTalla) {
+      setSelectedTalla(tallas[0]);
+    }
+  }, [colores, tallas, selectedColor, selectedTalla]);
+
   // Determine current active variant
   const selectedVariant = useMemo(() => {
     if (!product || !selectedTalla || !selectedColor) return null;
