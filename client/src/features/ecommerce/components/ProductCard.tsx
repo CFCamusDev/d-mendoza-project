@@ -13,9 +13,11 @@ interface ProductCardProps {
     };
     discountPercent: number; // Added to interface since it's new
   };
+  initialIsWishlisted?: boolean;
+  onFavoriteToggle?: (variantId: number, isWishlisted: boolean) => void;
 }
 
-export default function ProductCard({ variant }: ProductCardProps) {
+export default function ProductCard({ variant, initialIsWishlisted, onFavoriteToggle }: ProductCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -57,7 +59,11 @@ export default function ProductCard({ variant }: ProductCardProps) {
         
         {/* Botón de Favorito */}
         <div className="absolute top-2 right-2 z-10">
-          <WishlistButton variantId={variant.id} />
+          <WishlistButton 
+            variantId={variant.id} 
+            initialIsWishlisted={initialIsWishlisted}
+            onToggle={onFavoriteToggle}
+          />
         </div>
 
         {/* Imagen (Lazy loading nativo) */}

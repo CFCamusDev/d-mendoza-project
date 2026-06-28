@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
-import { ShoppingCart, HeartCrack } from 'lucide-react';
-import { WishlistButton } from './components/WishlistButton';
+import { HeartCrack } from 'lucide-react';
 import { useAuth } from '@/shared/context/AuthContext';
-import { VariantSelectionModal } from './components/VariantSelectionModal';
+import ProductCard from './components/ProductCard';
 
 interface WishlistItem {
   id: number;
@@ -32,8 +31,6 @@ interface WishlistItem {
 export const WishlistPage = () => {
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProductSlug, setSelectedProductSlug] = useState<string>('');
   const { isAuthenticated } = useAuth();
 
   const fetchWishlist = async () => {
@@ -109,62 +106,35 @@ export const WishlistPage = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((item) => {
-              const product = item.variant.product;
-              const mainImage = product.images.find(img => img.isMain)?.url || product.images[0]?.url || 'https://via.placeholder.com/400x500?text=No+Image';
+              const mappedVariant = {
+                id: item.variant.id,
+                sku: item.variant.sku,
+                price: item.variant.price,
+                discountPercent: 0,
+                outOfStock: false,
+                product: {
+                  name: item.variant.product.name,
+                  slug: item.variant.product.slug,
+                  images: item.variant.product.images
+                }
+              };
 
               return (
-                <div key={item.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col">
-                  {/* Image container */}
-                  <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-                    <img
-                      src={mainImage}
-                      alt={product.name}
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                    />
-                    {/* Floating Wishlist Button */}
-                    <div className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors">
-                      <WishlistButton variantId={item.variantId} initialIsWishlisted={true} size={20} />
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-5 flex flex-col flex-grow">
-                    <div className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">
-                      SKU: {item.variant.sku}
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-[#3F3F3F] transition-colors">
-                      {product.name}
-                    </h3>
-
-                    <div className="mt-auto pt-4 flex items-center justify-between">
-                      <span className="text-xl font-black text-[#3F3F3F]">
-                        S/ {Number(item.variant.price).toFixed(2)}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setSelectedProductSlug(product.slug);
-                          setIsModalOpen(true);
-                        }}
-                        className="flex items-center justify-center p-3 bg-gray-100 hover:bg-[#3F3F3F] hover:text-white text-gray-700 rounded-xl transition-all duration-300 group/btn"
-                        title="Agregar al carrito"
-                      >
-                        <ShoppingCart size={20} className="transform group-hover/btn:scale-110 transition-transform" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <ProductCard 
+                  key={item.id} 
+                  variant={mappedVariant as any}
+                  initialIsWishlisted={true}
+                  onFavoriteToggle={(variantId, isWishlisted) => {
+                    if (!isWishlisted) {
+                      setItems(prev => prev.filter(i => i.variantId !== variantId));
+                    }
+                  }}
+                />
               );
             })}
           </div>
         )}
       </div>
-      {isModalOpen && (
-        <VariantSelectionModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          productSlug={selectedProductSlug}
-        />
-      )}
     </div>
   );
 };
