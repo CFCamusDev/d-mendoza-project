@@ -10,13 +10,15 @@ interface WishlistButtonProps {
   initialIsWishlisted?: boolean;
   className?: string;
   size?: number;
+  onToggle?: (variantId: number, isWishlisted: boolean) => void;
 }
 
 export const WishlistButton: React.FC<WishlistButtonProps> = ({ 
   variantId, 
   initialIsWishlisted = false,
   className = '',
-  size = 24
+  size = 24,
+  onToggle
 }) => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -46,10 +48,12 @@ export const WishlistButton: React.FC<WishlistButtonProps> = ({
         await axiosInstance.delete(`/v1/wishlist/${variantId}`);
         setIsWishlisted(false);
         toast.success('Eliminado de favoritos');
+        onToggle?.(variantId, false);
       } else {
         await axiosInstance.post(`/v1/wishlist/${variantId}`);
         setIsWishlisted(true);
         toast.success('Agregado a favoritos');
+        onToggle?.(variantId, true);
       }
     } catch (error: unknown) {
       console.error('Error toggling wishlist:', error);

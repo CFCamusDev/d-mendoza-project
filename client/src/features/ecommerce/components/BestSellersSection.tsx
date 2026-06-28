@@ -56,11 +56,27 @@ export default function BestSellersSection() {
           }}
           className="pb-12" // padding para la paginación
         >
-          {variants.map((variant) => (
-            <SwiperSlide key={variant.id} className="h-auto">
-              <ProductCard variant={variant} />
-            </SwiperSlide>
-          ))}
+          {variants.map((variant) => {
+            const price = Number(variant.price);
+            const discountAmount = variant.discountPercent > 0 ? (price * variant.discountPercent) / 100 : 0;
+            const finalPrice = price - discountAmount;
+
+            return (
+              <SwiperSlide key={variant.id} className="h-auto">
+                <ProductCard 
+                  variantId={variant.id}
+                  productSlug={variant.product.slug}
+                  productName={variant.product.name}
+                  brandName={variant.product.brand?.name}
+                  images={variant.product.images}
+                  priceString={`S/ ${finalPrice.toFixed(2)}`}
+                  originalPriceString={variant.discountPercent > 0 ? `S/ ${price.toFixed(2)}` : undefined}
+                  discountPercent={variant.discountPercent}
+                  isOutOfStock={variant.outOfStock}
+                />
+              </SwiperSlide>
+            );
+          })}
         </Swiper>
       </div>
     </section>
