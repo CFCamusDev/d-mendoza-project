@@ -66,7 +66,8 @@ const ProductFormPage: React.FC = () => {
           reset(data.data);
           setProductCode(data.data.code);
           if (data.data.images) {
-            setImages(data.data.images.map((img: any) => ({
+            const parentImages = data.data.images.filter((img: any) => !img.attributeValueId);
+            setImages(parentImages.map((img: any) => ({
               id: img.id,
               url: img.url,
               isMain: img.isMain,
