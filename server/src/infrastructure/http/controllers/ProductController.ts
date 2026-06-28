@@ -120,8 +120,24 @@ export class ProductController {
       const product = await repo.findById(productId);
       if (!product) return res.status(404).json({ success: false, error: 'Producto no encontrado' });
 
+      const attributeValueId = req.body.attributeValueId 
+        ? parseInt(String(req.body.attributeValueId), 10) 
+        : null;
+      if (req.body.attributeValueId && isNaN(attributeValueId!)) {
+        return res.status(400).json({ success: false, error: 'attributeValueId inválido' });
+      }
+
       const files = req.files as Express.Multer.File[];
       if (!files?.length) return res.status(400).json({ success: false, error: 'No se enviaron imágenes' });
+
+      // Validar límite de 4 imágenes por agrupación (productId, attributeValueId)
+      const existingCount = await repo.countImagesByGroup(productId, attributeValueId);
+      if (existingCount + files.length > 4) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `No puedes subir más de 4 imágenes para esta agrupación. Actualmente ya tienes ${existingCount} imagen(es).` 
+        });
+      }
 
       const isMainParam = req.body.isMain;
       const mainIndex = isMainParam !== undefined ? parseInt(String(isMainParam), 10) : 0;
@@ -131,7 +147,7 @@ export class ProductController {
       for (let i = 0; i < files.length; i++) {
         const imageUrl = await storageService.uploadImage(files[i].buffer, files[i].originalname, 'products');
         const isMain = i === mainIndex;
-        await repo.addImage(productId, imageUrl, isMain);
+        await repo.addImage(productId, imageUrl, isMain, attributeValueId);
       }
 
       const updated = await repo.findById(productId);

@@ -4,7 +4,10 @@ import { PrismaAttributeRepository } from '@infrastructure/database/repositories
 
 const repo = new PrismaAttributeRepository();
 
-const NameSchema = z.object({ name: z.string().min(1, 'El nombre es obligatorio') });
+const NameSchema = z.object({
+  name: z.string().min(1, 'El nombre es obligatorio'),
+  isVisualDriver: z.boolean().optional(),
+});
 const ValueSchema = z.object({ value: z.string().min(1, 'El valor es obligatorio') });
 
 export class AttributeController {
@@ -28,7 +31,7 @@ export class AttributeController {
     try {
       const parsed = NameSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.issues });
-      return res.status(201).json({ success: true, data: await repo.create(parsed.data.name) });
+      return res.status(201).json({ success: true, data: await repo.create(parsed.data.name, parsed.data.isVisualDriver) });
     } catch (e) { next(e); }
   }
 
@@ -38,7 +41,7 @@ export class AttributeController {
       if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID inválido' });
       const parsed = NameSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.issues });
-      return res.status(200).json({ success: true, data: await repo.update(id, parsed.data.name) });
+      return res.status(200).json({ success: true, data: await repo.update(id, parsed.data.name, parsed.data.isVisualDriver) });
     } catch (e) { next(e); }
   }
 

@@ -60,7 +60,23 @@ export class SearchProductsUseCase {
         updatedAt: product.updatedAt,
         category: product.category,
         brand: product.brand,
-        images: product.images,
+        images: (() => {
+          const groups: Record<string, any[]> = {};
+          for (const img of product.images || []) {
+            const key = img.attributeValueId ? String(img.attributeValueId) : 'generic';
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(img);
+          }
+          const selectedImages: any[] = [];
+          for (const key of Object.keys(groups)) {
+            const groupList = groups[key];
+            const mainImg = groupList.find((img) => img.isMain) || groupList[0];
+            if (mainImg) {
+              selectedImages.push(mainImg);
+            }
+          }
+          return selectedImages;
+        })(),
         variants: mappedVariants,
         _minPrice: minVariantPrice,
         _maxPrice: maxVariantPrice,

@@ -193,22 +193,24 @@ model Brand {
 // ─── HU-012 ───────────────────────────────────────────────────────────────────
 
 model Attribute {
-  id        Int              @id @default(autoincrement())
-  name      String           @unique
-  isActive  Boolean          @default(true)
-  values    AttributeValue[]
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  isVisualDriver Boolean          @default(false)
+  isActive       Boolean          @default(true)
+  values         AttributeValue[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
 model AttributeValue {
-  id          Int       @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   value       String
-  isActive    Boolean   @default(true)
+  isActive    Boolean        @default(true)
   attributeId Int
-  attribute   Attribute @relation(fields: [attributeId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  attribute   Attribute      @relation(fields: [attributeId], references: [id])
+  images      ProductImage[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   @@unique([attributeId, value])
 }
@@ -235,12 +237,14 @@ model Product {
 }
 
 model ProductImage {
-  id        Int      @id @default(autoincrement())
-  productId Int
-  product   Product  @relation(fields: [productId], references: [id])
-  url       String
-  isMain    Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id               Int             @id @default(autoincrement())
+  productId        Int
+  product          Product         @relation(fields: [productId], references: [id])
+  url              String
+  isMain           Boolean         @default(false)
+  attributeValueId Int?
+  attributeValue   AttributeValue? @relation(fields: [attributeValueId], references: [id], onDelete: SetNull)
+  createdAt        DateTime        @default(now())
 }
 
 // ─── HU-026 (dependencies: ProductVariant + BranchStock) ─────────────────────

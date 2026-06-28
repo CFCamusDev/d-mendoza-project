@@ -70,11 +70,30 @@ export class PrismaProductRepository implements IProductRepository {
     }) as unknown as Promise<Product>;
   }
 
-  async addImage(productId: number, url: string, isMain: boolean): Promise<void> {
+  async addImage(productId: number, url: string, isMain: boolean, attributeValueId?: number | null): Promise<void> {
     if (isMain) {
-      await prisma.productImage.updateMany({ where: { productId }, data: { isMain: false } });
+      await prisma.productImage.updateMany({
+        where: { productId, attributeValueId: attributeValueId ?? null },
+        data: { isMain: false },
+      });
     }
-    await prisma.productImage.create({ data: { productId, url, isMain } });
+    await prisma.productImage.create({
+      data: {
+        productId,
+        url,
+        isMain,
+        attributeValueId: attributeValueId ?? null,
+      },
+    });
+  }
+
+  async countImagesByGroup(productId: number, attributeValueId?: number | null): Promise<number> {
+    return prisma.productImage.count({
+      where: {
+        productId,
+        attributeValueId: attributeValueId ?? null,
+      },
+    });
   }
 
   async countMainImages(productId: number): Promise<number> {

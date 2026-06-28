@@ -1,6 +1,7 @@
 import { IProductRepository, IProductVariantRepository } from '@domain/repositories/IProductVariantRepository';
 import { CreateVariantsRequestDTO, ProductWithVariantsResponseDTO, VariantResponseDTO } from '../../dtos/ProductVariantDTOs';
 import { ProductVariant } from '@domain/entities/ProductVariant';
+import prisma from '@infrastructure/database/prisma';
 
 /**
  * CreateVariantsUseCase — T-077
@@ -40,17 +41,47 @@ export class CreateVariantsUseCase {
     // 3. Generar producto cartesiano de atributos
     const combinations = this.cartesianProduct(dto.attributes);
 
+    // Fetch active attributes and their values to resolve IDs
+    const attributesFromDb = await prisma.attribute.findMany({
+      where: { isActive: true },
+      include: { values: { where: { isActive: true } } },
+    });
+
     // 4. Construir datos de variantes con SKU auto-generado
     const variantsData = combinations.map((attrs) => {
       // SKU: CODIGO_PRODUCTO-VALOR_ATTR1-VALOR_ATTR2... (en mayúsculas, sin espacios)
       const attrValues = attributeKeys.map((k) => attrs[k].toUpperCase().replace(/\s+/g, '_'));
       const sku = [product.code.toUpperCase(), ...attrValues].join('-');
 
+      // Build enriched attributesJson: {"attributeId": { name, valueId, value }}
+      const enrichedAttributesJson: Record<string, any> = {};
+      for (const [attrName, attrValStr] of Object.entries(attrs)) {
+        const dbAttr = attributesFromDb.find(
+          (a) => a.name.toLowerCase() === attrName.toLowerCase()
+        );
+        if (dbAttr) {
+          const dbValue = dbAttr.values.find(
+            (v) => v.value.toLowerCase() === attrValStr.toLowerCase()
+          );
+          if (dbValue) {
+            enrichedAttributesJson[String(dbAttr.id)] = {
+              name: dbAttr.name,
+              valueId: dbValue.id,
+              value: dbValue.value,
+            };
+          } else {
+            enrichedAttributesJson[attrName] = attrValStr;
+          }
+        } else {
+          enrichedAttributesJson[attrName] = attrValStr;
+        }
+      }
+
       return {
         productId,
         sku,
         price: dto.basePrice,
-        attributesJson: attrs,
+        attributesJson: enrichedAttributesJson as any,
       };
     });
 
