@@ -27,6 +27,7 @@ interface Variant {
   isActive: boolean;
   stock: number;
   outOfStock: boolean;
+  discountPercent?: number;
 }
 
 interface Category {
@@ -212,7 +213,10 @@ export const ProductDetailPage: React.FC = () => {
   }, [product, selectedTalla, selectedColor]);
 
   // Base price representation & selected image calculations
-  const displayPrice = product ? (selectedVariant ? selectedVariant.price : (product.variants[0]?.price || 0)) : 0;
+  const basePrice = product ? (selectedVariant ? selectedVariant.price : (product.variants[0]?.price || 0)) : 0;
+  const discountPercent = product ? (selectedVariant ? (selectedVariant.discountPercent || 0) : (product.variants[0]?.discountPercent || 0)) : 0;
+  const finalPrice = discountPercent > 0 ? basePrice * (1 - discountPercent / 100) : basePrice;
+  
   const selectedImage = filteredImages[currentImageIndex] ? filteredImages[currentImageIndex].url : 'https://via.placeholder.com/600x600?text=No+Image';
 
   // Handle wishlist toggle
@@ -484,9 +488,21 @@ export const ProductDetailPage: React.FC = () => {
 
               {/* Price & Category */}
               <div className="py-2 border-y border-neutral-100 flex items-center justify-between">
-                <span className="text-2xl font-black text-brand-accent">
-                  S/ {displayPrice.toFixed(2)}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl font-black text-brand-accent">
+                    S/ {finalPrice.toFixed(2)}
+                  </span>
+                  {discountPercent > 0 && (
+                    <>
+                      <span className="text-sm font-bold text-neutral-400 line-through">
+                        S/ {Number(basePrice).toFixed(2)}
+                      </span>
+                      <span className="text-[10px] font-black text-white bg-red-600 px-2 py-0.5 rounded-sm uppercase tracking-wider">
+                        -{discountPercent}%
+                      </span>
+                    </>
+                  )}
+                </div>
                 <span className="text-[9px] font-bold text-neutral-400 uppercase bg-neutral-100 px-2 py-0.5 rounded-sm">
                   {product.category.name}
                 </span>

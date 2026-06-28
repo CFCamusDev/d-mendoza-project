@@ -79,6 +79,7 @@ export class GetProductDetailUseCase {
         updatedAt: variant.updatedAt,
         stock: stockQuantity,
         outOfStock: stockQuantity <= 0,
+        discountPercent: variant.discountPercent || 0,
       };
     });
 
