@@ -6,10 +6,29 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 import ProductCard from './ProductCard';
-import type { ProductVariant } from '../types';
+
+interface GroupedProduct {
+  id: number;
+  code: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  categoryId: number;
+  brandId: number;
+  gender: string;
+  category: { id: number; name: string };
+  brand: { id: number; name: string };
+  images: Array<{ id: number; productId: number; url: string; isMain: boolean }>;
+  minDiscount: number;
+  maxDiscount: number;
+  minPrice: number;
+  maxPrice: number;
+  outOfStock: boolean;
+  variants: Array<{ id: number }>;
+}
 
 export default function OnSaleSection() {
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [products, setProducts] = useState<GroupedProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,20 +36,18 @@ export default function OnSaleSection() {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          setVariants(data.data);
+          setProducts(data.data);
         }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-
-
   if (loading) {
     return <div className="py-8 text-center text-gray-500">Cargando ofertas...</div>;
   }
 
-  if (variants.length === 0) {
+  if (products.length === 0) {
     return null; // Ocultar si no hay productos en oferta
   }
 
@@ -56,23 +73,20 @@ export default function OnSaleSection() {
           }}
           className="pb-12"
         >
-          {variants.map((variant) => {
-            const price = Number(variant.price);
-            const discountAmount = variant.discountPercent > 0 ? (price * variant.discountPercent) / 100 : 0;
-            const finalPrice = price - discountAmount;
-
+          {products.map((product) => {
             return (
-              <SwiperSlide key={variant.id} className="h-auto">
+              <SwiperSlide key={product.id} className="h-auto">
                 <ProductCard 
-                  variantId={variant.id}
-                  productSlug={variant.product.slug}
-                  productName={variant.product.name}
-                  brandName={variant.product.brand?.name}
-                  images={variant.product.images}
-                  priceString={`S/ ${finalPrice.toFixed(2)}`}
-                  originalPriceString={variant.discountPercent > 0 ? `S/ ${price.toFixed(2)}` : undefined}
-                  discountPercent={variant.discountPercent}
-                  isOutOfStock={variant.outOfStock}
+                  variantId={product.variants[0]?.id || product.id}
+                  productSlug={product.slug}
+                  productName={product.name}
+                  brandName={product.brand?.name}
+                  images={product.images}
+                  minPrice={product.minPrice}
+                  maxPrice={product.maxPrice}
+                  minDiscount={product.minDiscount}
+                  maxDiscount={product.maxDiscount}
+                  isOutOfStock={product.outOfStock}
                 />
               </SwiperSlide>
             );

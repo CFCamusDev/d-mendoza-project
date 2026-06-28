@@ -69,9 +69,10 @@ export default function BestSellersSection() {
                   productName={variant.product.name}
                   brandName={variant.product.brand?.name}
                   images={variant.product.images}
-                  priceString={`S/ ${finalPrice.toFixed(2)}`}
-                  originalPriceString={variant.discountPercent > 0 ? `S/ ${price.toFixed(2)}` : undefined}
-                  discountPercent={variant.discountPercent}
+                  minPrice={finalPrice}
+                  maxPrice={finalPrice}
+                  minDiscount={variant.discountPercent}
+                  maxDiscount={variant.discountPercent}
                   isOutOfStock={variant.outOfStock}
                 />
               </SwiperSlide>
