@@ -9,6 +9,7 @@ export interface ProductDetailResponse {
   categoryId: number | null;
   brandId: number | null;
   gender: string | null;
+  model?: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -90,6 +91,7 @@ export class GetProductDetailUseCase {
       categoryId: product.categoryId,
       brandId: product.brandId,
       gender: product.gender,
+      model: product.model,
       isActive: product.isActive,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

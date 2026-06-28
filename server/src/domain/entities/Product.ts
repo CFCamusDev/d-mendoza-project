@@ -17,6 +17,7 @@ export interface Product {
   categoryId: number | null;
   brandId?: number | null;
   gender?: string | null;
+  model?: string | null;
   isActive: boolean;
   variants?: ProductVariant[];
   images?: ProductImage[];
@@ -32,4 +33,5 @@ export interface CreateProductDTO {
   categoryId: number;
   brandId: number;
   gender?: string | null;
+  model?: string | null;
 }

@@ -18,9 +18,10 @@ const schema = yup.object({
     .max(10, 'No puede superar los 10 caracteres')
     .matches(/^[A-Z0-9]+$/, 'Solo letras mayúsculas y números (sin espacios)'),
   name: yup.string().required('El nombre es obligatorio'),
+  model: yup.string().required('El modelo es obligatorio'),
   description: yup.string().nullable(),
-  categoryId: yup.number().typeError('Selecciona una categoría').required(),
-  brandId: yup.number().typeError('Selecciona una marca').required(),
+  categoryId: yup.number().typeError('Selecciona una categoría').required('La categoría es obligatoria'),
+  brandId: yup.number().typeError('Selecciona una marca').required('La marca es obligatoria'),
   gender: yup.string().nullable(),
 });
 
@@ -43,7 +44,7 @@ const ProductFormPage: React.FC = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const replaceFileRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, reset, setError, formState: { errors } } = useForm<FormData>({
     resolver: yupResolver(schema) as any,
   });
 
@@ -162,8 +163,27 @@ const ProductFormPage: React.FC = () => {
       }
 
       navigate('/admin/products');
-    } catch { toast.error('Error al guardar producto'); }
-    finally { setSubmitting(false); }
+    } catch (err: any) {
+      const responseData = err.response?.data;
+      if (responseData && responseData.errors) {
+        Object.entries(responseData.errors).forEach(([field, msg]: any) => {
+          setError(field as any, { type: 'server', message: msg });
+        });
+        toast.error('Corrige los errores en el formulario');
+      } else if (responseData && responseData.message) {
+        const errMsg = responseData.message.toLowerCase();
+        if (errMsg.includes('sku') || errMsg.includes('código') || errMsg.includes('code')) {
+          setError('code', { type: 'server', message: 'Este código base (SKU) ya está registrado' });
+        } else if (errMsg.includes('model') || errMsg.includes('modelo')) {
+          setError('model', { type: 'server', message: 'Este modelo ya está registrado' });
+        }
+        toast.error(responseData.message || 'Error al guardar producto');
+      } else {
+        toast.error('Error al guardar producto');
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -237,6 +257,21 @@ const ProductFormPage: React.FC = () => {
                   />
                   {errors.code && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.code.message}</p>}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#3F3F3F] uppercase tracking-wider mb-2">
+                  Modelo del Producto *
+                </label>
+                <input 
+                  type="text"
+                  placeholder="Ej. Oxford Slim Fit, Air Max 90"
+                  {...register('model')} 
+                  className={`w-full px-4 py-2.5 rounded-xl border bg-[#FAFAFA] text-sm text-[#3F3F3F] placeholder-[#6B6B6B]/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#3F3F3F]/20 focus:border-[#3F3F3F] transition-all ${
+                    errors.model ? 'border-red-500 ring-1 ring-red-500/20' : 'border-[#D9D9D2]/70'
+                  }`} 
+                />
+                {errors.model && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.model.message}</p>}
               </div>
 
               <div>

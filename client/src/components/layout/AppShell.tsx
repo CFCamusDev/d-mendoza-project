@@ -4,12 +4,12 @@ import { useAuth } from '@/shared/context/AuthContext';
 import { SearchBar } from '@/features/ecommerce/components/SearchBar';
 import axiosInstance from '@/shared/api/axiosInstance';
 
-import { 
-  Menu, 
-  X, 
-  User, 
-  LogOut, 
-  Shield, 
+import {
+  Menu,
+  X,
+  User,
+  LogOut,
+  Shield,
   Link as LinkIcon,
   ShoppingCart,
   FileText,
@@ -76,7 +76,7 @@ export const AppShell: React.FC = () => {
       const target = event.target as Node;
       const isOutsideNav = dropdownRef.current && !dropdownRef.current.contains(target);
       const isOutsideUser = userDropdownRef.current && !userDropdownRef.current.contains(target);
-      
+
       if (isOutsideNav && isOutsideUser) {
         setOpenDropdown(null);
       }
@@ -97,13 +97,13 @@ export const AppShell: React.FC = () => {
   const getSocialIcon = (key: string) => {
     const className = "w-5 h-5";
     switch (key.toLowerCase()) {
-      case 'facebook': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
-      case 'instagram': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>;
+      case 'facebook': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>;
+      case 'instagram': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>;
       case 'twitter':
-      case 'x': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>;
-      case 'tiktok': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>;
-      case 'youtube': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>;
-      case 'linkedin': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>;
+      case 'x': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" /></svg>;
+      case 'tiktok': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>;
+      case 'youtube': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" /><path d="m10 15 5-3-5-3z" /></svg>;
+      case 'linkedin': return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect width="4" height="12" x="2" y="9" /><circle cx="4" cy="4" r="2" /></svg>;
       default: return <LinkIcon className={className} />;
     }
   };
@@ -120,7 +120,7 @@ export const AppShell: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-brand-bg flex flex-col font-sans selection:bg-brand-accent selection:text-white">
+    <div className="min-h-screen bg-brand-bg flex flex-col font-sans selection:bg-brand-accent selection:text-white overflow-x-hidden">
       {/* HEADER PRINCIPAL RESPONSIVO */}
       <header className="sticky top-0 z-40 bg-white border-b border-brand-primary/50 shadow-sm backdrop-blur-md bg-white/95">
         <div className="max-w-[1280px] mx-auto px-4 h-16 flex items-center justify-between">
@@ -132,7 +132,7 @@ export const AppShell: React.FC = () => {
               <span className="text-xl font-bold tracking-tight text-brand-accent">{brandConfig?.brandName || "D'Mendoza"}</span>
             )}
           </Link>
-          
+
           {/* Barra de Búsqueda Predictiva (Desktop) */}
           <div className="hidden md:block flex-grow max-w-xs lg:max-w-md mx-4 lg:mx-8">
             <SearchBar />
@@ -142,9 +142,8 @@ export const AppShell: React.FC = () => {
           <nav ref={dropdownRef} className="hidden md:flex items-center gap-6 relative">
             <Link
               to="/catalog"
-              className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${
-                isActiveRoute('/catalog') ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
-              }`}
+              className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${isActiveRoute('/catalog') ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
+                }`}
             >
               <Grid className="w-4 h-4" />
               Catálogo
@@ -154,9 +153,8 @@ export const AppShell: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setOpenDropdown(openDropdown === 'brands' ? null : 'brands')}
-                className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${
-                  openDropdown === 'brands' ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
-                }`}
+                className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${openDropdown === 'brands' ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
+                  }`}
               >
                 Marcas
                 <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'brands' ? 'rotate-180' : ''}`} />
@@ -188,9 +186,8 @@ export const AppShell: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setOpenDropdown(openDropdown === 'categories' ? null : 'categories')}
-                className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${
-                  openDropdown === 'categories' ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
-                }`}
+                className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${openDropdown === 'categories' ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
+                  }`}
               >
                 Categorías
                 <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'categories' ? 'rotate-180' : ''}`} />
@@ -227,9 +224,8 @@ export const AppShell: React.FC = () => {
 
             <Link
               to="/blog"
-              className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${
-                isActiveRoute('/blog') ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
-              }`}
+              className={`flex items-center gap-1.5 text-sm font-semibold transition-all px-3 py-1.5 rounded-lg ${isActiveRoute('/blog') ? 'text-white bg-brand-accent' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/20'
+                }`}
             >
               <FileText className="w-4 h-4" />
               Blog
@@ -286,7 +282,7 @@ export const AppShell: React.FC = () => {
                   <User className="w-4 h-4 text-brand-accent" />
                 </div>
               </button>
-              
+
               {openDropdown === 'user' && (
                 <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-brand-primary/30 rounded-2xl shadow-xl py-2 z-50">
                   {isAuthenticated && user ? (
@@ -348,7 +344,7 @@ export const AppShell: React.FC = () => {
       {/* MENÚ MÓVIL DESPLEGABLE (RESPONSIVO MOBILE/TABLET) */}
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={() => setIsMobileMenuOpen(false)}>
-          <nav 
+          <nav
             className="absolute top-16 right-0 w-72 bg-[#F7F7F5] border-l border-brand-primary shadow-2xl h-[calc(100vh-4rem)] p-6 flex flex-col justify-between animate-slideInLeft"
             onClick={(e) => e.stopPropagation()}
           >
@@ -364,9 +360,8 @@ export const AppShell: React.FC = () => {
                 <Link
                   to="/catalog"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 text-sm font-semibold p-2.5 rounded-xl transition-all ${
-                    isActiveRoute('/catalog') ? 'text-white bg-brand-accent shadow' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/30'
-                  }`}
+                  className={`flex items-center gap-3 text-sm font-semibold p-2.5 rounded-xl transition-all ${isActiveRoute('/catalog') ? 'text-white bg-brand-accent shadow' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/30'
+                    }`}
                 >
                   <Grid className="w-4 h-4" />
                   Catálogo
@@ -425,9 +420,8 @@ export const AppShell: React.FC = () => {
                   <Link
                     to="/blog"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 text-sm font-semibold p-2.5 rounded-xl transition-all ${
-                      isActiveRoute('/blog') ? 'text-white bg-brand-accent shadow' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/30'
-                    }`}
+                    className={`flex items-center gap-3 text-sm font-semibold p-2.5 rounded-xl transition-all ${isActiveRoute('/blog') ? 'text-white bg-brand-accent shadow' : 'text-brand-text hover:text-brand-accent hover:bg-brand-primary/30'
+                      }`}
                   >
                     <FileText className="w-4 h-4" />
                     Blog
@@ -502,7 +496,7 @@ export const AppShell: React.FC = () => {
       )}
 
       {/* ÁREA DE CONTENIDO CENTRAL - CONTENEDOR RESPONSIVO */}
-      <main className="flex-grow max-w-[1280px] w-full mx-auto px-4 py-8">
+      <main className="flex-grow lg:max-w-[1280px] w-full mx-auto lg:px-4 px-2 lg:py-8">
         <Outlet />
       </main>
 

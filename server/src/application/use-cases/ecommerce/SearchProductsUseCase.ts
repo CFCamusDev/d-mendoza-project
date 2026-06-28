@@ -54,6 +54,7 @@ export class SearchProductsUseCase {
         categoryId: product.categoryId,
         brandId: product.brandId,
         gender: product.gender,
+        model: product.model,
         isActive: product.isActive,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt,

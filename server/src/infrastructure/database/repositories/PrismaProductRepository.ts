@@ -45,6 +45,7 @@ export class PrismaProductRepository implements IProductRepository {
         name: fullData.name,
         slug: generatedSlug,
         description: fullData.description ?? null,
+        model: fullData.model ?? null,
         categoryId: fullData.categoryId ?? null,
         brandId: fullData.brandId ?? null,
         gender: fullData.gender ?? null,

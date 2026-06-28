@@ -18,6 +18,7 @@ const CreateProductSchema = z.object({
   code: z.string().min(1, 'El código es obligatorio'),
   name: z.string().min(1, 'El nombre es obligatorio'),
   description: z.string().nullable().optional(),
+  model: z.string().nullable().optional(),
   categoryId: z.number().int().positive(),
   brandId: z.number().int().positive(),
   gender: z.string().nullable().optional(),
