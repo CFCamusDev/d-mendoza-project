@@ -8,7 +8,14 @@ const storageService = new CloudinaryStorageService();
 
 const CreateSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio'),
-  parentId: z.number().int().positive().nullable().optional(),
+  parentId: z.preprocess(
+    (val) => {
+      if (val === '' || val === 'null' || val === undefined || val === null) return null;
+      const num = Number(val);
+      return isNaN(num) ? val : num;
+    },
+    z.number().int().positive().nullable().optional()
+  ),
   sizeGuideUrl: z.string().nullable().optional(),
 });
 
