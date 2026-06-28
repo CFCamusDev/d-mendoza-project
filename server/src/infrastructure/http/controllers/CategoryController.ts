@@ -36,7 +36,13 @@ export class CategoryController {
     try {
       const parsed = CreateSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.issues });
-      const data = await repo.create(parsed.data);
+      
+      let imageUrl = undefined;
+      if (req.file) {
+        imageUrl = await storageService.uploadImage(req.file.buffer, req.file.originalname, 'categories');
+      }
+      
+      const data = await repo.create({ ...parsed.data, imageUrl });
       return res.status(201).json({ success: true, data });
     } catch (e) { next(e); }
   }
@@ -45,9 +51,24 @@ export class CategoryController {
     try {
       const id = parseInt(String(req.params.id), 10);
       if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID inválido' });
+      
+      const existingCategory = await repo.findById(id);
+      if (!existingCategory) return res.status(404).json({ success: false, error: 'Categoría no encontrada' });
+
       const parsed = UpdateSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.issues });
-      const data = await repo.update(id, parsed.data);
+      
+      let updateData: any = { ...parsed.data };
+      
+      if (req.file) {
+        const newImageUrl = await storageService.uploadImage(req.file.buffer, req.file.originalname, 'categories');
+        updateData.imageUrl = newImageUrl;
+        if (existingCategory.imageUrl) {
+          await storageService.deleteImage(existingCategory.imageUrl);
+        }
+      }
+      
+      const data = await repo.update(id, updateData);
       return res.status(200).json({ success: true, data });
     } catch (e) { next(e); }
   }

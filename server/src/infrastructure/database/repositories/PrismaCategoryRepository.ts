@@ -19,18 +19,19 @@ export class PrismaCategoryRepository {
     return record as Category | null;
   }
 
-  async create(data: CreateCategoryDTO): Promise<Category> {
+  async create(data: CreateCategoryDTO & { imageUrl?: string }): Promise<Category> {
     const record = await prisma.category.create({
       data: {
         name: data.name,
         parentId: data.parentId ?? null,
         sizeGuideUrl: data.sizeGuideUrl ?? null,
+        imageUrl: data.imageUrl ?? null,
       },
     });
     return record as Category;
   }
 
-  async update(id: number, data: Partial<CreateCategoryDTO>): Promise<Category> {
+  async update(id: number, data: Partial<CreateCategoryDTO & { imageUrl?: string | null }>): Promise<Category> {
     const record = await prisma.category.update({
       where: { id },
       data,

@@ -25,9 +25,9 @@ const upload = multer({
 // ─── Categories ───────────────────────────────────────────────────────────────
 router.get('/categories', categories.getAll.bind(categories));
 router.get('/categories/:id', categories.getOne.bind(categories));
-router.post('/categories', requirePermission('products:write'), categories.create.bind(categories));
+router.post('/categories', requirePermission('products:write'), upload.single('image'), categories.create.bind(categories));
 router.post('/categories/upload', requirePermission('products:write'), upload.single('image'), categories.uploadSizeGuide.bind(categories));
-router.patch('/categories/:id', requirePermission('products:write'), categories.update.bind(categories));
+router.patch('/categories/:id', requirePermission('products:write'), upload.single('image'), categories.update.bind(categories));
 router.delete('/categories/:id', requirePermission('products:write'), categories.deactivate.bind(categories));
 
 // ─── Brands ───────────────────────────────────────────────────────────────────
