@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import axiosInstance from '@/shared/api/axiosInstance';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, A11y, Autoplay } from 'swiper/modules';
 import 'swiper/css';
@@ -32,11 +33,10 @@ export default function OnSaleSection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/v1/ecommerce/products/on-sale')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setProducts(data.data);
+    axiosInstance.get('/v1/ecommerce/products/on-sale')
+      .then(response => {
+        if (response.data?.success) {
+          setProducts(response.data.data);
         }
       })
       .catch(console.error)
@@ -77,7 +77,7 @@ export default function OnSaleSection() {
             return (
               <SwiperSlide key={product.id} className="h-auto">
                 <ProductCard 
-                  variantId={product.variants[0]?.id || product.id}
+                  variantId={product.variants?.[0]?.id || product.id}
                   productSlug={product.slug}
                   productName={product.name}
                   brandName={product.brand?.name}
