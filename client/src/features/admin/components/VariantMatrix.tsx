@@ -3,14 +3,15 @@ import { useVariants } from '../hooks/useVariants';
 import type { ProductVariant } from '../types/variant';
 import axiosInstance from '@/shared/api/axiosInstance';
 import toast from 'react-hot-toast';
-import { Upload, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Upload, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react';
 
 interface VariantMatrixProps {
   productId: number;
   productCode: string;
+  mode?: 'all' | 'variants' | 'images';
 }
 
-export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, productCode }) => {
+export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, productCode, mode }) => {
   const { variants, loading, fetchVariants, generateVariants, updateVariant } = useVariants(productId);
   const [productImages, setProductImages] = useState<any[]>([]);
 
@@ -223,8 +224,27 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
     }));
   }, [dbAttributes, variants]);
 
+  const [uploadingColorIds, setUploadingColorIds] = useState<Record<number, boolean>>({});
+  const [dragOverColorId, setDragOverColorId] = useState<number | null>(null);
+
+  const handleDragOver = (e: React.DragEvent, valId: number) => {
+    e.preventDefault();
+    setDragOverColorId(valId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverColorId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, valId: number) => {
+    e.preventDefault();
+    setDragOverColorId(null);
+    handleUploadImages(valId, e.dataTransfer.files);
+  };
+
   const handleUploadImages = async (valId: number, files: FileList | null) => {
     if (!files || files.length === 0) return;
+    setUploadingColorIds(prev => ({ ...prev, [valId]: true }));
     const formData = new FormData();
     Array.from(files).forEach(file => {
       formData.append('images', file);
@@ -242,6 +262,8 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
       }
     } catch {
       toast.error('Error al subir imágenes');
+    } finally {
+      setUploadingColorIds(prev => ({ ...prev, [valId]: false }));
     }
   };
 
@@ -284,8 +306,13 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
     });
   };
 
+  const showVariantsSection = !mode || mode === 'all' || mode === 'variants';
+  const showImagesSection = !mode || mode === 'all' || mode === 'images';
+
   return (
-    <div className="bg-brand-bg rounded-xl p-6 shadow-sm border border-gray-100 max-w-5xl mx-auto my-8">
+    <div className={mode ? "w-full" : "bg-brand-bg rounded-xl p-6 shadow-sm border border-gray-100 max-w-5xl mx-auto my-8"}>
+      {showVariantsSection && (
+        <>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-4 mb-6">
         <div>
           <h2 className="text-2xl font-semibold text-brand-accent">Matriz de Variantes SKU</h2>
@@ -577,9 +604,12 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
           No hay variantes creadas para este producto. Rellena los campos de arriba para generar la matriz.
         </div>
       )}
+        </>
+      )}
 
       {/* Dynamic Images by Visual Driver Section */}
-      <div className="mt-10 border-t border-gray-200 pt-8">
+      {showImagesSection && (
+        <div className={mode ? "w-full" : "mt-10 border-t border-gray-200 pt-8"}>
         <h3 className="text-xl font-semibold text-brand-accent flex items-center gap-2">
           <ImageIcon className="w-5 h-5 text-gray-500" />
           <span>Galería de Imágenes por Atributo Visual (Color)</span>
@@ -596,6 +626,8 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
           <div className="grid grid-cols-1 gap-6 mt-6">
             {visualDriverValues.map((val) => {
               const valImages = productImages.filter(img => img.attributeValueId === val.id);
+              const isDragging = dragOverColorId === val.id;
+              const isUploading = uploadingColorIds[val.id];
               return (
                 <div key={val.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4">
                   <div className="flex items-center justify-between border-b border-gray-100 pb-2">
@@ -606,7 +638,7 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
                   </div>
 
                   {/* Thumbnail gallery */}
-                  {valImages.length > 0 && (
+                  {(valImages.length > 0 || isUploading) && (
                     <div className="flex flex-wrap gap-3">
                       {valImages.map((img) => (
                         <div key={img.id} className="relative group border border-gray-200 rounded-lg overflow-hidden w-20 h-20 bg-gray-50 flex items-center justify-center p-1">
@@ -621,22 +653,44 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
                           </button>
                         </div>
                       ))}
+
+                      {isUploading && (
+                        <div className="border border-gray-200 rounded-lg overflow-hidden w-20 h-20 bg-gray-50 flex flex-col items-center justify-center p-2 text-gray-400 animate-pulse">
+                          <Loader2 size={16} className="animate-spin text-brand-accent" />
+                          <span className="text-[9px] mt-1 font-bold">Subiendo...</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* File upload input */}
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 bg-gray-50 border border-dashed border-gray-300 hover:border-brand-accent cursor-pointer rounded-lg px-4 py-2 text-xs font-semibold text-gray-600 transition">
-                      <Upload size={14} />
-                      <span>Subir Imágenes para {val.value}</span>
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/jpeg,image/png,image/webp"
-                        className="hidden"
-                        onChange={(e) => handleUploadImages(val.id, e.target.files)}
-                      />
-                    </label>
+                  {/* Drag and Drop Zone */}
+                  <div
+                    onDragOver={(e) => handleDragOver(e, val.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, val.id)}
+                    onClick={() => {
+                      const input = document.getElementById(`file-input-${val.id}`);
+                      input?.click();
+                    }}
+                    className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
+                      isDragging
+                        ? 'border-[#3F3F3F] bg-[#D9D9D2]/10 scale-[0.99]'
+                        : 'border-gray-200 hover:bg-gray-50/55 hover:border-gray-300'
+                    }`}
+                  >
+                    <Upload size={20} className={isDragging ? 'text-[#3F3F3F] animate-bounce' : 'text-gray-400'} />
+                    <span className="text-xs font-bold text-[#3F3F3F]">
+                      Arrastra imágenes o <span className="underline">selecciona archivos</span>
+                    </span>
+                    <span className="text-[10px] text-gray-400">JPEG, PNG o WEBP para {val.value}</span>
+                    <input
+                      type="file"
+                      id={`file-input-${val.id}`}
+                      multiple
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={(e) => handleUploadImages(val.id, e.target.files)}
+                    />
                   </div>
                 </div>
               );
@@ -644,6 +698,7 @@ export const VariantMatrix: React.FC<VariantMatrixProps> = ({ productId, product
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };
