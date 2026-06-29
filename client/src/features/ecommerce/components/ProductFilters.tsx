@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { getCategories, getBrands, getBranches } from '../services/search.service';
 import type { Category, Brand } from '../types/search.types';
 import { Filter, RefreshCw, ChevronDown, Check } from 'lucide-react';
+import axiosInstance from '@/shared/api/axiosInstance';
 
 interface ProductFiltersProps {
   filters: {
     categoryId?: number;
     brandId?: number;
-    gender?: string;
+    genderId?: number;
     minPrice?: number;
     maxPrice?: number;
     branchId?: number;
@@ -16,7 +17,7 @@ interface ProductFiltersProps {
   onFilterChange: (newFilters: {
     categoryId?: number;
     brandId?: number;
-    gender?: string;
+    genderId?: number;
     minPrice?: number;
     maxPrice?: number;
     branchId?: number;
@@ -57,6 +58,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [genders, setGenders] = useState<{ id: number; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [minPriceInput, setMinPriceInput] = useState(filters.minPrice?.toString() || '');
@@ -66,14 +68,16 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     const fetchMetadata = async () => {
       setIsLoading(true);
       try {
-        const [catsRes, brandsRes, branchesRes] = await Promise.all([
+        const [catsRes, brandsRes, branchesRes, gendersRes] = await Promise.all([
           getCategories(),
           getBrands(),
           getBranches(),
+          axiosInstance.get('/v1/ecommerce/genders'),
         ]);
         if (catsRes.success) setCategories(catsRes.data);
         if (brandsRes.success) setBrands(brandsRes.data);
         if (branchesRes.success) setBranches(branchesRes.data);
+        if (gendersRes.data?.success) setGenders(gendersRes.data.data);
       } catch (error) {
         console.error('Error fetching filters metadata:', error);
       } finally {
@@ -102,8 +106,8 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     }
   };
 
-  const handleGenderChange = (gender: string) => {
-    onFilterChange({ ...filters, gender: gender === '' ? undefined : gender });
+  const handleGenderChange = (genderIdVal: string) => {
+    onFilterChange({ ...filters, genderId: genderIdVal === '' ? undefined : Number(genderIdVal) });
   };
 
   const handleCategoryChange = (catIdStr: string) => {
@@ -175,26 +179,31 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
 
           <FilterSection title="Género" defaultOpen={true}>
             <div className="flex flex-wrap gap-1.5 pt-1">
-              {[
-                { value: '', label: 'Todos' },
-                { value: 'MALE', label: 'Hombre' },
-                { value: 'FEMALE', label: 'Mujer' },
-                { value: 'UNISEX', label: 'Unisex' },
-                { value: 'KIDS', label: 'Niños' },
-              ].map((opt) => {
-                const isActive = (filters.gender || '') === opt.value;
+              <button
+                type="button"
+                onClick={() => handleGenderChange('')}
+                className={`text-[11px] font-bold py-1.5 px-3 border transition-all duration-200 ${
+                  !filters.genderId
+                    ? 'bg-neutral-900 border-neutral-900 text-white'
+                    : 'bg-transparent border-neutral-200 text-neutral-600 hover:border-neutral-800 hover:text-neutral-900'
+                }`}
+              >
+                Todos
+              </button>
+              {genders.map((g) => {
+                const isActive = filters.genderId === g.id;
                 return (
                   <button
-                    key={opt.value}
+                    key={g.id}
                     type="button"
-                    onClick={() => handleGenderChange(opt.value)}
+                    onClick={() => handleGenderChange(g.id.toString())}
                     className={`text-[11px] font-bold py-1.5 px-3 border transition-all duration-200 ${
                       isActive
                         ? 'bg-neutral-900 border-neutral-900 text-white'
                         : 'bg-transparent border-neutral-200 text-neutral-600 hover:border-neutral-800 hover:text-neutral-900'
                     }`}
                   >
-                    {opt.label}
+                    {g.name}
                   </button>
                 );
               })}

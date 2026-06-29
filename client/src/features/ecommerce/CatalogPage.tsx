@@ -21,7 +21,7 @@ export const CatalogPage: React.FC = () => {
   const q = searchParams.get('q') || '';
   const categoryId = searchParams.get('categoryId') ? Number(searchParams.get('categoryId')) : undefined;
   const brandId = searchParams.get('brandId') ? Number(searchParams.get('brandId')) : undefined;
-  const gender = searchParams.get('gender') || undefined;
+  const genderId = searchParams.get('genderId') ? Number(searchParams.get('genderId')) : undefined;
   const minPrice = searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined;
   const maxPrice = searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined;
   const branchId = searchParams.get('branchId') ? Number(searchParams.get('branchId')) : undefined;
@@ -41,7 +41,7 @@ export const CatalogPage: React.FC = () => {
           q,
           categoryId,
           brandId,
-          gender,
+          genderId,
           minPrice,
           maxPrice,
           branchId,
@@ -61,7 +61,7 @@ export const CatalogPage: React.FC = () => {
     };
 
     fetchInitialResults();
-  }, [q, categoryId, brandId, gender, minPrice, maxPrice, branchId, orderBy]);
+  }, [q, categoryId, brandId, genderId, minPrice, maxPrice, branchId, orderBy]);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -87,7 +87,7 @@ export const CatalogPage: React.FC = () => {
         q,
         categoryId,
         brandId,
-        gender,
+        genderId,
         minPrice,
         maxPrice,
         branchId,
@@ -111,7 +111,7 @@ export const CatalogPage: React.FC = () => {
   const updateFilters = (newFilters: {
     categoryId?: number;
     brandId?: number;
-    gender?: string;
+    genderId?: number;
     minPrice?: number;
     maxPrice?: number;
     branchId?: number;
@@ -121,7 +121,7 @@ export const CatalogPage: React.FC = () => {
     if (q) nextParams.set('q', q);
     if (newFilters.categoryId !== undefined) nextParams.set('categoryId', newFilters.categoryId.toString());
     if (newFilters.brandId !== undefined) nextParams.set('brandId', newFilters.brandId.toString());
-    if (newFilters.gender !== undefined) nextParams.set('gender', newFilters.gender);
+    if (newFilters.genderId !== undefined) nextParams.set('genderId', newFilters.genderId.toString());
     if (newFilters.minPrice !== undefined) nextParams.set('minPrice', newFilters.minPrice.toString());
     if (newFilters.maxPrice !== undefined) nextParams.set('maxPrice', newFilters.maxPrice.toString());
     if (newFilters.branchId !== undefined) nextParams.set('branchId', newFilters.branchId.toString());
@@ -276,7 +276,7 @@ export const CatalogPage: React.FC = () => {
           {/* Side Filters Panel */}
           <div className="md:col-span-1">
             <ProductFilters
-              filters={{ categoryId, brandId, gender, minPrice, maxPrice, branchId, talla }}
+              filters={{ categoryId, brandId, genderId, minPrice, maxPrice, branchId, talla }}
               onFilterChange={updateFilters}
               onClearFilters={handleClearFilters}
             />

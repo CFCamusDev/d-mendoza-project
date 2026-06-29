@@ -16,7 +16,7 @@ interface GroupedProduct {
   description: string | null;
   categoryId: number;
   brandId: number;
-  gender: string;
+  gender?: { id: number; name: string } | null;
   category: { id: number; name: string };
   brand: { id: number; name: string };
   images: Array<{ id: number; productId: number; url: string; isMain: boolean }>;

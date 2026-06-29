@@ -1,4 +1,5 @@
 import prisma from '@infrastructure/database/prisma';
+import { Gender } from '@domain/entities/Gender';
 
 export interface ProductDetailResponse {
   id: number;
@@ -8,7 +9,7 @@ export interface ProductDetailResponse {
   description: string | null;
   categoryId: number | null;
   brandId: number | null;
-  gender: string | null;
+  gender: Gender | null;
   model?: string | null;
   isActive: boolean;
   createdAt: Date;
@@ -42,6 +43,7 @@ export class GetProductDetailUseCase {
         images: true,
         category: true,
         brand: true,
+        gender: true,
         variants: {
           where: { isActive: true },
           include: {

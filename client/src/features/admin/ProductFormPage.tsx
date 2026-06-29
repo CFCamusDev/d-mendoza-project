@@ -23,7 +23,7 @@ const schema = yup.object({
   description: yup.string().nullable(),
   categoryId: yup.number().typeError('Selecciona una categoría').required('La categoría es obligatoria'),
   brandId: yup.number().typeError('Selecciona una marca').required('La marca es obligatoria'),
-  gender: yup.string().nullable(),
+  genderId: yup.number().nullable(),
 });
 
 type FormData = yup.InferType<typeof schema>;
@@ -36,6 +36,7 @@ const ProductFormPage: React.FC = () => {
 
   const [categories, setCategories] = useState<SelectOption[]>([]);
   const [brands, setBrands] = useState<SelectOption[]>([]);
+  const [genders, setGenders] = useState<SelectOption[]>([]);
   const [images, setImages] = useState<ImagePreview[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -55,9 +56,11 @@ const ProductFormPage: React.FC = () => {
     Promise.all([
       axiosInstance.get('/v1/categories'),
       axiosInstance.get('/v1/brands'),
-    ]).then(([cats, brnds]) => {
+      axiosInstance.get('/v1/genders'),
+    ]).then(([cats, brnds, gnds]) => {
       setCategories(cats.data.data);
       setBrands(brnds.data.data);
+      setGenders(gnds.data.data);
     }).catch(() => toast.error('Error al cargar datos'));
 
     if (isEdit) {
@@ -362,14 +365,15 @@ const ProductFormPage: React.FC = () => {
                     Género
                   </label>
                   <select
-                    {...register('gender')}
+                    {...register('genderId', {
+                      setValueAs: (v) => v === '' ? null : Number(v)
+                    })}
                     className="w-full px-4 py-2.5 rounded-xl border border-[#D9D9D2]/70 bg-[#FAFAFA] text-sm text-[#3F3F3F] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#3F3F3F]/20 focus:border-[#3F3F3F] transition-all appearance-none"
                   >
                     <option value="">-- Sin especificar (Unisex/Infantil) --</option>
-                    <option value="M">Masculino</option>
-                    <option value="F">Femenino</option>
-                    <option value="Unisex">Unisex Adulto</option>
+                    {genders.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
+                  {errors.genderId && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.genderId.message}</p>}
                 </div>
               </div>
             </div>

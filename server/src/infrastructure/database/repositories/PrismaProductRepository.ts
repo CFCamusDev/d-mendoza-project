@@ -5,7 +5,7 @@ import { IProductRepository } from '@domain/repositories/IProductVariantReposito
 export class PrismaProductRepository implements IProductRepository {
   async findAll(): Promise<Product[]> {
     return prisma.product.findMany({
-      include: { images: true, category: true, brand: true, variants: true },
+      include: { images: true, category: true, brand: true, variants: true, gender: true },
       orderBy: { name: 'asc' },
     }) as unknown as Promise<Product[]>;
   }
@@ -13,7 +13,7 @@ export class PrismaProductRepository implements IProductRepository {
   async findAllActive(): Promise<Product[]> {
     return prisma.product.findMany({
       where: { isActive: true },
-      include: { images: true, category: true, brand: true, variants: true },
+      include: { images: true, category: true, brand: true, variants: true, gender: true },
       orderBy: { name: 'asc' },
     }) as unknown as Promise<Product[]>;
   }
@@ -21,14 +21,14 @@ export class PrismaProductRepository implements IProductRepository {
   async findById(id: number): Promise<Product | null> {
     return prisma.product.findUnique({
       where: { id },
-      include: { images: true, category: true, brand: true, variants: true },
+      include: { images: true, category: true, brand: true, variants: true, gender: true },
     }) as unknown as Promise<Product | null>;
   }
 
   async findByCode(code: string): Promise<Product | null> {
     return prisma.product.findUnique({
       where: { code },
-      include: { images: true, category: true, brand: true, variants: true },
+      include: { images: true, category: true, brand: true, variants: true, gender: true },
     }) as unknown as Promise<Product | null>;
   }
 
@@ -48,9 +48,9 @@ export class PrismaProductRepository implements IProductRepository {
         model: fullData.model ?? null,
         categoryId: fullData.categoryId ?? null,
         brandId: fullData.brandId ?? null,
-        gender: fullData.gender ?? null,
+        genderId: fullData.genderId ?? null,
       },
-      include: { images: true, variants: true },
+      include: { images: true, variants: true, gender: true },
     }) as unknown as Promise<Product>;
   }
 
@@ -58,7 +58,7 @@ export class PrismaProductRepository implements IProductRepository {
     return prisma.product.update({
       where: { id },
       data,
-      include: { images: true, variants: true },
+      include: { images: true, variants: true, gender: true },
     }) as unknown as Promise<Product>;
   }
 
@@ -66,7 +66,7 @@ export class PrismaProductRepository implements IProductRepository {
     return prisma.product.update({
       where: { id },
       data: { isActive },
-      include: { images: true, variants: true },
+      include: { images: true, variants: true, gender: true },
     }) as unknown as Promise<Product>;
   }
 

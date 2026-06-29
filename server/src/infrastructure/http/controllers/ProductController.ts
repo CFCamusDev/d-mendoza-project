@@ -21,7 +21,7 @@ const CreateProductSchema = z.object({
   model: z.string().nullable().optional(),
   categoryId: z.number().int().positive(),
   brandId: z.number().int().positive(),
-  gender: z.string().nullable().optional(),
+  genderId: z.number().int().positive().nullable().optional(),
 });
 
 export const productUpload = multer({
@@ -93,6 +93,7 @@ export class ProductController {
         ...req.body,
         categoryId: Number(req.body.categoryId),
         brandId: Number(req.body.brandId),
+        genderId: req.body.genderId ? Number(req.body.genderId) : null,
       };
       const parsed = CreateProductSchema.safeParse(body);
       if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.issues });
@@ -105,7 +106,13 @@ export class ProductController {
     try {
       const id = parseInt(String(req.params.id), 10);
       if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID inválido' });
-      const parsed = CreateProductSchema.partial().safeParse(req.body);
+      const body = {
+        ...req.body,
+        categoryId: req.body.categoryId ? Number(req.body.categoryId) : undefined,
+        brandId: req.body.brandId ? Number(req.body.brandId) : undefined,
+        genderId: req.body.genderId !== undefined ? (req.body.genderId ? Number(req.body.genderId) : null) : undefined,
+      };
+      const parsed = CreateProductSchema.partial().safeParse(body);
       if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.issues });
       const data = await repo.update(id, parsed.data);
       return res.status(200).json({ success: true, data });

@@ -9,7 +9,7 @@ interface ProductCardProps {
   productSlug: string;
   productName: string;
   brandName?: string;
-  gender?: string;
+  gender?: string | { id: number; name: string } | null;
   description?: string;
   images: Array<{ url: string; isMain: boolean; attributeValueId?: number | null }>;
   isOutOfStock?: boolean;
@@ -43,13 +43,14 @@ export default function ProductCard({
   const mainImage = images.find(img => img.isMain)?.url || images[0]?.url || 'https://via.placeholder.com/400x500?text=No+Image';
   const secondaryImage = images.find(img => !img.isMain)?.url;
 
-  const formatGender = (g: string) => {
-    switch (g.toUpperCase()) {
+  const formatGender = (g: string | { id: number; name: string }) => {
+    const name = typeof g === 'object' ? g.name : g;
+    switch (name.toUpperCase()) {
       case 'MALE': return 'Hombre';
       case 'FEMALE': return 'Mujer';
       case 'UNISEX': return 'Unisex';
       case 'KIDS': return 'Niños';
-      default: return g;
+      default: return name;
     }
   };
 

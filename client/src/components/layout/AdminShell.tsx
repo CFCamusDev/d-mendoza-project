@@ -374,6 +374,17 @@ export const AdminShell: React.FC = () => {
                 </Link>
 
                 <Link
+                  to="/admin/genders"
+                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                    isActiveRoute('/admin/genders') ? activeClass : inactiveClass
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title="Géneros (Público Objetivo)"
+                >
+                  <Users className="w-4 h-4 shrink-0" />
+                  {!isCollapsed && <span>Géneros</span>}
+                </Link>
+
+                <Link
                   to="/admin/attributes"
                   className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
                     isActiveRoute('/admin/attributes') ? activeClass : inactiveClass

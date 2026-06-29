@@ -2,7 +2,7 @@ export interface ProductSearchCriteria {
   query?: string;
   categoryId?: number;
   brandId?: number;
-  gender?: string;
+  genderId?: number;
   minPrice?: number;
   maxPrice?: number;
   branchId?: number;
