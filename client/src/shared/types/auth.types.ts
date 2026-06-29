@@ -34,3 +34,14 @@ export interface AuthContextType {
   login: (tokens: AuthTokens) => void;
   logout: () => void;
 }
+
+// Helper to determine the default landing route based on user role
+export const getDefaultRouteForRole = (role?: UserRole | string): string => {
+  switch (role) {
+    case 'ADMIN': return '/admin/inventory/stock';
+    case 'SELLER': return '/pos';
+    case 'SUPPLY': return '/admin/inventory/stock';
+    case 'DELIVERY': return '/admin/orders';
+    default: return '/';
+  }
+};

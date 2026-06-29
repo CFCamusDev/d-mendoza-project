@@ -5,6 +5,7 @@ import { LoginForm } from './components/LoginForm';
 import { GoogleLoginButton } from './components/GoogleLoginButton';
 import { useLogin } from './hooks/useLogin';
 import { useAuth } from '@/shared/context/AuthContext';
+import { getDefaultRouteForRole } from '@/shared/types/auth.types';
 import type { LoginFormData } from './schemas/login.schema';
 import { useBrand } from '@/shared/context/BrandContext';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
@@ -32,8 +33,8 @@ export default function LoginPage() {
 
   // Automatic redirect if already authenticated
   useEffect(() => {
-    if (auth.isAuthenticated && (auth.user?.role === 'ADMIN' || auth.user?.role === 'SELLER')) {
-      navigate('/admin/inventory/stock', { replace: true });
+    if (auth.isAuthenticated && auth.user && auth.user.role !== 'CLIENT') {
+      navigate(getDefaultRouteForRole(auth.user.role), { replace: true });
     }
   }, [auth.isAuthenticated, auth.user, navigate]);
 
@@ -51,8 +52,8 @@ export default function LoginPage() {
 
       // Role-based redirect (RBAC)
       const role = auth.user?.role ?? result.data.user?.role;
-      if (role === 'ADMIN' || role === 'SELLER') {
-        navigate('/admin/inventory/stock');
+      if (role && role !== 'CLIENT') {
+        navigate(getDefaultRouteForRole(role));
       } else {
         // CLIENT or unknown → e-commerce home
         navigate('/');
