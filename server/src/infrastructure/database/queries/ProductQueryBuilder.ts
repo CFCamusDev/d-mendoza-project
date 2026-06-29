@@ -7,7 +7,7 @@ export class ProductQueryBuilder {
       query,
       categoryId,
       brandId,
-      gender,
+      genderId,
       minPrice,
       maxPrice,
       branchId,
@@ -31,8 +31,8 @@ export class ProductQueryBuilder {
     }
 
     // Gender Filter
-    if (gender !== undefined) {
-      whereClause.gender = { equals: gender };
+    if (genderId !== undefined) {
+      whereClause.genderId = genderId;
     }
 
     // Text query search
@@ -80,6 +80,7 @@ export class ProductQueryBuilder {
       images: true,
       category: true,
       brand: true,
+      gender: true,
       variants: {
         where: {
           isActive: true,

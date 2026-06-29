@@ -11,7 +11,7 @@ const SearchQuerySchema = z.object({
   q: z.string().optional(),
   categoryId: z.preprocess((val) => (val ? Number(val) : undefined), z.number().int().positive().optional()),
   brandId: z.preprocess((val) => (val ? Number(val) : undefined), z.number().int().positive().optional()),
-  gender: z.string().optional(),
+  genderId: z.preprocess((val) => (val ? Number(val) : undefined), z.number().int().positive().optional()),
   minPrice: z.preprocess((val) => (val ? Number(val) : undefined), z.number().nonnegative().optional()),
   maxPrice: z.preprocess((val) => (val ? Number(val) : undefined), z.number().nonnegative().optional()),
   branchId: z.preprocess((val) => (val ? Number(val) : undefined), z.number().int().positive().optional()),
@@ -34,13 +34,13 @@ export class ProductSearchController {
         });
       }
 
-      const { q, categoryId, brandId, gender, minPrice, maxPrice, branchId, cursor, limit, orderBy } = parsed.data;
+      const { q, categoryId, brandId, genderId, minPrice, maxPrice, branchId, cursor, limit, orderBy } = parsed.data;
 
       const criteria: ProductSearchCriteria = {
         query: q,
         categoryId,
         brandId,
-        gender,
+        genderId,
         minPrice,
         maxPrice,
         branchId,

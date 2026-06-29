@@ -17,6 +17,7 @@ export class GetOnSaleProductsUseCase {
         images: true,
         category: true,
         brand: true,
+        gender: true,
         variants: {
           where: {
             isActive: true,
