@@ -140,7 +140,11 @@ export const EmployeesPage: React.FC = () => {
       setFormData({ name: '', dni: '', branchId: '', roleId: '', email: '', password: '', createAccount: false });
       fetchEmployees();
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Error al procesar solicitud');
+      const errorData = error.response?.data?.error;
+      const errorMessage = Array.isArray(errorData) 
+        ? errorData[0]?.message || 'Error de validación'
+        : errorData || 'Error al procesar solicitud';
+      toast.error(typeof errorMessage === 'string' ? errorMessage : 'Error desconocido');
     } finally {
       setSubmitting(false);
     }
