@@ -103,6 +103,38 @@ export const AdminShell: React.FC = () => {
   // Cross Branch count state
   const [pendingCrossBranchCount, setPendingCrossBranchCount] = useState(0);
 
+  // Auto-expand based on route
+  useEffect(() => {
+    const path = location.pathname;
+    let activeKey = '';
+    
+    if (path.startsWith('/admin/orders') || path.startsWith('/admin/delivery-zones') || path.startsWith('/admin/banners') || path.startsWith('/admin/blog')) {
+      activeKey = 'ventas';
+    } else if (path.startsWith('/admin/products') || path.startsWith('/admin/categories') || path.startsWith('/admin/brands') || path.startsWith('/admin/genders') || path.startsWith('/admin/attributes')) {
+      activeKey = 'catalogo';
+    } else if (path.startsWith('/admin/inventory') || path.startsWith('/admin/reports/inventory-rotation')) {
+      activeKey = 'inventario';
+    } else if (path.startsWith('/admin/clients')) {
+      activeKey = 'crm';
+    } else if (path.startsWith('/admin/receipts') || path.startsWith('/admin/reconcile') || path.startsWith('/admin/branches/registers')) {
+      activeKey = 'finanzas';
+    } else if (path.startsWith('/admin/branches') || path.startsWith('/admin/employees') || path.startsWith('/admin/branding')) {
+      activeKey = 'empresa';
+    }
+    
+    if (activeKey) {
+      setExpandedMenus(prev => ({
+        ventas: false,
+        catalogo: false,
+        inventario: false,
+        crm: false,
+        finanzas: false,
+        empresa: false,
+        [activeKey]: true
+      }));
+    }
+  }, [location.pathname]);
+
   useEffect(() => {
     const fetchPendingCrossBranch = async () => {
       try {
@@ -129,10 +161,18 @@ export const AdminShell: React.FC = () => {
   };
 
   const toggleMenu = (menuKey: string) => {
-    setExpandedMenus(prev => ({
-      ...prev,
-      [menuKey]: !prev[menuKey]
-    }));
+    setExpandedMenus(prev => {
+      const isCurrentlyOpen = prev[menuKey];
+      return {
+        ventas: false,
+        catalogo: false,
+        inventario: false,
+        crm: false,
+        finanzas: false,
+        empresa: false,
+        [menuKey]: !isCurrentlyOpen
+      };
+    });
   };
 
   const isActiveRoute = (path: string) => {
