@@ -25,8 +25,20 @@ export const CatalogPage: React.FC = () => {
   const minPrice = searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined;
   const maxPrice = searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined;
   const branchId = searchParams.get('branchId') ? Number(searchParams.get('branchId')) : undefined;
-  const talla = searchParams.get('talla') || undefined;
   const orderBy = (searchParams.get('orderBy') as 'relevance' | 'newest' | 'price_asc' | 'price_desc') || 'relevance';
+
+  // Extract dynamic attributes from query parameters (attr_X=Y)
+  const attributes: Record<string, string> = {};
+  searchParams.forEach((value, key) => {
+    if (key.startsWith('attr_')) {
+      const attrId = key.substring(5);
+      if (attrId) {
+        attributes[attrId] = value;
+      }
+    }
+  });
+
+  const stringifiedAttributes = JSON.stringify(attributes);
 
   // Set document title
   useDocumentTitle(q ? `Buscar: ${q}` : 'Catálogo de Prendas - D\'Mendoza');
@@ -47,6 +59,7 @@ export const CatalogPage: React.FC = () => {
           branchId,
           orderBy,
           limit: 8,
+          ...attributes, // Send dynamic attributes directly in the query object
         });
         if (response.success) {
           setProducts(response.data);
@@ -61,7 +74,7 @@ export const CatalogPage: React.FC = () => {
     };
 
     fetchInitialResults();
-  }, [q, categoryId, brandId, genderId, minPrice, maxPrice, branchId, orderBy]);
+  }, [q, categoryId, brandId, genderId, minPrice, maxPrice, branchId, orderBy, stringifiedAttributes]);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -115,7 +128,7 @@ export const CatalogPage: React.FC = () => {
     minPrice?: number;
     maxPrice?: number;
     branchId?: number;
-    talla?: string;
+    attributes?: Record<string, string>;
   }) => {
     const nextParams = new URLSearchParams();
     if (q) nextParams.set('q', q);
@@ -125,7 +138,13 @@ export const CatalogPage: React.FC = () => {
     if (newFilters.minPrice !== undefined) nextParams.set('minPrice', newFilters.minPrice.toString());
     if (newFilters.maxPrice !== undefined) nextParams.set('maxPrice', newFilters.maxPrice.toString());
     if (newFilters.branchId !== undefined) nextParams.set('branchId', newFilters.branchId.toString());
-    if (newFilters.talla !== undefined) nextParams.set('talla', newFilters.talla);
+    
+    if (newFilters.attributes) {
+      Object.entries(newFilters.attributes).forEach(([attrId, valId]) => {
+        nextParams.set(`attr_${attrId}`, valId);
+      });
+    }
+
     nextParams.set('orderBy', orderBy);
     setSearchParams(nextParams);
   };
@@ -276,7 +295,7 @@ export const CatalogPage: React.FC = () => {
           {/* Side Filters Panel */}
           <div className="md:col-span-1">
             <ProductFilters
-              filters={{ categoryId, brandId, genderId, minPrice, maxPrice, branchId, talla }}
+              filters={{ categoryId, brandId, genderId, minPrice, maxPrice, branchId, attributes }}
               onFilterChange={updateFilters}
               onClearFilters={handleClearFilters}
             />

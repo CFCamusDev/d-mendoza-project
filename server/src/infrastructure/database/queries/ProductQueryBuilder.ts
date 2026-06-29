@@ -99,7 +99,7 @@ export class ProductQueryBuilder {
             attributesJson: {
               path: [attrId, 'valueId'],
               equals: valId,
-            },
+            } as any,
           });
         }
       });

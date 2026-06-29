@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { orderService } from '../services/orderService';
+import { orderService } from '../services/order.service';
 import type { Order } from '../types';
 
 export const useOrders = (initialLimit = 5) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [page, setPage] = useState(1);
   const [limit] = useState(initialLimit);
   const [totalPages, setTotalPages] = useState(1);

@@ -9,6 +9,7 @@ export interface SearchQueryParams {
   cursor?: number;
   limit?: number;
   orderBy?: 'relevance' | 'newest' | 'price_asc' | 'price_desc';
+  [key: string]: any;
 }
 
 export interface Category {

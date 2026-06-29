@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getCategories, getBrands, getBranches } from '../services/search.service';
+import { getCategories, getBrands, getBranches, getFilterAttributes, type Attribute } from '../services/search.service';
 import type { Category, Brand } from '../types/search.types';
 import { Filter, RefreshCw, ChevronDown, Check } from 'lucide-react';
 import axiosInstance from '@/shared/api/axiosInstance';
@@ -12,7 +12,7 @@ interface ProductFiltersProps {
     minPrice?: number;
     maxPrice?: number;
     branchId?: number;
-    talla?: string;
+    attributes?: Record<string, string>;
   };
   onFilterChange: (newFilters: {
     categoryId?: number;
@@ -21,7 +21,7 @@ interface ProductFiltersProps {
     minPrice?: number;
     maxPrice?: number;
     branchId?: number;
-    talla?: string;
+    attributes?: Record<string, string>;
   }) => void;
   onClearFilters: () => void;
 }
@@ -59,6 +59,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   const [brands, setBrands] = useState<Brand[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [genders, setGenders] = useState<{ id: number; name: string }[]>([]);
+  const [dynamicAttributes, setDynamicAttributes] = useState<Attribute[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [minPriceInput, setMinPriceInput] = useState(filters.minPrice?.toString() || '');
@@ -68,16 +69,18 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     const fetchMetadata = async () => {
       setIsLoading(true);
       try {
-        const [catsRes, brandsRes, branchesRes, gendersRes] = await Promise.all([
+        const [catsRes, brandsRes, branchesRes, gendersRes, attrsRes] = await Promise.all([
           getCategories(),
           getBrands(),
           getBranches(),
           axiosInstance.get('/v1/ecommerce/genders'),
+          getFilterAttributes(),
         ]);
         if (catsRes.success) setCategories(catsRes.data);
         if (brandsRes.success) setBrands(brandsRes.data);
         if (branchesRes.success) setBranches(branchesRes.data);
         if (gendersRes.data?.success) setGenders(gendersRes.data.data);
+        if (attrsRes.success) setDynamicAttributes(attrsRes.data);
       } catch (error) {
         console.error('Error fetching filters metadata:', error);
       } finally {
@@ -163,7 +166,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                 </span>
                 <input type="radio" className="hidden" checked={!filters.branchId} onChange={() => handleBranchChange('')} />
               </label>
-              {branches.map(b => (
+              {branches.map((b: Branch) => (
                 <label key={b.id} className="flex items-center gap-3 cursor-pointer group">
                   <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${filters.branchId === b.id ? 'border-brand-accent bg-brand-accent text-white' : 'border-neutral-200 bg-transparent group-hover:border-neutral-400'}`}>
                     {filters.branchId === b.id && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
@@ -190,7 +193,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
               >
                 Todos
               </button>
-              {genders.map((g) => {
+              {genders.map((g: any) => {
                 const isActive = filters.genderId === g.id;
                 return (
                   <button
@@ -210,27 +213,40 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
             </div>
           </FilterSection>
 
-          <FilterSection title="Tallas" defaultOpen={true}>
-            <div className="grid grid-cols-3 gap-1.5 pt-1">
-              {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
-                const isActive = filters.talla === size;
-                return (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => onFilterChange({ ...filters, talla: isActive ? undefined : size })}
-                    className={`text-[11px] font-bold py-2 border transition-all duration-200 ${
-                      isActive
-                        ? 'bg-brand-accent border-brand-accent text-white font-black'
-                        : 'bg-transparent border-neutral-200 text-neutral-600 hover:border-neutral-800 hover:text-neutral-900'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                );
-              })}
-            </div>
-          </FilterSection>
+          {dynamicAttributes.map((attr: Attribute) => {
+            const currentAttributes = filters.attributes || {};
+            return (
+              <FilterSection key={attr.id} title={attr.name} defaultOpen={true}>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {attr.values.map((val: any) => {
+                    const isActive = currentAttributes[String(attr.id)] === String(val.id);
+                    return (
+                      <button
+                        key={val.id}
+                        type="button"
+                        onClick={() => {
+                          const nextAttributes = { ...currentAttributes };
+                          if (isActive) {
+                            delete nextAttributes[String(attr.id)];
+                          } else {
+                            nextAttributes[String(attr.id)] = String(val.id);
+                          }
+                          onFilterChange({ ...filters, attributes: nextAttributes });
+                        }}
+                        className={`text-[11px] font-bold py-1.5 px-3 border transition-all duration-200 ${
+                          isActive
+                            ? 'bg-brand-accent border-brand-accent text-white font-black'
+                            : 'bg-transparent border-neutral-200 text-neutral-600 hover:border-neutral-800 hover:text-neutral-900'
+                        }`}
+                      >
+                        {val.value}
+                      </button>
+                    );
+                  })}
+                </div>
+              </FilterSection>
+            );
+          })}
 
           <FilterSection title="Categorías" defaultOpen={true}>
             <div className="flex flex-wrap gap-1.5 pt-1 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
@@ -245,7 +261,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
               >
                 Todas
               </button>
-              {categories.map((c) => {
+              {categories.map((c: Category) => {
                 const isActive = filters.categoryId === c.id;
                 return (
                   <button
@@ -276,7 +292,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                 </span>
                 <input type="radio" className="hidden" checked={!filters.brandId} onChange={() => handleBrandChange('')} />
               </label>
-              {brands.map(b => (
+              {brands.map((b: Brand) => (
                 <label key={b.id} className="flex items-center gap-3 cursor-pointer group">
                   <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${filters.brandId === b.id ? 'border-brand-accent bg-brand-accent text-white' : 'border-neutral-200 bg-transparent group-hover:border-neutral-400'}`}>
                     {filters.brandId === b.id && <Check className="w-3 h-3" />}

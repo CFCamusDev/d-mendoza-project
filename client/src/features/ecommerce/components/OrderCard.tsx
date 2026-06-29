@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import type { Order } from '../types';
 import { OrderTimeline } from './OrderTimeline';
-import { orderService } from '../services/orderService';
+import { orderService } from '../services/order.service';
 import { toast } from 'react-hot-toast';
-import { 
-  FileText, 
-  Download, 
-  Loader2, 
-  ChevronDown, 
-  ChevronUp, 
-  MapPin, 
+import {
+  FileText,
+  Download,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  MapPin,
   Calendar
 } from 'lucide-react';
 
