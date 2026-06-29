@@ -26,7 +26,7 @@ const OpenCashPage: React.FC = () => {
 
   const { user } = useAuth();
   
-  const isRestrictedRole = user?.role !== 'ADMIN' && user?.role !== 'SUPERADMIN';
+  const isRestrictedRole = user?.role !== 'ADMIN';
   const initialBranchId = isRestrictedRole && user?.branchId ? String(user.branchId) : '';
 
   const [branches, setBranches] = useState<Branch[]>([]);
