@@ -3,6 +3,7 @@ import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
 import { HeartCrack } from 'lucide-react';
 import { useAuth } from '@/shared/context/AuthContext';
+import { Link } from 'react-router-dom';
 import ProductCard from './components/ProductCard';
 
 interface WishlistItem {
@@ -100,9 +101,12 @@ export const WishlistPage = () => {
             <p className="text-gray-500 max-w-md mx-auto mb-8">
               Aún no has guardado ningún producto. Explora nuestro catálogo y marca los que más te gusten.
             </p>
-            <button className="px-8 py-3 bg-[#3F3F3F] text-white rounded-full font-medium hover:bg-black transition-all transform hover:scale-105 active:scale-95">
+            <Link 
+              to="/catalog"
+              className="inline-block px-8 py-3 bg-[#3F3F3F] text-white rounded-full font-medium hover:bg-black transition-all transform hover:scale-105 active:scale-95"
+            >
               Explorar productos
-            </button>
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
