@@ -156,8 +156,8 @@ export const CatalogPage: React.FC = () => {
   };
 
   const handleClearFilters = () => {
+    setLocalSearch('');
     const nextParams = new URLSearchParams();
-    if (q) nextParams.set('q', q);
     nextParams.set('orderBy', 'relevance');
     setSearchParams(nextParams);
   };
