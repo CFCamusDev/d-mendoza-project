@@ -4,4 +4,5 @@
  */
 export interface IStorageService {
   uploadImage(fileBuffer: Buffer, fileName: string, folder?: string): Promise<string>;
+  deleteImage(imageUrl: string): Promise<void>;
 }

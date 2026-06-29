@@ -52,10 +52,10 @@ export default function OnSaleSection() {
   }
 
   return (
-    <section className="py-12 bg-gray-50 border-y border-gray-100">
+    <section className="py-12 border-y border-neutral-100/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 flex items-center gap-2">
-          ⚡ Súper Ofertas
+          Súper Ofertas
         </h2>
         
         <Swiper

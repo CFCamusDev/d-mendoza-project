@@ -496,7 +496,7 @@ export const AppShell: React.FC = () => {
       )}
 
       {/* ÁREA DE CONTENIDO CENTRAL - CONTENEDOR RESPONSIVO */}
-      <main className="flex-grow lg:max-w-[1280px] w-full mx-auto lg:px-4 px-2 lg:py-8">
+      <main className={`flex-grow w-full ${location.pathname === '/' ? '' : 'lg:max-w-[1280px] mx-auto lg:px-4 px-2 lg:py-8'}`}>
         <Outlet />
       </main>
 

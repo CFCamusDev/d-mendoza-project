@@ -3,6 +3,7 @@ export interface Category {
   name: string;
   parentId: number | null;
   isActive: boolean;
+  imageUrl?: string | null;
   sizeGuideUrl: string | null;
   children?: Category[];
   createdAt: Date;

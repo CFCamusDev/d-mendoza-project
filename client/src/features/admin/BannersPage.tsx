@@ -27,7 +27,8 @@ import {
   GripVertical, 
   X, 
   Image as ImageIcon,
-  AlertCircle
+  AlertCircle,
+  ImagePlus
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -37,13 +38,15 @@ interface SortableItemProps {
   onToggle: (id: number, current: boolean) => void;
   onDelete: (id: number) => void;
   onEditLink: (banner: Banner) => void;
+  onEditImage: (banner: Banner) => void;
 }
 
 const SortableBannerItem: React.FC<SortableItemProps> = ({ 
   banner, 
   onToggle, 
   onDelete, 
-  onEditLink 
+  onEditLink,
+  onEditImage
 }) => {
   const {
     attributes,
@@ -117,6 +120,16 @@ const SortableBannerItem: React.FC<SortableItemProps> = ({
 
       {/* Controles de Acción */}
       <div className="flex items-center gap-3">
+        {/* Cambiar imagen */}
+        <button
+          onClick={() => onEditImage(banner)}
+          className="p-2 text-xs font-medium text-[#3F3F3F] border border-[#3F3F3F]/30 hover:border-[#3F3F3F] rounded-lg hover:bg-white/50 transition-all flex items-center gap-1.5"
+          title="Cambiar Imagen"
+        >
+          <ImagePlus className="w-4 h-4" />
+          <span className="hidden sm:inline">Imagen</span>
+        </button>
+
         {/* Cambiar link */}
         <button
           onClick={() => onEditLink(banner)}
@@ -167,6 +180,7 @@ export const BannersPage: React.FC = () => {
   // Estados del Formulario / Modales
   const [showAddModal, setShowAddModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState<Banner | null>(null);
+  const [showImageModal, setShowImageModal] = useState<Banner | null>(null);
   const [uploading, setUploading] = useState(false);
 
   // Formulario Nuevo Banner
@@ -174,6 +188,10 @@ export const BannersPage: React.FC = () => {
   const [newImagePreview, setNewImagePreview] = useState<string>('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [editLinkUrl, setEditLinkUrl] = useState('');
+
+  // Formulario Reemplazar Imagen
+  const [replaceImage, setReplaceImage] = useState<File | null>(null);
+  const [replaceImagePreview, setReplaceImagePreview] = useState<string>('');
 
   // Configuración de Sensores para Drag & Drop
   const sensors = useSensors(
@@ -242,6 +260,27 @@ export const BannersPage: React.FC = () => {
     if (success) {
       setShowLinkModal(null);
       setEditLinkUrl('');
+    }
+  };
+
+  // Guardar Imagen editada
+  const handleSaveImage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showImageModal || !replaceImage) {
+      toast.error('Selecciona una nueva imagen');
+      return;
+    }
+
+    setUploading(true);
+    const success = await updateBanner(showImageModal.id, {
+      image: replaceImage,
+    });
+    setUploading(false);
+
+    if (success) {
+      setShowImageModal(null);
+      setReplaceImage(null);
+      setReplaceImagePreview('');
     }
   };
 
@@ -332,6 +371,11 @@ export const BannersPage: React.FC = () => {
                     onEditLink={(b) => {
                       setShowLinkModal(b);
                       setEditLinkUrl(b.linkUrl || '');
+                    }}
+                    onEditImage={(b) => {
+                      setShowImageModal(b);
+                      setReplaceImage(null);
+                      setReplaceImagePreview('');
                     }}
                   />
                 ))}
@@ -512,6 +556,107 @@ export const BannersPage: React.FC = () => {
                     </>
                   ) : (
                     'Guardar Cambios'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CAMBIAR IMAGEN */}
+      {showImageModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-[#F7F7F5] rounded-2xl border border-[#D9D9D2] shadow-2xl max-w-lg w-full overflow-hidden animate-scaleUp">
+            <div className="border-b border-[#D9D9D2] p-5 flex justify-between items-center bg-[#D9D9D2]/20">
+              <h2 className="text-xl font-bold text-[#3F3F3F]">Reemplazar Imagen del Banner</h2>
+              <button 
+                onClick={() => {
+                  setShowImageModal(null);
+                  setReplaceImage(null);
+                  setReplaceImagePreview('');
+                }}
+                className="text-[#3F3F3F]/60 hover:text-[#3F3F3F] p-1 rounded-lg hover:bg-[#D9D9D2]/30"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveImage} className="p-6 space-y-5">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-[#3F3F3F]">
+                  Seleccionar Nueva Imagen <span className="text-red-500">*</span>
+                </label>
+                
+                {replaceImagePreview ? (
+                  <div className="relative border border-[#D9D9D2] rounded-xl overflow-hidden bg-white aspect-[21/9]">
+                    <img 
+                      src={replaceImagePreview} 
+                      alt="Previsualización de nueva imagen" 
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplaceImage(null);
+                        setReplaceImagePreview('');
+                      }}
+                      className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full shadow transition-colors"
+                      title="Quitar imagen"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#D9D9D2] hover:border-[#3F3F3F] bg-white rounded-xl p-8 cursor-pointer transition-all hover:bg-slate-50/50">
+                    <ImageIcon className="w-10 h-10 text-slate-400 mb-2" />
+                    <span className="text-sm font-medium text-[#3F3F3F]">Seleccionar Archivo</span>
+                    <span className="text-xs text-slate-400 mt-1">Sustituirá la imagen actual del banner</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 5 * 1024 * 1024) {
+                            toast.error('La imagen no debe superar los 5MB');
+                            return;
+                          }
+                          setReplaceImage(file);
+                          setReplaceImagePreview(URL.createObjectURL(file));
+                        }
+                      }} 
+                      className="hidden" 
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Acciones */}
+              <div className="flex justify-end gap-3 pt-3 border-t border-[#D9D9D2]/40">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowImageModal(null);
+                    setReplaceImage(null);
+                    setReplaceImagePreview('');
+                  }}
+                  className="px-5 py-2.5 border border-[#D9D9D2] hover:bg-[#D9D9D2]/20 text-[#3F3F3F] rounded-xl font-medium transition-all text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploading || !replaceImage}
+                  className="flex items-center gap-2 bg-[#3F3F3F] hover:bg-[#3F3F3F]/90 disabled:opacity-50 text-[#F7F7F5] px-6 py-2.5 rounded-xl font-semibold transition-all shadow text-sm"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    'Reemplazar Imagen'
                   )}
                 </button>
               </div>
