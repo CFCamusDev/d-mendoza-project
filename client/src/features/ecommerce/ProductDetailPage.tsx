@@ -70,8 +70,7 @@ export const ProductDetailPage: React.FC = () => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
 
   // Selector State
-  const [selectedTalla, setSelectedTalla] = useState<string>('');
-  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState<number>(1);
   const [attributes, setAttributes] = useState<any[]>([]);
 
@@ -139,28 +138,35 @@ export const ProductDetailPage: React.FC = () => {
     }
   }, [slug]);
 
-  // Reset image index when color changes
+  // Reset image index when visual driver attribute changes
   useEffect(() => {
     setCurrentImageIndex(0);
-  }, [selectedColor]);
+  }, [selectedAttributes]);
 
-  const selectedColorValueId = useMemo(() => {
-    if (!selectedColor || attributes.length === 0) return null;
-    const colorAttr = attributes.find(a => a.name.toLowerCase() === 'color' || a.isVisualDriver);
-    if (!colorAttr) return null;
-    const valObj = colorAttr.values.find((v: any) => v.value.toUpperCase() === selectedColor.toUpperCase());
+  // Find visual driver (e.g. Color) selected value
+  const visualDriverValueId = useMemo(() => {
+    if (Object.keys(selectedAttributes).length === 0 || attributes.length === 0) return null;
+    const visualAttr = attributes.find(a => a.name.toLowerCase() === 'color' || a.isVisualDriver);
+    if (!visualAttr) return null;
+    
+    // Check if the visual attribute is present in the product's available attributes (case insensitive matching of key)
+    const attrKey = Object.keys(selectedAttributes).find(k => k.toLowerCase() === visualAttr.name.toLowerCase());
+    if (!attrKey) return null;
+
+    const selectedVal = selectedAttributes[attrKey];
+    const valObj = visualAttr.values.find((v: any) => v.value.toUpperCase() === selectedVal.toUpperCase());
     return valObj ? valObj.id : null;
-  }, [selectedColor, attributes]);
+  }, [selectedAttributes, attributes]);
 
   const filteredImages = useMemo(() => {
     if (!product) return [];
-    if (!selectedColorValueId) return product.images;
-    const colorImages = product.images.filter(img => (img as any).attributeValueId === selectedColorValueId);
+    if (!visualDriverValueId) return product.images;
+    const colorImages = product.images.filter(img => (img as any).attributeValueId === visualDriverValueId);
     if (colorImages.length === 0) {
       return product.images.filter(img => !(img as any).attributeValueId);
     }
     return colorImages;
-  }, [product, selectedColorValueId]);
+  }, [product, visualDriverValueId]);
 
   // Automatic Carousel effect
   useEffect(() => {
@@ -173,44 +179,74 @@ export const ProductDetailPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [product, filteredImages, isHovered]);
 
-  // Extract unique attributes
-  const { tallas, colores } = useMemo(() => {
-    if (!product) return { tallas: [], colores: [] };
-    const tallasSet = new Set<string>();
-    const coloresSet = new Set<string>();
+  // Extract dynamic attributes from all active variants
+  const availableAttributes = useMemo(() => {
+    if (!product) return {};
+    const attrs: Record<string, Set<string>> = {};
 
     product.variants.forEach(variant => {
       if (variant.isActive) {
-        if (variant.attributesJson.talla) tallasSet.add(variant.attributesJson.talla);
-        if (variant.attributesJson.color) coloresSet.add(variant.attributesJson.color);
+        Object.entries(variant.attributesJson).forEach(([key, value]) => {
+          if (!attrs[key]) {
+            attrs[key] = new Set<string>();
+          }
+          if (value) attrs[key].add(value as string);
+        });
       }
     });
 
-    return {
-      tallas: Array.from(tallasSet),
-      colores: Array.from(coloresSet)
-    };
+    const result: Record<string, string[]> = {};
+    Object.keys(attrs).forEach(key => {
+      result[key] = Array.from(attrs[key]);
+    });
+    return result;
   }, [product]);
 
-  // Pre-select first color and size if none are selected
+  // Pre-select first available option for each attribute
   useEffect(() => {
-    if (colores.length > 0 && !selectedColor) {
-      setSelectedColor(colores[0]);
+    if (Object.keys(availableAttributes).length > 0) {
+      const newSelections = { ...selectedAttributes };
+      let changed = false;
+      Object.entries(availableAttributes).forEach(([attrKey, values]) => {
+        if (!newSelections[attrKey] && values.length > 0) {
+          newSelections[attrKey] = values[0];
+          changed = true;
+        }
+      });
+      if (changed) {
+        setSelectedAttributes(newSelections);
+      }
     }
-    if (tallas.length > 0 && !selectedTalla) {
-      setSelectedTalla(tallas[0]);
-    }
-  }, [colores, tallas, selectedColor, selectedTalla]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableAttributes]);
 
-  // Determine current active variant
+  // Determine current active variant based on dynamic selections
   const selectedVariant = useMemo(() => {
-    if (!product || !selectedTalla || !selectedColor) return null;
-    return product.variants.find(variant =>
-      variant.isActive &&
-      variant.attributesJson.talla?.toUpperCase() === selectedTalla.toUpperCase() &&
-      variant.attributesJson.color?.toUpperCase() === selectedColor.toUpperCase()
-    ) || null;
-  }, [product, selectedTalla, selectedColor]);
+    if (!product || Object.keys(selectedAttributes).length === 0) return null;
+    
+    return product.variants.find(variant => {
+      if (!variant.isActive) return false;
+      return Object.entries(selectedAttributes).every(([key, value]) => {
+        return variant.attributesJson[key]?.toUpperCase() === value.toUpperCase();
+      });
+    }) || null;
+  }, [product, selectedAttributes]);
+
+  // Helper for multi-dimensional stock validation
+  const isOptionOutOfStock = (attrKey: string, optionValue: string) => {
+    if (!product) return true;
+    
+    const testSelection = { ...selectedAttributes, [attrKey]: optionValue };
+    
+    const matchingVariants = product.variants.filter(v => {
+      if (!v.isActive) return false;
+      return Object.entries(testSelection).every(([k, vVal]) => {
+        return v.attributesJson[k]?.toUpperCase() === vVal.toUpperCase();
+      });
+    });
+
+    return matchingVariants.length === 0 || matchingVariants.every(v => v.outOfStock);
+  };
 
   // Base price representation & selected image calculations
   const basePrice = product ? (selectedVariant ? selectedVariant.price : (product.variants[0]?.price || 0)) : 0;
@@ -227,7 +263,7 @@ export const ProductDetailPage: React.FC = () => {
 
   const handleAddToCart = async () => {
     if (!selectedVariant) {
-      toast.error('Por favor selecciona talla y color.');
+      toast.error('Por favor completa la selección de opciones.');
       return;
     }
     if (selectedVariant.outOfStock) {
@@ -237,7 +273,8 @@ export const ProductDetailPage: React.FC = () => {
 
     try {
       await addItem(selectedVariant.id, quantity);
-      toast.success(`¡Agregado al carrito! ${product?.name} (${selectedTalla}/${selectedColor}) x${quantity}`);
+      const selectedOpts = Object.values(selectedAttributes).join(' / ');
+      toast.success(`¡Agregado al carrito! ${product?.name} (${selectedOpts}) x${quantity}`);
     } catch (error) {
       toast.error('Error al agregar al carrito');
     }
@@ -245,7 +282,7 @@ export const ProductDetailPage: React.FC = () => {
 
   const handleBuyNow = async () => {
     if (!selectedVariant) {
-      toast.error('Por favor selecciona talla y color.');
+      toast.error('Por favor completa la selección de opciones.');
       return;
     }
     if (selectedVariant.outOfStock) {
@@ -305,24 +342,23 @@ export const ProductDetailPage: React.FC = () => {
                   <div className="h-3.5 w-12 bg-neutral-200 rounded-md" />
                 </div>
 
-                {/* Colors skeleton */}
-                <div className="space-y-2">
-                  <div className="h-2.5 w-28 bg-neutral-200 rounded-md" />
-                  <div className="flex gap-2">
-                    <div className="w-7 h-7 rounded-full bg-neutral-200" />
-                    <div className="w-7 h-7 rounded-full bg-neutral-200" />
-                    <div className="w-7 h-7 rounded-full bg-neutral-200" />
+                {/* Attributes skeleton */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="h-2.5 w-28 bg-neutral-200 rounded-md" />
+                    <div className="flex gap-2">
+                      <div className="w-8 h-8 rounded-full bg-neutral-200" />
+                      <div className="w-8 h-8 rounded-full bg-neutral-200" />
+                      <div className="w-8 h-8 rounded-full bg-neutral-200" />
+                    </div>
                   </div>
-                </div>
-
-                {/* Sizes skeleton */}
-                <div className="space-y-2">
-                  <div className="h-2.5 w-24 bg-neutral-200 rounded-md" />
-                  <div className="flex gap-2">
-                    <div className="w-9 h-8 bg-neutral-200 rounded-lg" />
-                    <div className="w-9 h-8 bg-neutral-200 rounded-lg" />
-                    <div className="w-9 h-8 bg-neutral-200 rounded-lg" />
-                    <div className="w-9 h-8 bg-neutral-200 rounded-lg" />
+                  <div className="space-y-2">
+                    <div className="h-2.5 w-24 bg-neutral-200 rounded-md" />
+                    <div className="flex gap-2">
+                      <div className="w-10 h-9 bg-neutral-200 rounded-lg" />
+                      <div className="w-10 h-9 bg-neutral-200 rounded-lg" />
+                      <div className="w-10 h-9 bg-neutral-200 rounded-lg" />
+                    </div>
                   </div>
                 </div>
 
@@ -508,115 +544,139 @@ export const ProductDetailPage: React.FC = () => {
                 </span>
               </div>
 
-              {/* Color Selector */}
-              {colores.length > 0 && (
-                <div className="space-y-1.5">
-                  <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest block">
-                    Seleccionar Color : {selectedColor}
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {colores.map(color => {
-                      const colorAttr = attributes.find(a => a.name.toLowerCase() === 'color' || a.isVisualDriver);
-                      const valObj = colorAttr?.values.find((v: any) => v.value.toUpperCase() === color.toUpperCase());
-                      const valId = valObj ? valObj.id : null;
-                      
-                      const colorImg = valId ? product.images.find(img => (img as any).attributeValueId === valId) : null;
-                      const mainParentImg = product.images.find(img => !(img as any).attributeValueId) || product.images[0];
-                      const thumbUrl = colorImg?.url || mainParentImg?.url;
-                      
-                      const COLOR_MAP: Record<string, string> = {
-                        'NEGRO': '#000000', 'BLANCO': '#FFFFFF', 'ROJO': '#FF0000', 'AZUL': '#0000FF',
-                        'VERDE': '#00FF00', 'AMARILLO': '#FFFF00', 'GRIS': '#808080', 'BEIGE': '#F5F5DC',
-                        'MARRON': '#8B4513', 'ROSA': '#FFC0CB', 'MORADO': '#800080', 'NARANJA': '#FFA500'
-                      };
-                      const hex = COLOR_MAP[color.toUpperCase()] || '#E2E8F0';
-                      
-                      return (
+              {/* Dynamic Attributes Render */}
+              <div className="space-y-4">
+                {Object.entries(availableAttributes).map(([attrKey, values]) => {
+                  const isVisualDriver = attrKey.toLowerCase() === 'color' || attributes.find(a => a.name.toLowerCase() === attrKey.toLowerCase())?.isVisualDriver;
+                  const selectedVal = selectedAttributes[attrKey];
+
+                  return (
+                    <div key={attrKey} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest block">
+                          Seleccionar {attrKey} {selectedVal ? `: ${selectedVal}` : ''}
+                        </span>
+                        {/* Only show size guide if it's a 'talla' or 'size' attribute */}
+                        {(attrKey.toLowerCase() === 'talla' || attrKey.toLowerCase() === 'size') && product.sizeGuideUrl && (
+                          <button
+                            onClick={() => setShowSizeGuide(true)}
+                            className="inline-flex items-center gap-1.5 text-[9px] font-bold text-slate-400 hover:text-brand-accent transition-colors underline underline-offset-4"
+                          >
+                            <Ruler size={10} />
+                            <span>Guía</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {values.map(val => {
+                          const outOfStock = isOptionOutOfStock(attrKey, val);
+                          const isSelected = selectedVal === val;
+
+                          if (isVisualDriver) {
+                            // Find corresponding image or hex
+                            const colorAttr = attributes.find(a => a.name.toLowerCase() === attrKey.toLowerCase() || a.isVisualDriver);
+                            const valObj = colorAttr?.values.find((v: any) => v.value.toUpperCase() === val.toUpperCase());
+                            const valId = valObj ? valObj.id : null;
+                            
+                            const colorImg = valId ? product.images.find(img => (img as any).attributeValueId === valId) : null;
+                            const mainParentImg = product.images.find(img => !(img as any).attributeValueId) || product.images[0];
+                            const thumbUrl = colorImg?.url || mainParentImg?.url;
+                            
+                            const COLOR_MAP: Record<string, string> = {
+                              'NEGRO': '#000000', 'BLANCO': '#FFFFFF', 'ROJO': '#FF0000', 'AZUL': '#0000FF',
+                              'VERDE': '#00FF00', 'AMARILLO': '#FFFF00', 'GRIS': '#808080', 'BEIGE': '#F5F5DC',
+                              'MARRON': '#8B4513', 'ROSA': '#FFC0CB', 'MORADO': '#800080', 'NARANJA': '#FFA500'
+                            };
+                            const hex = COLOR_MAP[val.toUpperCase()] || '#E2E8F0';
+
+                            return (
+                              <button
+                                key={val}
+                                onClick={() => {
+                                  setSelectedAttributes(prev => ({ ...prev, [attrKey]: val }));
+                                  setQuantity(1);
+                                }}
+                                className={`w-10 h-10 rounded-full transition-all flex items-center justify-center cursor-pointer relative group overflow-hidden border
+                                  ${isSelected
+                                    ? 'ring-2 ring-brand-accent ring-offset-2 scale-110 border-transparent'
+                                    : 'border-slate-200 hover:scale-105'}
+                                  ${outOfStock ? 'opacity-40 grayscale pointer-events-auto' : ''}`}
+                                title={val}
+                              >
+                                {thumbUrl ? (
+                                  <img src={thumbUrl} alt={val} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full" style={{ backgroundColor: hex }} />
+                                )}
+                                {outOfStock && (
+                                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                                    <div className="w-full h-[2px] bg-red-500/80 -rotate-45"></div>
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]"></div>
+                              </button>
+                            );
+                          } else {
+                            // Standard button for Size/Material/Capacity
+                            return (
+                              <button
+                                key={val}
+                                onClick={() => {
+                                  setSelectedAttributes(prev => ({ ...prev, [attrKey]: val }));
+                                  setQuantity(1);
+                                }}
+                                className={`min-w-[2.5rem] h-9 px-3 text-[10px] font-bold rounded-lg border transition-all flex items-center justify-center cursor-pointer relative overflow-hidden
+                                  ${isSelected
+                                    ? 'border-brand-accent bg-brand-accent text-white shadow-sm'
+                                    : 'border-neutral-200 bg-white text-neutral-700'}
+                                  ${outOfStock ? 'opacity-50 text-neutral-400 bg-neutral-100 hover:bg-neutral-100 hover:border-neutral-200' : 'hover:border-brand-accent'}`}
+                              >
+                                <span className={outOfStock ? 'line-through decoration-red-400/50 decoration-2' : ''}>
+                                  {val}
+                                </span>
+                              </button>
+                            );
+                          }
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Quantity Selector & Availability Message */}
+              <div className="pt-2">
+                {selectedVariant && selectedVariant.outOfStock ? (
+                  <div className="flex items-center gap-2 text-red-500 bg-red-50 px-3 py-2 rounded-lg border border-red-100 mb-2">
+                    <AlertTriangle size={14} className="shrink-0" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Agotado en esta combinación</span>
+                  </div>
+                ) : (
+                  selectedVariant && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-black text-brand-text uppercase tracking-widest">Cantidad:</span>
+                      <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white shadow-xs">
                         <button
-                          key={color}
-                          onClick={() => {
-                            setSelectedColor(color);
-                            setQuantity(1);
-                          }}
-                          className={`w-10 h-10 rounded-full transition-all flex items-center justify-center cursor-pointer relative group overflow-hidden border
-                            ${selectedColor === color
-                              ? 'ring-2 ring-brand-accent ring-offset-2 scale-110 border-transparent'
-                              : 'border-slate-200 hover:scale-105'}`}
-                          title={color}
+                          disabled={quantity <= 1}
+                          onClick={() => setQuantity(q => q - 1)}
+                          className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 text-slate-500 disabled:opacity-30 font-bold text-xs"
                         >
-                          {thumbUrl ? (
-                            <img src={thumbUrl} alt={color} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full" style={{ backgroundColor: hex }} />
-                          )}
-                          <div className="absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]"></div>
+                          -
                         </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Size Selector */}
-              {tallas.length > 0 && (
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">
-                      Seleccionar Talla
-                    </span>
-                    {product.sizeGuideUrl && (
-                      <button
-                        onClick={() => setShowSizeGuide(true)}
-                        className="inline-flex items-center gap-1.5 text-[9px] font-bold text-slate-400 hover:text-brand-accent transition-colors underline underline-offset-4"
-                      >
-                        <Ruler size={10} />
-                        <span>Guía</span>
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {tallas.map(talla => (
-                      <button
-                        key={talla}
-                        onClick={() => {
-                          setSelectedTalla(talla);
-                          setQuantity(1);
-                        }}
-                        className={`min-w-[2.5rem] h-9 px-2 text-[10px] font-bold rounded-lg border transition-all flex items-center justify-center cursor-pointer
-                          ${selectedTalla === talla
-                            ? 'border-brand-accent bg-brand-accent text-white shadow-sm'
-                            : 'border-neutral-200 hover:border-brand-accent bg-white text-neutral-700'}`}
-                      >
-                        {talla}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Quantity Selector */}
-              {selectedVariant && !selectedVariant.outOfStock && (
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black text-brand-text uppercase tracking-widest">Cantidad:</span>
-                  <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white shadow-xs">
-                    <button
-                      disabled={quantity <= 1}
-                      onClick={() => setQuantity(q => q - 1)}
-                      className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 text-slate-500 disabled:opacity-30 font-bold text-xs"
-                    >
-                      -
-                    </button>
-                    <span className="w-7 text-center text-[11px] font-black text-slate-800">{quantity}</span>
-                    <button
-                      disabled={quantity >= selectedVariant.stock}
-                      onClick={() => setQuantity(q => q + 1)}
-                      className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 text-slate-500 disabled:opacity-30 font-bold text-xs"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              )}
+                        <span className="w-7 text-center text-[11px] font-black text-slate-800">{quantity}</span>
+                        <button
+                          disabled={quantity >= selectedVariant.stock}
+                          onClick={() => setQuantity(q => q + 1)}
+                          className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 text-slate-500 disabled:opacity-30 font-bold text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
 
               {/* Checkout Action Buttons */}
               <div className="flex flex-col gap-2 pt-2 border-t border-neutral-100">
@@ -627,10 +687,10 @@ export const ProductDetailPage: React.FC = () => {
                     ${!selectedVariant
                       ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                       : selectedVariant.outOfStock
-                        ? 'bg-red-50 text-red-600 border-red-200 cursor-not-allowed'
+                        ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed border-neutral-300'
                         : 'bg-brand-accent text-brand-bg hover:opacity-90'}`}
                 >
-                  Añadir al Carrito
+                  {selectedVariant && selectedVariant.outOfStock ? 'AGOTADO' : 'Añadir al Carrito'}
                 </button>
 
                 <div className="flex gap-2 w-full">
