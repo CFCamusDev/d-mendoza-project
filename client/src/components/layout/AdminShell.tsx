@@ -19,7 +19,6 @@ import {
   ClipboardCheck,
   MapPin,
   ChevronDown,
-  ChevronUp,
   Archive,
   BarChart3,
   Store,
@@ -61,16 +60,22 @@ const AccordionMenu: React.FC<AccordionMenuProps> = ({
         className="w-full flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 px-3 py-1 hover:text-white transition-colors"
       >
         <span>{title}</span>
-        {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
       </button>
     ) : (
       <p className="text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 text-center">•</p>
     )}
-    {(isExpanded || isCollapsed) && (
-      <div className="space-y-1">
-        {children}
+        <div 
+      className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+        isExpanded || isCollapsed ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+      }`}
+    >
+      <div className="overflow-hidden">
+        <div className="space-y-1 mt-1">
+          {children}
+        </div>
       </div>
-    )}
+    </div>
   </div>
 );
 
