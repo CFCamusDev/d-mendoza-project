@@ -232,9 +232,9 @@ export const ProductDetailPage: React.FC = () => {
     }) || null;
   }, [product, selectedAttributes]);
 
-  // Helper for multi-dimensional stock validation
-  const isOptionOutOfStock = (attrKey: string, optionValue: string) => {
-    if (!product) return true;
+  // Helper for multi-dimensional stock validation and existence
+  const checkOptionStatus = (attrKey: string, optionValue: string) => {
+    if (!product) return { existsInCurrent: false, outOfStock: true };
     
     const testSelection = { ...selectedAttributes, [attrKey]: optionValue };
     
@@ -245,7 +245,35 @@ export const ProductDetailPage: React.FC = () => {
       });
     });
 
-    return matchingVariants.length === 0 || matchingVariants.every(v => v.outOfStock);
+    return {
+      existsInCurrent: matchingVariants.length > 0,
+      outOfStock: matchingVariants.length > 0 && matchingVariants.every(v => v.outOfStock)
+    };
+  };
+
+  const handleSelection = (attrKey: string, val: string) => {
+    if (!product) return;
+    const newSelections = { ...selectedAttributes, [attrKey]: val };
+    
+    // Check if this exact combination exists
+    const combinationExists = product.variants.some(v => 
+      v.isActive && Object.entries(newSelections).every(([k, vVal]) => v.attributesJson[k]?.toUpperCase() === vVal.toUpperCase())
+    );
+
+    if (!combinationExists) {
+      // Find the first available variant that has the newly selected option
+      const fallbackVariant = product.variants.find(v => 
+        v.isActive && v.attributesJson[attrKey]?.toUpperCase() === val.toUpperCase()
+      );
+      if (fallbackVariant) {
+        setSelectedAttributes(fallbackVariant.attributesJson as Record<string, string>);
+      } else {
+        setSelectedAttributes(newSelections); // Should not happen
+      }
+    } else {
+      setSelectedAttributes(newSelections);
+    }
+    setQuantity(1);
   };
 
   // Base price representation & selected image calculations
@@ -570,8 +598,11 @@ export const ProductDetailPage: React.FC = () => {
 
                       <div className="flex flex-wrap gap-2">
                         {values.map(val => {
-                          const outOfStock = isOptionOutOfStock(attrKey, val);
+                          const { existsInCurrent, outOfStock } = checkOptionStatus(attrKey, val);
                           const isSelected = selectedVal === val;
+                          
+                          // If it doesn't exist in current selection, we show it visually muted
+                          const isUnavailable = !existsInCurrent;
 
                           if (isVisualDriver) {
                             // Find corresponding image or hex
@@ -593,23 +624,21 @@ export const ProductDetailPage: React.FC = () => {
                             return (
                               <button
                                 key={val}
-                                onClick={() => {
-                                  setSelectedAttributes(prev => ({ ...prev, [attrKey]: val }));
-                                  setQuantity(1);
-                                }}
+                                onClick={() => handleSelection(attrKey, val)}
                                 className={`w-10 h-10 rounded-full transition-all flex items-center justify-center cursor-pointer relative group overflow-hidden border
                                   ${isSelected
                                     ? 'ring-2 ring-brand-accent ring-offset-2 scale-110 border-transparent'
                                     : 'border-slate-200 hover:scale-105'}
-                                  ${outOfStock ? 'opacity-40 grayscale pointer-events-auto' : ''}`}
-                                title={val}
+                                  ${isUnavailable ? 'opacity-30' : ''}
+                                  ${outOfStock ? 'opacity-50 grayscale' : ''}`}
+                                title={isUnavailable ? `${val} (No disponible con selección actual)` : val}
                               >
                                 {thumbUrl ? (
                                   <img src={thumbUrl} alt={val} className="w-full h-full object-cover" />
                                 ) : (
                                   <div className="w-full h-full" style={{ backgroundColor: hex }} />
                                 )}
-                                {outOfStock && (
+                                {(outOfStock || isUnavailable) && (
                                   <div className="absolute inset-0 flex items-center justify-center z-10">
                                     <div className="w-full h-[2px] bg-red-500/80 -rotate-45"></div>
                                   </div>
@@ -622,17 +651,16 @@ export const ProductDetailPage: React.FC = () => {
                             return (
                               <button
                                 key={val}
-                                onClick={() => {
-                                  setSelectedAttributes(prev => ({ ...prev, [attrKey]: val }));
-                                  setQuantity(1);
-                                }}
+                                onClick={() => handleSelection(attrKey, val)}
                                 className={`min-w-[2.5rem] h-9 px-3 text-[10px] font-bold rounded-lg border transition-all flex items-center justify-center cursor-pointer relative overflow-hidden
                                   ${isSelected
                                     ? 'border-brand-accent bg-brand-accent text-white shadow-sm'
                                     : 'border-neutral-200 bg-white text-neutral-700'}
-                                  ${outOfStock ? 'opacity-50 text-neutral-400 bg-neutral-100 hover:bg-neutral-100 hover:border-neutral-200' : 'hover:border-brand-accent'}`}
+                                  ${isUnavailable ? 'opacity-40 bg-neutral-50 text-neutral-400 border-neutral-100 hover:border-neutral-300' : ''}
+                                  ${outOfStock && !isUnavailable ? 'opacity-60 text-neutral-500 bg-neutral-100 hover:bg-neutral-200 hover:border-neutral-300' : 'hover:border-brand-accent'}`}
+                                title={isUnavailable ? `${val} (No disponible con selección actual)` : val}
                               >
-                                <span className={outOfStock ? 'line-through decoration-red-400/50 decoration-2' : ''}>
+                                <span className={(outOfStock || isUnavailable) ? 'line-through decoration-neutral-400/60 decoration-2' : ''}>
                                   {val}
                                 </span>
                               </button>
