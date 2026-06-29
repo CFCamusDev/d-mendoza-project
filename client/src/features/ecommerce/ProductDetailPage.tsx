@@ -75,7 +75,7 @@ export const ProductDetailPage: React.FC = () => {
   const [attributes, setAttributes] = useState<any[]>([]);
 
   useEffect(() => {
-    axiosInstance.get('/v1/attributes')
+    axiosInstance.get('/v1/ecommerce/attributes')
       .then(({ data }) => {
         if (data.success) setAttributes(data.data);
       })
