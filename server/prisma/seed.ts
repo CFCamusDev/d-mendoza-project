@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import path from 'path';
+import { seedData } from './seedData';
 
 // Setup environment loader dynamically bridging to workspace root configuration
 dotenv.config({ path: path.join(__dirname, '../../.env') });
@@ -141,6 +142,54 @@ async function main() {
     });
     console.log(`ℹ️ Verified existing administrator promotions.`);
   }
+
+  // ------------------------------------------------------------------
+  // 4. Seed Catalog Data (Banners, Products, Categories, etc.)
+  // ------------------------------------------------------------------
+  console.log('🌱 Seeding catalog data...');
+  for (const b of seedData.branches) {
+    await prisma.branch.upsert({ where: { id: b.id }, update: b, create: b });
+  }
+  for (const s of seedData.suppliers) {
+    await prisma.supplier.upsert({ where: { id: s.id }, update: s, create: s });
+  }
+  for (const c of seedData.categories) {
+    await prisma.category.upsert({ where: { id: c.id }, update: c, create: c });
+  }
+  for (const b of seedData.brands) {
+    await prisma.brand.upsert({ where: { id: b.id }, update: b, create: b });
+  }
+  for (const g of seedData.genders) {
+    await prisma.gender.upsert({ where: { id: g.id }, update: g, create: g });
+  }
+  for (const a of seedData.attributes) {
+    const { values, ...attr } = a;
+    await prisma.attribute.upsert({ where: { id: attr.id }, update: attr, create: attr });
+    for (const v of values) {
+      // Set the relation via attributeId instead of just mapping the object blindly,
+      // but seedData actually includes attributeId? No, wait. 
+      // I should pass attributeId: a.id
+      const val = { ...v, attributeId: a.id };
+      await prisma.attributeValue.upsert({ where: { id: val.id }, update: val, create: val });
+    }
+  }
+  for (const p of seedData.products) {
+    const { images, variants, ...prod } = p;
+    // ensure price/discountPercent/attributesJson are appropriately set for variants
+    await prisma.product.upsert({ where: { id: prod.id }, update: prod, create: prod });
+    for (const v of variants) {
+      const vari = { ...v, productId: prod.id };
+      await prisma.productVariant.upsert({ where: { id: vari.id }, update: vari, create: vari });
+    }
+    for (const img of images) {
+      const image = { ...img, productId: prod.id };
+      await prisma.productImage.upsert({ where: { id: image.id }, update: image, create: image });
+    }
+  }
+  for (const b of seedData.banners) {
+    await prisma.banner.upsert({ where: { id: b.id }, update: b, create: b });
+  }
+  console.log(`✅ Seeded ${seedData.products.length} products and related catalog data.`);
 
   console.log('🚀 Seed execution finalized successfully.\n');
 }
