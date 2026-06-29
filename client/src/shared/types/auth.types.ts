@@ -8,7 +8,7 @@ export interface JwtPayload {
 }
 
 // Roles defined by the backend RBAC system
-export type UserRole = 'CLIENT' | 'ADMIN' | 'SELLER';
+export type UserRole = 'CLIENT' | 'ADMIN' | 'SELLER' | 'SUPPLY' | 'DELIVERY';
 
 // Hydrated user object stored in AuthContext
 export interface AuthUser {
