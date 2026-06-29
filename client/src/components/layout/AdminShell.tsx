@@ -19,7 +19,6 @@ import {
   ClipboardCheck,
   MapPin,
   ChevronDown,
-  ChevronUp,
   Archive,
   BarChart3,
   Store,
@@ -36,6 +35,50 @@ import {
   LayoutDashboard
 } from 'lucide-react';
 
+
+interface AccordionMenuProps {
+  menuKey: string;
+  title: string;
+  isExpanded: boolean;
+  isCollapsed: boolean;
+  onToggle: (key: string) => void;
+  children: React.ReactNode;
+}
+
+const AccordionMenu: React.FC<AccordionMenuProps> = ({ 
+  menuKey, 
+  title, 
+  isExpanded, 
+  isCollapsed, 
+  onToggle, 
+  children 
+}) => (
+  <div className="space-y-1">
+    {!isCollapsed ? (
+      <button
+        onClick={() => onToggle(menuKey)}
+        className="w-full flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 px-3 py-1 hover:text-white transition-colors"
+      >
+        <span>{title}</span>
+        <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+      </button>
+    ) : (
+      <p className="text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 text-center">•</p>
+    )}
+        <div 
+      className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+        isExpanded || isCollapsed ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+      }`}
+    >
+      <div className="overflow-hidden">
+        <div className="space-y-1 mt-1">
+          {children}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export const AdminShell: React.FC = () => {
   const { user, logout } = useAuth();
   const { brandConfig } = useBrand();
@@ -44,10 +87,13 @@ export const AdminShell: React.FC = () => {
 
   // Sidebar states
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
-    mantenimiento: true,
-    inventario: true,
-    reportes: false
+    const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
+    ventas: false,
+    catalogo: false,
+    inventario: false,
+    crm: false,
+    finanzas: false,
+    empresa: false
   });
 
   // Header Dropdowns
@@ -61,6 +107,38 @@ export const AdminShell: React.FC = () => {
 
   // Cross Branch count state
   const [pendingCrossBranchCount, setPendingCrossBranchCount] = useState(0);
+
+  // Auto-expand based on route
+  useEffect(() => {
+    const path = location.pathname;
+    let activeKey = '';
+    
+    if (path.startsWith('/admin/orders') || path.startsWith('/admin/delivery-zones') || path.startsWith('/admin/banners') || path.startsWith('/admin/blog')) {
+      activeKey = 'ventas';
+    } else if (path.startsWith('/admin/products') || path.startsWith('/admin/categories') || path.startsWith('/admin/brands') || path.startsWith('/admin/genders') || path.startsWith('/admin/attributes')) {
+      activeKey = 'catalogo';
+    } else if (path.startsWith('/admin/inventory') || path.startsWith('/admin/reports/inventory-rotation')) {
+      activeKey = 'inventario';
+    } else if (path.startsWith('/admin/clients')) {
+      activeKey = 'crm';
+    } else if (path.startsWith('/admin/receipts') || path.startsWith('/admin/reconcile') || path.startsWith('/admin/branches/registers')) {
+      activeKey = 'finanzas';
+    } else if (path.startsWith('/admin/branches') || path.startsWith('/admin/employees') || path.startsWith('/admin/branding')) {
+      activeKey = 'empresa';
+    }
+    
+    if (activeKey) {
+      setExpandedMenus({
+        ventas: false,
+        catalogo: false,
+        inventario: false,
+        crm: false,
+        finanzas: false,
+        empresa: false,
+        [activeKey]: true
+      });
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const fetchPendingCrossBranch = async () => {
@@ -88,10 +166,18 @@ export const AdminShell: React.FC = () => {
   };
 
   const toggleMenu = (menuKey: string) => {
-    setExpandedMenus(prev => ({
-      ...prev,
-      [menuKey]: !prev[menuKey]
-    }));
+    setExpandedMenus(prev => {
+      const isCurrentlyOpen = prev[menuKey];
+      return {
+        ventas: false,
+        catalogo: false,
+        inventario: false,
+        crm: false,
+        finanzas: false,
+        empresa: false,
+        [menuKey]: !isCurrentlyOpen
+      };
+    });
   };
 
   const isActiveRoute = (path: string) => {
@@ -134,10 +220,10 @@ export const AdminShell: React.FC = () => {
         {/* Navigation list */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-4">
           
-          {/* General Section */}
+          {/* Grupo 1: Principal */}
           <div className="space-y-1">
             <p className={`text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 px-3 ${isCollapsed ? 'text-center' : ''}`}>
-              {!isCollapsed ? 'Inicio' : '•'}
+              {!isCollapsed ? 'Principal' : '•'}
             </p>
             <Link
               to="/admin/dashboard"
@@ -149,51 +235,6 @@ export const AdminShell: React.FC = () => {
               <LayoutDashboard className="w-4 h-4 shrink-0" />
               {!isCollapsed && <span>Dashboard</span>}
             </Link>
-
-            <Link
-              to="/admin/orders"
-              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                isActiveRoute('/admin/orders') ? activeClass : inactiveClass
-              } ${isCollapsed ? 'justify-center' : ''}`}
-              title="Pedidos E-commerce"
-            >
-              <Package className="w-4 h-4 shrink-0" />
-              {!isCollapsed && <span>Pedidos E-commerce</span>}
-            </Link>
-
-            <Link
-              to="/admin/inventory/stock"
-              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                isActiveRoute('/admin/inventory/stock') ? activeClass : inactiveClass
-              } ${isCollapsed ? 'justify-center' : ''}`}
-              title="Control de Stock"
-            >
-              <Boxes className="w-4 h-4 shrink-0" />
-              {!isCollapsed && <span>Control de Stock</span>}
-            </Link>
-
-            <Link
-              to="/admin/receipts"
-              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                isActiveRoute('/admin/receipts') ? activeClass : inactiveClass
-              } ${isCollapsed ? 'justify-center' : ''}`}
-              title="Comprobantes Electrónicos"
-            >
-              <FileText className="w-4 h-4 shrink-0" />
-              {!isCollapsed && <span>Comprobantes</span>}
-            </Link>
-
-            <Link
-              to="/admin/reconcile"
-              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                isActiveRoute('/admin/reconcile') ? activeClass : inactiveClass
-              } ${isCollapsed ? 'justify-center' : ''}`}
-              title="Conciliación"
-            >
-              <ArrowLeftRight className="w-4 h-4 shrink-0" />
-              {!isCollapsed && <span>Conciliación</span>}
-            </Link>
-
             <Link
               to="/pos"
               className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
@@ -206,300 +247,322 @@ export const AdminShell: React.FC = () => {
             </Link>
           </div>
 
-          {/* Mantenimiento Section */}
-          <div className="space-y-1">
-            {!isCollapsed ? (
-              <button
-                onClick={() => toggleMenu('mantenimiento')}
-                className="w-full flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 px-3 py-1 hover:text-white transition-colors"
-              >
-                <span>Configuración</span>
-                {expandedMenus.mantenimiento ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              </button>
-            ) : (
-              <p className="text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 text-center">•</p>
-            )}
+          {/* Grupo 2: Ventas & E-commerce */}
+          <AccordionMenu 
+            menuKey="ventas" 
+            title="Ventas & E-commerce" 
+            isExpanded={expandedMenus.ventas} 
+            isCollapsed={isCollapsed} 
+            onToggle={toggleMenu}
+          >
+            <Link
+              to="/admin/orders"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/orders') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Pedidos E-commerce"
+            >
+              <Package className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Pedidos E-commerce</span>}
+            </Link>
+            <Link
+              to="/admin/delivery-zones"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/delivery-zones') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Zonas de Envío"
+            >
+              <MapPin className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Zonas de Envío</span>}
+            </Link>
+            <Link
+              to="/admin/banners"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/banners') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Banners"
+            >
+              <ImageIcon className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Banners</span>}
+            </Link>
+            <Link
+              to="/admin/blog"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/blog') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Gestión del Blog"
+            >
+              <FileText className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Gestión del Blog</span>}
+            </Link>
+          </AccordionMenu>
 
-            {(expandedMenus.mantenimiento || isCollapsed) && (
-              <div className="space-y-1">
-                <Link
-                  to="/admin/banners"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/banners') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Banners"
-                >
-                  <ImageIcon className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Banners</span>}
-                </Link>
+          {/* Grupo 3: Catálogo */}
+          <AccordionMenu 
+            menuKey="catalogo" 
+            title="Catálogo" 
+            isExpanded={expandedMenus.catalogo} 
+            isCollapsed={isCollapsed} 
+            onToggle={toggleMenu}
+          >
+            <Link
+              to="/admin/products"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/products') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Productos"
+            >
+              <Package className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Productos</span>}
+            </Link>
+            <Link
+              to="/admin/categories"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/categories') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Categorías"
+            >
+              <FolderTree className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Categorías</span>}
+            </Link>
+            <Link
+              to="/admin/brands"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/brands') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Marcas"
+            >
+              <Award className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Marcas</span>}
+            </Link>
+            <Link
+              to="/admin/genders"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/genders') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Géneros (Público Objetivo)"
+            >
+              <Users className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Géneros</span>}
+            </Link>
+            <Link
+              to="/admin/attributes"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/attributes') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Atributos"
+            >
+              <Sliders className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Atributos</span>}
+            </Link>
+          </AccordionMenu>
 
-                <Link
-                  to="/admin/delivery-zones"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/delivery-zones') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Zonas de Envío"
-                >
-                  <MapPin className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Zonas de Envío</span>}
-                </Link>
-
-                <Link
-                  to="/admin/branding"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/branding') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Identidad Visual"
-                >
-                  <Palette className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Identidad Visual</span>}
-                </Link>
-
-                <Link
-                  to="/admin/employees"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/employees') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Empleados"
-                >
-                  <Users className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Empleados</span>}
-                </Link>
-
-                <Link
-                  to="/admin/branches"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/branches') && location.pathname === '/admin/branches' ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Sucursales"
-                >
-                  <Building2 className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Sucursales y Almacén</span>}
-                </Link>
-
-                <Link
-                  to="/admin/branches/registers"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/branches/registers') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Gestión de Cajas"
-                >
-                  <Landmark className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Gestión de Cajas</span>}
-                </Link>
-
-                <Link
-                  to="/admin/clients"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/clients') && location.pathname === '/admin/clients' ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Clientes"
-                >
-                  <Users className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Base de Clientes</span>}
-                </Link>
-
-                <Link
-                  to="/admin/clients/link"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/clients/link') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Vincular Clientes"
-                >
-                  <UserPlus className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Vincular Clientes</span>}
-                </Link>
-
-                <Link
-                  to="/admin/blog"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/blog') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Gestión del Blog"
-                >
-                  <FileText className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Gestión del Blog</span>}
-                </Link>
+          {/* Grupo 4: Inventario */}
+          <AccordionMenu 
+            menuKey="inventario" 
+            title="Inventario" 
+            isExpanded={expandedMenus.inventario} 
+            isCollapsed={isCollapsed} 
+            onToggle={toggleMenu}
+          >
+            <Link
+              to="/admin/inventory/stock"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/inventory/stock') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Control de Stock"
+            >
+              <Boxes className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Control de Stock</span>}
+            </Link>
+            <Link
+              to="/admin/inventory/suppliers"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/inventory/suppliers') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Proveedores"
+            >
+              <ClipboardList className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Proveedores</span>}
+            </Link>
+            <Link
+              to="/admin/inventory/entries"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/inventory/entries') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Ingreso Mercadería"
+            >
+              <FileSignature className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Ingreso Mercadería</span>}
+            </Link>
+            <Link
+              to="/admin/inventory/audits"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/inventory/audits') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Auditoría Física"
+            >
+              <ClipboardCheck className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Auditoría Física</span>}
+            </Link>
+            <Link
+              to="/admin/inventory/adjustments"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/inventory/adjustments') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Ajustes de Stock"
+            >
+              <Archive className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Ajustes de Stock</span>}
+            </Link>
+            <Link
+              to="/admin/inventory/transfers"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/inventory/transfers') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Transferencias"
+            >
+              <ArrowLeftRight className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Transferencias</span>}
+            </Link>
+            <Link
+              to="/admin/inventory/cross-branch/pending"
+              className={`flex items-center justify-between gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/inventory/cross-branch/pending') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Monitoreo Cross-Branch"
+            >
+              <div className="flex items-center gap-3">
+                <Building2 className="w-4 h-4 shrink-0" />
+                {!isCollapsed && <span>Ventas Intersucursal</span>}
               </div>
-            )}
-          </div>
+              {!isCollapsed && pendingCrossBranchCount > 0 && (
+                <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-indigo-600 rounded-full animate-pulse">
+                  {pendingCrossBranchCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              to="/admin/reports/inventory-rotation"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/reports/inventory-rotation') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Rotación de Stock"
+            >
+              <BarChart3 className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Rotación de Stock</span>}
+            </Link>
+          </AccordionMenu>
 
-          {/* Inventario Section */}
-          <div className="space-y-1">
-            {!isCollapsed ? (
-              <button
-                onClick={() => toggleMenu('inventario')}
-                className="w-full flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 px-3 py-1 hover:text-white transition-colors"
-              >
-                <span>Inventario</span>
-                {expandedMenus.inventario ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              </button>
-            ) : (
-              <p className="text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 text-center">•</p>
-            )}
+          {/* Grupo 5: CRM */}
+          <AccordionMenu 
+            menuKey="crm" 
+            title="CRM" 
+            isExpanded={expandedMenus.crm} 
+            isCollapsed={isCollapsed} 
+            onToggle={toggleMenu}
+          >
+            <Link
+              to="/admin/clients"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/clients') && location.pathname === '/admin/clients' ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Base de Clientes"
+            >
+              <Users className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Base de Clientes</span>}
+            </Link>
+            <Link
+              to="/admin/clients/link"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/clients/link') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Vincular Clientes"
+            >
+              <UserPlus className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Vincular Clientes</span>}
+            </Link>
+          </AccordionMenu>
 
-            {(expandedMenus.inventario || isCollapsed) && (
-              <div className="space-y-1">
-                <Link
-                  to="/admin/products"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/products') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Catálogo de Productos"
-                >
-                  <Package className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Productos</span>}
-                </Link>
+          {/* Grupo 6: Finanzas */}
+          <AccordionMenu 
+            menuKey="finanzas" 
+            title="Finanzas" 
+            isExpanded={expandedMenus.finanzas} 
+            isCollapsed={isCollapsed} 
+            onToggle={toggleMenu}
+          >
+            <Link
+              to="/admin/receipts"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/receipts') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Comprobantes Electrónicos"
+            >
+              <FileText className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Comprobantes</span>}
+            </Link>
+            <Link
+              to="/admin/reconcile"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/reconcile') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Conciliación"
+            >
+              <ArrowLeftRight className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Conciliación</span>}
+            </Link>
+            <Link
+              to="/admin/branches/registers"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/branches/registers') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Gestión de Cajas"
+            >
+              <Landmark className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Gestión de Cajas</span>}
+            </Link>
+          </AccordionMenu>
 
-                <Link
-                  to="/admin/categories"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/categories') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Categorías"
-                >
-                  <FolderTree className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Categorías</span>}
-                </Link>
-
-                <Link
-                  to="/admin/brands"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/brands') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Marcas"
-                >
-                  <Award className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Marcas</span>}
-                </Link>
-
-                <Link
-                  to="/admin/genders"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/genders') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Géneros (Público Objetivo)"
-                >
-                  <Users className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Géneros</span>}
-                </Link>
-
-                <Link
-                  to="/admin/attributes"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/attributes') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Atributos de Variante"
-                >
-                  <Sliders className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Atributos</span>}
-                </Link>
-
-                <Link
-                  to="/admin/inventory/suppliers"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/inventory/suppliers') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Proveedores"
-                >
-                  <ClipboardList className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Proveedores</span>}
-                </Link>
-
-                <Link
-                  to="/admin/inventory/entries"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/inventory/entries') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Ingreso Mercadería"
-                >
-                  <FileSignature className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Ingreso Mercadería</span>}
-                </Link>
-
-                <Link
-                  to="/admin/inventory/audits"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/inventory/audits') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Auditoría Física"
-                >
-                  <ClipboardCheck className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Auditoría Física</span>}
-                </Link>
-
-                <Link
-                  to="/admin/inventory/adjustments"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/inventory/adjustments') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Ajustes de Stock"
-                >
-                  <Archive className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Ajustes de Stock</span>}
-                </Link>
-
-                <Link
-                  to="/admin/inventory/transfers"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/inventory/transfers') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Transferencias"
-                >
-                  <ArrowLeftRight className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Transferencias</span>}
-                </Link>
-
-                <Link
-                  to="/admin/inventory/cross-branch/pending"
-                  className={`flex items-center justify-between gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/inventory/cross-branch/pending') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Monitoreo Cross-Branch"
-                >
-                  <div className="flex items-center gap-3">
-                    <Building2 className="w-4 h-4 shrink-0" />
-                    {!isCollapsed && <span>Ventas Intersucursal</span>}
-                  </div>
-                  {!isCollapsed && pendingCrossBranchCount > 0 && (
-                    <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-indigo-600 rounded-full animate-pulse">
-                      {pendingCrossBranchCount}
-                    </span>
-                  )}
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Reportes Section */}
-          <div className="space-y-1">
-            {!isCollapsed ? (
-              <button
-                onClick={() => toggleMenu('reportes')}
-                className="w-full flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 px-3 py-1 hover:text-white transition-colors"
-              >
-                <span>Análisis</span>
-                {expandedMenus.reportes ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              </button>
-            ) : (
-              <p className="text-[10px] uppercase font-bold tracking-widest text-[#FAFAFA]/40 text-center">•</p>
-            )}
-
-            {(expandedMenus.reportes || isCollapsed) && (
-              <div className="space-y-1">
-                <Link
-                  to="/admin/reports/inventory-rotation"
-                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                    isActiveRoute('/admin/reports/inventory-rotation') ? activeClass : inactiveClass
-                  } ${isCollapsed ? 'justify-center' : ''}`}
-                  title="Rotación de Stock"
-                >
-                  <BarChart3 className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && <span>Rotación de Stock</span>}
-                </Link>
-              </div>
-            )}
-          </div>
+          {/* Grupo 7: Empresa / Configuración */}
+          <AccordionMenu 
+            menuKey="empresa" 
+            title="Empresa / Config." 
+            isExpanded={expandedMenus.empresa} 
+            isCollapsed={isCollapsed} 
+            onToggle={toggleMenu}
+          >
+            <Link
+              to="/admin/branches"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/branches') && location.pathname === '/admin/branches' ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Sucursales y Almacén"
+            >
+              <Building2 className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Sucursales y Almacén</span>}
+            </Link>
+            <Link
+              to="/admin/employees"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/employees') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Empleados"
+            >
+              <Users className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Empleados</span>}
+            </Link>
+            <Link
+              to="/admin/branding"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/branding') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Identidad Visual"
+            >
+              <Palette className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Identidad Visual</span>}
+            </Link>
+          </AccordionMenu>
 
         </nav>
       </aside>
