@@ -22,3 +22,22 @@ export const getBranches = async (): Promise<{ success: boolean; data: { id: num
   const { data } = await axiosInstance.get<{ success: boolean; data: { id: number; name: string }[] }>('/v1/branches');
   return data;
 };
+
+export interface AttributeValue {
+  id: number;
+  value: string;
+  isActive: boolean;
+}
+
+export interface Attribute {
+  id: number;
+  name: string;
+  isVisualDriver: boolean;
+  isActive: boolean;
+  values: AttributeValue[];
+}
+
+export const getFilterAttributes = async (): Promise<{ success: boolean; data: Attribute[] }> => {
+  const { data } = await axiosInstance.get<{ success: boolean; data: Attribute[] }>('/v1/ecommerce/attributes');
+  return data;
+};

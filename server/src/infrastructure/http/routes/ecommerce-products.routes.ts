@@ -4,6 +4,7 @@ import { ProductBestSellersController } from '@infrastructure/http/controllers/e
 import { ProductOnSaleController } from '@infrastructure/http/controllers/ecommerce/ProductOnSaleController';
 import { CategoryController } from '@infrastructure/http/controllers/CategoryController';
 import { GenderController } from '@infrastructure/http/controllers/GenderController';
+import { EcommerceAttributeController } from '@infrastructure/http/controllers/ecommerce/EcommerceAttributeController';
 
 const router = Router();
 const searchController = new ProductSearchController();
@@ -11,10 +12,12 @@ const bestSellersController = new ProductBestSellersController();
 const onSaleController = new ProductOnSaleController();
 const categoryController = new CategoryController();
 const genderController = new GenderController();
+const attributeController = new EcommerceAttributeController();
 
 // Rutas Públicas E-commerce
 router.get('/ecommerce/categories', categoryController.getAll.bind(categoryController));
 router.get('/ecommerce/genders', genderController.getActive.bind(genderController));
+router.get('/ecommerce/attributes', attributeController.getActiveAttributes.bind(attributeController));
 router.get('/ecommerce/products/search', searchController.search.bind(searchController));
 router.get('/ecommerce/products/best-sellers', bestSellersController.getBestSellers.bind(bestSellersController));
 router.get('/ecommerce/products/on-sale', onSaleController.getOnSale.bind(onSaleController));
