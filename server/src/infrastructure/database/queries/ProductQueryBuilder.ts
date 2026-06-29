@@ -14,6 +14,7 @@ export class ProductQueryBuilder {
       cursor,
       limit = 10,
       orderBy = 'relevance',
+      attributes,
     } = criteria;
 
     const whereClause: Prisma.ProductWhereInput = {
@@ -71,9 +72,48 @@ export class ProductQueryBuilder {
       variantFilters.price = priceFilter;
     }
 
-    whereClause.variants = {
-      some: variantFilters,
-    };
+    if (attributes && Object.keys(attributes).length > 0) {
+      const andConditions: Prisma.ProductVariantWhereInput[] = [
+        {
+          isActive: true,
+        },
+        {
+          branchStock: {
+            some: {
+              quantity: { gt: 0 },
+              status: 'AVAILABLE',
+              ...(branchId ? { branchId } : {}),
+            },
+          },
+        },
+      ];
+
+      if (variantFilters.price) {
+        andConditions.push({ price: variantFilters.price });
+      }
+
+      Object.entries(attributes).forEach(([attrId, valueIdStr]) => {
+        const valId = Number(valueIdStr);
+        if (!isNaN(valId)) {
+          andConditions.push({
+            attributesJson: {
+              path: [attrId, 'valueId'],
+              equals: valId,
+            },
+          });
+        }
+      });
+
+      whereClause.variants = {
+        some: {
+          AND: andConditions,
+        },
+      };
+    } else {
+      whereClause.variants = {
+        some: variantFilters,
+      };
+    }
 
     // Include definitions
     const includeClause: Prisma.ProductInclude = {

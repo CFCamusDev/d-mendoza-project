@@ -36,6 +36,18 @@ export class ProductSearchController {
 
       const { q, categoryId, brandId, genderId, minPrice, maxPrice, branchId, cursor, limit, orderBy } = parsed.data;
 
+      // Extract dynamic attribute filters (e.g. attr_1=5)
+      const attributes: Record<string, string> = {};
+      Object.keys(req.query).forEach((key) => {
+        if (key.startsWith('attr_')) {
+          const attrId = key.substring(5);
+          const val = req.query[key];
+          if (attrId && typeof val === 'string') {
+            attributes[attrId] = val;
+          }
+        }
+      });
+
       const criteria: ProductSearchCriteria = {
         query: q,
         categoryId,
@@ -47,6 +59,7 @@ export class ProductSearchController {
         cursor,
         limit,
         orderBy,
+        attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
       };
 
       const result = await searchUseCase.execute(criteria);
