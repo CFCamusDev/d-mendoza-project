@@ -8,6 +8,7 @@ export interface UserResponseDTO {
   id: number;
   email: string;
   name: string | null;
+  branchId?: number; // Added for branch-level isolation (e.g. SELLER/SUPPLY)
   lastLogin: Date | null;
   createdAt: Date;
   updatedAt: Date;

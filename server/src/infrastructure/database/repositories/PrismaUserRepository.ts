@@ -10,7 +10,7 @@ export class PrismaUserRepository implements IUserRepository {
   async findById(id: number): Promise<User | null> {
     const record = await prisma.user.findUnique({
       where: { id },
-      include: { roles: true },
+      include: { roles: true, employee: { select: { branchId: true } } },
     });
     return record ? this.toDomain(record) : null;
   }
@@ -18,7 +18,7 @@ export class PrismaUserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
     const record = await prisma.user.findUnique({
       where: { email },
-      include: { roles: true },
+      include: { roles: true, employee: { select: { branchId: true } } },
     });
     return record ? this.toDomain(record) : null;
   }
@@ -29,7 +29,7 @@ export class PrismaUserRepository implements IUserRepository {
   async findByGoogleId(googleId: string): Promise<User | null> {
     const record = await prisma.user.findUnique({
       where: { googleId },
-      include: { roles: true },
+      include: { roles: true, employee: { select: { branchId: true } } },
     });
     return record ? this.toDomain(record) : null;
   }
@@ -50,7 +50,7 @@ export class PrismaUserRepository implements IUserRepository {
           connect: { name: 'CLIENT' },
         },
       },
-      include: { roles: true },
+      include: { roles: true, employee: { select: { branchId: true } } },
     });
     return this.toDomain(record);
   }
@@ -172,6 +172,7 @@ export class PrismaUserRepository implements IUserRepository {
       verificationPin: record.verificationPin,
       pinExpiresAt: record.pinExpiresAt,
       roles: record.roles ? record.roles.map((r: any) => r.name) : undefined,
+      branchId: record.employee?.branchId,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };

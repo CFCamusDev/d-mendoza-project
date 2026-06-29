@@ -9,8 +9,19 @@ const confirmCrossBranchSaleUseCase = new ConfirmCrossBranchSaleUseCase();
 export class SaleController {
   async processSale(req: Request, res: Response) {
     try {
-      const { items, subtotal, discountTotal, total, payments, branchId, isCrossBranch, sourceBranchId } = req.body;
+      let { branchId } = req.body;
+      const { items, subtotal, discountTotal, total, payments, isCrossBranch, sourceBranchId } = req.body;
       const userId = req.auth?.userId;
+      const userRole = req.auth?.role;
+      const authBranchId = req.auth?.branchId;
+
+      // Enforce branch isolation for non-admins (e.g., SELLER)
+      // They can only sell from their own branch (unless cross-branch logic specifically allows it)
+      if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN') {
+        if (authBranchId) {
+          branchId = authBranchId;
+        }
+      }
 
       // 1. Validaciones básicas
       if (!items || !items.length || !payments || !payments.length || !branchId) {

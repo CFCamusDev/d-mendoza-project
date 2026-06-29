@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/context/AuthContext';
+import { getDefaultRouteForRole } from '@/shared/types/auth.types';
 import { SearchBar } from '@/features/ecommerce/components/SearchBar';
 import axiosInstance from '@/shared/api/axiosInstance';
 
@@ -231,11 +232,11 @@ export const AppShell: React.FC = () => {
               Blog
             </Link>
 
-            {/* Enlace al Panel de Control si es ADMIN o SELLER */}
-            {isAuthenticated && (user?.role === 'ADMIN' || user?.role === 'SELLER') && (
+            {/* Enlace al Panel de Control si tiene rol administrativo */}
+            {isAuthenticated && user && user.role !== 'CLIENT' && (
               <div className="flex items-center gap-3 border-l border-brand-primary/60 pl-6">
                 <Link
-                  to="/admin/inventory/stock"
+                  to={getDefaultRouteForRole(user.role)}
                   className="flex items-center gap-1.5 text-xs font-bold transition-all px-3 py-1.5 rounded-lg text-white bg-brand-accent hover:bg-brand-accent/90"
                 >
                   <Shield className="w-3.5 h-3.5" />
@@ -430,13 +431,13 @@ export const AppShell: React.FC = () => {
               </div>
 
               {/* Enlace del Panel de Control en Móvil */}
-              {isAuthenticated && (user?.role === 'ADMIN' || user?.role === 'SELLER') && (
+              {isAuthenticated && user && user.role !== 'CLIENT' && (
                 <div className="space-y-2 pt-4 border-t border-brand-primary/60">
                   <p className="text-[10px] uppercase font-bold tracking-wider text-brand-accent/50 flex items-center gap-1">
                     <Shield className="w-3.5 h-3.5" /> Panel Administrativo
                   </p>
                   <Link
-                    to="/admin/inventory/stock"
+                    to={getDefaultRouteForRole(user.role)}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-3 text-sm font-semibold p-2.5 rounded-xl transition-all text-white bg-brand-accent shadow"
                   >

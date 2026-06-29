@@ -34,6 +34,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             id: String(decoded.sub ?? decoded.userId ?? ''),
             email: decoded.email,
             role: decoded.role,
+            branchId: decoded.branchId,
           });
         } else {
           // Token expired — clean up storage
@@ -59,6 +60,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       id: String(decoded.sub ?? decoded.userId ?? ''),
       email: decoded.email,
       role: decoded.role,
+      branchId: decoded.branchId,
     });
   };
 

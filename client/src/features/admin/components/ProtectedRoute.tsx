@@ -4,8 +4,10 @@ import { useAuth } from '@/shared/context/AuthContext';
 import type { UserRole } from '@/shared/types/auth.types';
 
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  ADMIN: ['users:write', 'users:read', 'roles:manage', 'sales:read'],
-  SELLER: ['users:read'],
+  ADMIN: ['users:write', 'users:read', 'roles:manage', 'sales:read', 'products:write', 'products:read', 'inventory:write', 'inventory:read', 'pos:discounts'],
+  SELLER: ['users:read', 'products:read', 'sales:read', 'pos:discounts'],
+  SUPPLY: ['inventory:read', 'inventory:write', 'products:read'],
+  DELIVERY: ['sales:read', 'roles:manage', 'users:read'],
   CLIENT: [],
 };
 
