@@ -242,41 +242,41 @@ export const AppRouter = () => {
         <Route path="/admin/blog/:id/edit" element={<ProtectedRoute allowedRoles={['ADMIN']}><BlogEditorPage /></ProtectedRoute>} />
 
         {/* HU-012 */}
-        <Route path="/admin/attributes" element={<ProtectedRoute allowedRoles={['ADMIN']}><AttributesPage /></ProtectedRoute>} />
+        <Route path="/admin/attributes" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><AttributesPage /></ProtectedRoute>} />
 
         {/* HU-013 */}
-        <Route path="/admin/products/new" element={<ProtectedRoute allowedRoles={['ADMIN']}><ProductFormPage /></ProtectedRoute>} />
-        <Route path="/admin/products/:id/edit" element={<ProtectedRoute allowedRoles={['ADMIN']}><ProductFormPage /></ProtectedRoute>} />
+        <Route path="/admin/products/new" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><ProductFormPage /></ProtectedRoute>} />
+        <Route path="/admin/products/:id/edit" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><ProductFormPage /></ProtectedRoute>} />
 
         {/* HU-028 */}
-        <Route path="/admin/inventory/adjustments" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdjustmentPage /></ProtectedRoute>} />
+        <Route path="/admin/inventory/adjustments" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><AdjustmentPage /></ProtectedRoute>} />
 
         {/* HU-024 */}
-        <Route path="/admin/inventory/transfers" element={<ProtectedRoute allowedRoles={['ADMIN']}><TransferPage /></ProtectedRoute>} />
+        <Route path="/admin/inventory/transfers" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><TransferPage /></ProtectedRoute>} />
 
         {/* HU-051 */}
-        <Route path="/admin/inventory/suppliers" element={<ProtectedRoute allowedRoles={['ADMIN']}><SuppliersPage /></ProtectedRoute>} />
-        <Route path="/admin/inventory/entries" element={<ProtectedRoute allowedRoles={['ADMIN']}><StockEntriesPage /></ProtectedRoute>} />
+        <Route path="/admin/inventory/suppliers" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><SuppliersPage /></ProtectedRoute>} />
+        <Route path="/admin/inventory/entries" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><StockEntriesPage /></ProtectedRoute>} />
 
         {/* HU-021 */}
-        <Route path="/admin/inventory/stock" element={<ProtectedRoute allowedRoles={['ADMIN']}><StockPage /></ProtectedRoute>} />
+        <Route path="/admin/inventory/stock" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><StockPage /></ProtectedRoute>} />
 
         {/* HU-057 */}
-        <Route path="/admin/inventory/cross-branch/pending" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><CrossBranchMonitorPage /></ProtectedRoute>} />
+        <Route path="/admin/inventory/cross-branch/pending" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER', 'SUPPLY']}><CrossBranchMonitorPage /></ProtectedRoute>} />
 
         {/* HU-055 */}
         <Route path="/admin/receipts" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><ReceiptsPage /></ProtectedRoute>} />
 
         {/* HU-029 */}
-        <Route path="/admin/inventory/audits" element={<ProtectedRoute allowedRoles={['ADMIN']}><InventoryAuditPage /></ProtectedRoute>} />
+        <Route path="/admin/inventory/audits" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><InventoryAuditPage /></ProtectedRoute>} />
 
         {/* HU-030 */}
-        <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN']}><RotationReportPage /></ProtectedRoute>} />
+        <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><RotationReportPage /></ProtectedRoute>} />
 
 
 
         {/* User Profile */}
-        <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><ProfilePage /></ProtectedRoute>} />
+        <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER', 'SUPPLY']}><ProfilePage /></ProtectedRoute>} />
       </Route>
 
 
