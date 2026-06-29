@@ -52,13 +52,6 @@ export class ProductQueryBuilder {
     // Variant-level filters (Price & Stock)
     const variantFilters: Prisma.ProductVariantWhereInput = {
       isActive: true,
-      branchStock: {
-        some: {
-          quantity: { gt: 0 },
-          status: 'AVAILABLE',
-          ...(branchId ? { branchId } : {}),
-        },
-      },
     };
 
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -76,15 +69,6 @@ export class ProductQueryBuilder {
       const andConditions: Prisma.ProductVariantWhereInput[] = [
         {
           isActive: true,
-        },
-        {
-          branchStock: {
-            some: {
-              quantity: { gt: 0 },
-              status: 'AVAILABLE',
-              ...(branchId ? { branchId } : {}),
-            },
-          },
         },
       ];
 
