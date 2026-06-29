@@ -2,7 +2,7 @@ export interface SearchQueryParams {
   q?: string;
   categoryId?: number;
   brandId?: number;
-  gender?: string;
+  genderId?: number;
   minPrice?: number;
   maxPrice?: number;
   branchId?: number;
@@ -50,7 +50,8 @@ export interface SearchProductItem {
   description: string;
   categoryId: number;
   brandId: number;
-  gender: string;
+  genderId?: number;
+  gender: { id: number; name: string } | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

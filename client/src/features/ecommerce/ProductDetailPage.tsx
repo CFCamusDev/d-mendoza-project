@@ -49,7 +49,7 @@ interface ProductDetail {
   description: string | null;
   categoryId: number;
   brandId: number;
-  gender: string | null;
+  gender: string | { id: number; name: string } | null;
   category: Category;
   brand: Brand;
   images: ProductImage[];

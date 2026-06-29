@@ -32,6 +32,7 @@ import { AdminShell } from '../components/layout/AdminShell';
 import { PosShell } from '../components/layout/PosShell';
 import CategoriesPage from '../features/admin/CategoriesPage';
 import BrandsPage from '../features/admin/BrandsPage';
+import GendersPage from '../features/admin/GendersPage';
 import AttributesPage from '../features/admin/AttributesPage';
 import ProductFormPage from '../features/admin/ProductFormPage';
 import AdjustmentPage from '../features/admin/AdjustmentPage';
@@ -233,6 +234,7 @@ export const AppRouter = () => {
         {/* HU-011 */}
         <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['ADMIN']}><CategoriesPage /></ProtectedRoute>} />
         <Route path="/admin/brands" element={<ProtectedRoute allowedRoles={['ADMIN']}><BrandsPage /></ProtectedRoute>} />
+        <Route path="/admin/genders" element={<ProtectedRoute allowedRoles={['ADMIN']}><GendersPage /></ProtectedRoute>} />
 
         {/* HU-018 Blog Management */}
         <Route path="/admin/blog" element={<ProtectedRoute allowedRoles={['ADMIN']}><BlogAdminPage /></ProtectedRoute>} />
