@@ -92,8 +92,8 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   }, []);
 
   useEffect(() => {
-    setMinPriceInput(filters.minPrice?.toString() || '');
-    setMaxPriceInput(filters.maxPrice?.toString() || '');
+    setMinPriceInput(filters.minPrice !== undefined ? filters.minPrice.toString() : '');
+    setMaxPriceInput(filters.maxPrice !== undefined ? filters.maxPrice.toString() : '');
   }, [filters.minPrice, filters.maxPrice]);
 
   const handlePriceApply = (e: React.FormEvent) => {
