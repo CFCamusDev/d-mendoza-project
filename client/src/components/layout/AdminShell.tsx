@@ -123,7 +123,7 @@ export const AdminShell: React.FC = () => {
     }
     
     if (activeKey) {
-      setExpandedMenus(prev => ({
+      setExpandedMenus({
         ventas: false,
         catalogo: false,
         inventario: false,
@@ -131,7 +131,7 @@ export const AdminShell: React.FC = () => {
         finanzas: false,
         empresa: false,
         [activeKey]: true
-      }));
+      });
     }
   }, [location.pathname]);
 
