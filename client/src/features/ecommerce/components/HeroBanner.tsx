@@ -30,7 +30,7 @@ export default function HeroBanner() {
 
   if (loading) {
     return (
-      <div className="w-full h-[300px] md:h-[450px] lg:h-[550px] bg-neutral-100 animate-pulse flex items-center justify-center">
+      <div className="w-full h-[calc(100vh-64px)] lg:h-[calc(100vh-80px)] bg-neutral-100 animate-pulse flex items-center justify-center">
         <span className="text-sm font-medium text-neutral-400">Cargando colección...</span>
       </div>
     );
@@ -39,7 +39,7 @@ export default function HeroBanner() {
   // Fallback if no banners are returned
   if (banners.length === 0) {
     return (
-      <section className="w-full h-[300px] md:h-[450px] lg:h-[550px] bg-neutral-200 flex items-center justify-center relative overflow-hidden">
+      <section className="w-full h-[calc(100vh-64px)] lg:h-[calc(100vh-80px)] bg-neutral-200 flex items-center justify-center relative overflow-hidden">
         <img 
           src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=2070" 
           className="absolute inset-0 w-full h-full object-cover opacity-80" 
@@ -68,7 +68,7 @@ export default function HeroBanner() {
         pagination={{ clickable: true, el: '.custom-banner-pagination' }}
         autoplay={{ delay: 5000, disableOnInteraction: false }}
         loop={banners.length > 1}
-        className="w-full h-[300px] md:h-[450px] lg:h-[550px]"
+        className="w-full h-[calc(100vh-64px)] lg:h-[calc(100vh-80px)]"
       >
         {banners.map((banner) => {
           const slideContent = (

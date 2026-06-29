@@ -73,7 +73,7 @@ export default function CategoryBar() {
             onClick={() => navigate(`/catalog?categoryId=${category.id}`)}
             className="flex flex-col items-center gap-3 shrink-0 group focus:outline-none cursor-pointer"
           >
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-neutral-100 bg-neutral-50 flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:border-neutral-900 group-hover:scale-105 group-active:scale-95 shadow-sm group-hover:shadow">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border border-white/40 bg-white/30 backdrop-blur-md flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:border-white/60 group-hover:bg-white/40 group-hover:scale-105 group-active:scale-95 shadow-sm group-hover:shadow">
               {category.imageUrl ? (
                 <img
                   src={category.imageUrl}
@@ -81,12 +81,12 @@ export default function CategoryBar() {
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-neutral-50 group-hover:bg-neutral-100 transition-colors">
+                <div className="w-full h-full flex items-center justify-center bg-transparent transition-colors">
                   {getFallbackIcon(category.name)}
                 </div>
               )}
             </div>
-            <span className="text-[10px] md:text-xs font-bold text-neutral-800 uppercase tracking-wider group-hover:text-neutral-900 group-hover:font-extrabold transition-all">
+            <span className="text-[10px] md:text-xs font-bold text-neutral-800 uppercase tracking-wider group-hover:text-neutral-900 group-hover:font-extrabold transition-all drop-shadow-sm">
               {category.name}
             </span>
           </button>

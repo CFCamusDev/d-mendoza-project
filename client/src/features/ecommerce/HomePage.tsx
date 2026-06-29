@@ -7,7 +7,7 @@ import { CartDrawer } from './components/CartDrawer';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <main className="pb-16">
         {/* Dynamic Hero Banner */}
         <HeroBanner />
