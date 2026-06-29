@@ -26,6 +26,9 @@ interface WishlistItem {
         url: string;
         isMain: boolean;
       }>;
+      variants?: Array<{
+        branchStock?: Array<{ quantity: number }>;
+      }>;
     };
   };
 }
@@ -111,6 +114,11 @@ export const WishlistPage = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((item) => {
+              const productVariants = item.variant.product.variants || [];
+              const isOutOfStock = productVariants.length > 0 && productVariants.every(v => 
+                !v.branchStock || v.branchStock.length === 0 || v.branchStock.every(bs => bs.quantity <= 0)
+              );
+
               return (
                 <ProductCard 
                   key={item.id}
@@ -123,7 +131,7 @@ export const WishlistPage = () => {
                   maxPrice={Number(item.variant.price) * (1 - (item.variant.discountPercent || 0) / 100)}
                   minDiscount={item.variant.discountPercent || 0}
                   maxDiscount={item.variant.discountPercent || 0}
-                  isOutOfStock={false}
+                  isOutOfStock={isOutOfStock}
                   initialIsWishlisted={true}
                   onFavoriteToggle={(variantId, isWishlisted) => {
                     if (!isWishlisted) {
