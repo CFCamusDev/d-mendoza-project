@@ -23,12 +23,12 @@ const reorderBannersUseCase = new ReorderBannersUseCase(bannerRepository);
 
 const CreateBannerSchema = z.object({
   linkUrl: z.string().url('Formato de URL inválido').optional().nullable(),
-  order: z.preprocess((val) => Number(val), z.number().int().nonnegative().optional()),
+  order: z.preprocess((val) => val === undefined || val === '' ? undefined : Number(val), z.number().int().nonnegative().optional()),
 });
 
 const UpdateBannerSchema = z.object({
   linkUrl: z.string().url('Formato de URL inválido').optional().nullable(),
-  order: z.preprocess((val) => Number(val), z.number().int().nonnegative().optional()),
+  order: z.preprocess((val) => val === undefined || val === '' ? undefined : Number(val), z.number().int().nonnegative().optional()),
   isActive: z.preprocess((val) => {
     if (val === 'true') return true;
     if (val === 'false') return false;

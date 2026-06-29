@@ -4,8 +4,7 @@ import { PrismaProductRepository } from '@infrastructure/database/repositories/P
 import { GetActiveProductsUseCase } from '@application/use-cases/product/GetActiveProductsUseCase';
 import { ToggleProductStatusUseCase } from '@application/use-cases/product/ToggleProductStatusUseCase';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { CloudinaryStorageService } from '@infrastructure/services/CloudinaryStorageService';
 
 const repo = new PrismaProductRepository();
 const getActiveProductsUseCase = new GetActiveProductsUseCase(repo);
@@ -19,21 +18,14 @@ const CreateProductSchema = z.object({
   code: z.string().min(1, 'El código es obligatorio'),
   name: z.string().min(1, 'El nombre es obligatorio'),
   description: z.string().nullable().optional(),
+  model: z.string().nullable().optional(),
   categoryId: z.number().int().positive(),
   brandId: z.number().int().positive(),
-  gender: z.string().nullable().optional(),
-});
-
-const uploadsDir = path.join(process.cwd(), 'uploads', 'products');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/\s/g, '_')}`),
+  genderId: z.number().int().positive().nullable().optional(),
 });
 
 export const productUpload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
@@ -101,6 +93,7 @@ export class ProductController {
         ...req.body,
         categoryId: Number(req.body.categoryId),
         brandId: Number(req.body.brandId),
+        genderId: req.body.genderId ? Number(req.body.genderId) : null,
       };
       const parsed = CreateProductSchema.safeParse(body);
       if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.issues });
@@ -113,7 +106,13 @@ export class ProductController {
     try {
       const id = parseInt(String(req.params.id), 10);
       if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID inválido' });
-      const parsed = CreateProductSchema.partial().safeParse(req.body);
+      const body = {
+        ...req.body,
+        categoryId: req.body.categoryId ? Number(req.body.categoryId) : undefined,
+        brandId: req.body.brandId ? Number(req.body.brandId) : undefined,
+        genderId: req.body.genderId !== undefined ? (req.body.genderId ? Number(req.body.genderId) : null) : undefined,
+      };
+      const parsed = CreateProductSchema.partial().safeParse(body);
       if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.issues });
       const data = await repo.update(id, parsed.data);
       return res.status(200).json({ success: true, data });
@@ -128,20 +127,54 @@ export class ProductController {
       const product = await repo.findById(productId);
       if (!product) return res.status(404).json({ success: false, error: 'Producto no encontrado' });
 
+      const attributeValueId = req.body.attributeValueId 
+        ? parseInt(String(req.body.attributeValueId), 10) 
+        : null;
+      if (req.body.attributeValueId && isNaN(attributeValueId!)) {
+        return res.status(400).json({ success: false, error: 'attributeValueId inválido' });
+      }
+
       const files = req.files as Express.Multer.File[];
       if (!files?.length) return res.status(400).json({ success: false, error: 'No se enviaron imágenes' });
+
+      // Validar límite de 4 imágenes por agrupación (productId, attributeValueId)
+      const existingCount = await repo.countImagesByGroup(productId, attributeValueId);
+      if (existingCount + files.length > 4) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `No puedes subir más de 4 imágenes para esta agrupación. Actualmente ya tienes ${existingCount} imagen(es).` 
+        });
+      }
 
       const isMainParam = req.body.isMain;
       const mainIndex = isMainParam !== undefined ? parseInt(String(isMainParam), 10) : 0;
 
+      const storageService = new CloudinaryStorageService();
+
       for (let i = 0; i < files.length; i++) {
-        const url = `/uploads/products/${files[i].filename}`;
+        const imageUrl = await storageService.uploadImage(files[i].buffer, files[i].originalname, 'products');
         const isMain = i === mainIndex;
-        await repo.addImage(productId, url, isMain);
+        await repo.addImage(productId, imageUrl, isMain, attributeValueId);
       }
 
       const updated = await repo.findById(productId);
       return res.status(201).json({ success: true, data: updated });
+    } catch (e) { next(e); }
+  }
+
+  async deleteImage(req: Request, res: Response, next: NextFunction) {
+    try {
+      const productId = parseInt(String(req.params.id), 10);
+      const imageId = parseInt(String(req.params.imageId), 10);
+      if (isNaN(productId) || isNaN(imageId)) {
+        return res.status(400).json({ success: false, error: 'ID inválido' });
+      }
+      const product = await repo.findById(productId);
+      if (!product) {
+        return res.status(404).json({ success: false, error: 'Producto no encontrado' });
+      }
+      await repo.deleteImage(productId, imageId);
+      return res.status(200).json({ success: true, message: 'Imagen eliminada' });
     } catch (e) { next(e); }
   }
 }

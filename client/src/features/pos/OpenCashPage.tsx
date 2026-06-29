@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
 import { usePos } from './context/PosContext';
+import { useAuth } from '@/shared/context/AuthContext';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { Sparkles, Coins, Landmark, Landmark as BoxIcon, ArrowRight, Loader2, Info } from 'lucide-react';
 
@@ -23,9 +24,14 @@ const OpenCashPage: React.FC = () => {
   const navigate = useNavigate();
   const { openShift, loading: posLoading, checkActiveShift } = usePos();
 
+  const { user } = useAuth();
+  
+  const isRestrictedRole = user?.role !== 'ADMIN';
+  const initialBranchId = isRestrictedRole && user?.branchId ? String(user.branchId) : '';
+
   const [branches, setBranches] = useState<Branch[]>([]);
   const [registers, setRegisters] = useState<CashRegister[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState(initialBranchId);
   const [selectedRegister, setSelectedRegister] = useState('');
   const [openAmount, setOpenAmount] = useState('0');
   const [loading, setLoading] = useState(false);
@@ -150,9 +156,10 @@ const OpenCashPage: React.FC = () => {
               </label>
               <select
                 required
+                disabled={isRestrictedRole}
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-[#D9D9D2]/70 bg-[#FAFAFA] text-sm text-[#3F3F3F] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#3F3F3F]/20 focus:border-[#3F3F3F] transition-all font-semibold"
+                className={`w-full px-4 py-2.5 rounded-xl border border-[#D9D9D2]/70 bg-[#FAFAFA] text-sm text-[#3F3F3F] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#3F3F3F]/20 focus:border-[#3F3F3F] transition-all font-semibold ${isRestrictedRole ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <option value="">Seleccione una sucursal...</option>
                 {branches.map((b) => (

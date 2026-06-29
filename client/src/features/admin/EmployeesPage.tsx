@@ -8,7 +8,9 @@ import {
   CheckCircle, 
   XCircle,
   Plus,
-  Building2
+  Building2,
+  Key,
+  Mail
 } from 'lucide-react';
 
 interface Employee {
@@ -48,8 +50,20 @@ export const EmployeesPage: React.FC = () => {
     name: '',
     dni: '',
     branchId: '',
-    roleId: ''
+    roleId: '',
+    email: '',
+    password: '',
+    createAccount: false
   });
+
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let pass = '';
+    for (let i = 0; i < 10; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setFormData(prev => ({ ...prev, password: pass }));
+  };
 
   useEffect(() => {
     fetchEmployees();
@@ -108,20 +122,29 @@ export const EmployeesPage: React.FC = () => {
         });
         toast.success('Empleado actualizado');
       } else {
-        await axiosInstance.post('/v1/employees', {
+        const payload: any = {
           name: formData.name,
           dni: formData.dni,
           branchId: parseInt(formData.branchId),
           roleId: formData.roleId ? parseInt(formData.roleId) : null
-        });
-        toast.success('Empleado creado');
+        };
+        if (formData.createAccount) {
+          payload.email = formData.email;
+          payload.password = formData.password;
+        }
+        await axiosInstance.post('/v1/employees', payload);
+        toast.success('Empleado creado exitosamente');
       }
       setIsModalOpen(false);
       setEditingEmployee(null);
-      setFormData({ name: '', dni: '', branchId: '', roleId: '' });
+      setFormData({ name: '', dni: '', branchId: '', roleId: '', email: '', password: '', createAccount: false });
       fetchEmployees();
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Error al procesar solicitud');
+      const errorData = error.response?.data?.error;
+      const errorMessage = Array.isArray(errorData) 
+        ? errorData[0]?.message || 'Error de validación'
+        : errorData || 'Error al procesar solicitud';
+      toast.error(typeof errorMessage === 'string' ? errorMessage : 'Error desconocido');
     } finally {
       setSubmitting(false);
     }
@@ -133,7 +156,10 @@ export const EmployeesPage: React.FC = () => {
       name: employee.name,
       dni: employee.dni,
       branchId: employee.branchId.toString(),
-      roleId: ''
+      roleId: '',
+      email: '',
+      password: '',
+      createAccount: false
     });
     setIsModalOpen(true);
   };
@@ -149,7 +175,7 @@ export const EmployeesPage: React.FC = () => {
         <button
           onClick={() => {
             setEditingEmployee(null);
-            setFormData({ name: '', dni: '', branchId: '', roleId: '' });
+            setFormData({ name: '', dni: '', branchId: '', roleId: '', email: '', password: '', createAccount: false });
             setIsModalOpen(true);
           }}
           className="flex items-center gap-2 bg-[#3F3F3F] hover:bg-[#3F3F3F]/90 text-[#F7F7F5] px-4 py-2 rounded-xl transition-all shadow-md font-medium hover:scale-[1.02] active:scale-[0.98]"
@@ -315,7 +341,62 @@ export const EmployeesPage: React.FC = () => {
                 </select>
               </div>
 
-              {editingEmployee && editingEmployee.userId && (
+              {!editingEmployee && (
+                <div className="pt-4 border-t border-[#D9D9D2]/40">
+                  <label className="flex items-center gap-2 cursor-pointer mb-4">
+                    <input
+                      type="checkbox"
+                      checked={formData.createAccount}
+                      onChange={e => setFormData({ ...formData, createAccount: e.target.checked })}
+                      className="w-4 h-4 rounded border-[#D9D9D2] text-[#3F3F3F] focus:ring-[#3F3F3F]"
+                    />
+                    <span className="text-sm font-bold text-[#3F3F3F]">Crear cuenta de acceso al sistema</span>
+                  </label>
+
+                  {formData.createAccount && (
+                    <div className="space-y-4 p-4 bg-[#FAFAFA] rounded-xl border border-[#D9D9D2]/40">
+                      <div className="space-y-1">
+                        <label className="text-sm font-bold text-[#3F3F3F]">Correo Electrónico</label>
+                        <div className="relative">
+                          <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6B6B]" />
+                          <input
+                            type="email"
+                            required={formData.createAccount}
+                            className="w-full pl-10 pr-4 py-2 border border-[#D9D9D2] rounded-xl outline-none focus:border-[#3F3F3F] transition-colors"
+                            value={formData.email}
+                            onChange={e => setFormData({ ...formData, email: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-bold text-[#3F3F3F]">Contraseña</label>
+                          <button
+                            type="button"
+                            onClick={generatePassword}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-800"
+                          >
+                            Generar aleatoria
+                          </button>
+                        </div>
+                        <div className="relative">
+                          <Key className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6B6B]" />
+                          <input
+                            type="text"
+                            required={formData.createAccount}
+                            className="w-full pl-10 pr-4 py-2 border border-[#D9D9D2] rounded-xl outline-none focus:border-[#3F3F3F] transition-colors font-mono"
+                            value={formData.password}
+                            onChange={e => setFormData({ ...formData, password: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {(formData.createAccount || (editingEmployee && editingEmployee.userId)) && (
                 <div className="space-y-1">
                   <label className="text-sm font-bold text-[#3F3F3F]">Rol asignado (opcional)</label>
                   <select

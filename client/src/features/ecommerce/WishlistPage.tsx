@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import axiosInstance from '@/shared/api/axiosInstance';
 import { toast } from 'react-hot-toast';
-import { ShoppingCart, HeartCrack } from 'lucide-react';
-import { WishlistButton } from './components/WishlistButton';
+import { HeartCrack } from 'lucide-react';
 import { useAuth } from '@/shared/context/AuthContext';
+import { Link } from 'react-router-dom';
+import ProductCard from './components/ProductCard';
 
 interface WishlistItem {
   id: number;
@@ -14,14 +15,19 @@ interface WishlistItem {
     id: number;
     sku: string;
     price: string;
+    discountPercent?: number;
     product: {
       id: number;
       name: string;
+      slug: string;
       description: string;
       images: Array<{
         id: number;
         url: string;
         isMain: boolean;
+      }>;
+      variants?: Array<{
+        branchStock?: Array<{ quantity: number }>;
       }>;
     };
   };
@@ -56,11 +62,6 @@ export const WishlistPage = () => {
     }
   }, [isAuthenticated]);
 
-  const handleAddToCart = (variantId: number) => {
-    // Aquí iría la lógica para agregar al carrito real
-    // Por ahora solo mostraremos un toast
-    toast.success(`Producto (Variante ${variantId}) agregado al carrito`);
-  };
 
   if (!isAuthenticated) {
     return (
@@ -103,54 +104,41 @@ export const WishlistPage = () => {
             <p className="text-gray-500 max-w-md mx-auto mb-8">
               Aún no has guardado ningún producto. Explora nuestro catálogo y marca los que más te gusten.
             </p>
-            <button className="px-8 py-3 bg-[#3F3F3F] text-white rounded-full font-medium hover:bg-black transition-all transform hover:scale-105 active:scale-95">
+            <Link 
+              to="/catalog"
+              className="inline-block px-8 py-3 bg-[#3F3F3F] text-white rounded-full font-medium hover:bg-black transition-all transform hover:scale-105 active:scale-95"
+            >
               Explorar productos
-            </button>
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((item) => {
-              const product = item.variant.product;
-              const mainImage = product.images.find(img => img.isMain)?.url || product.images[0]?.url || 'https://via.placeholder.com/400x500?text=No+Image';
+              const productVariants = item.variant.product.variants || [];
+              const isOutOfStock = productVariants.length > 0 && productVariants.every(v => 
+                !v.branchStock || v.branchStock.length === 0 || v.branchStock.every(bs => bs.quantity <= 0)
+              );
 
               return (
-                <div key={item.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col">
-                  {/* Image container */}
-                  <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-                    <img
-                      src={mainImage}
-                      alt={product.name}
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                    />
-                    {/* Floating Wishlist Button */}
-                    <div className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors">
-                      <WishlistButton variantId={item.variantId} initialIsWishlisted={true} size={20} />
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-5 flex flex-col flex-grow">
-                    <div className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">
-                      SKU: {item.variant.sku}
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-[#3F3F3F] transition-colors">
-                      {product.name}
-                    </h3>
-
-                    <div className="mt-auto pt-4 flex items-center justify-between">
-                      <span className="text-xl font-black text-[#3F3F3F]">
-                        S/ {Number(item.variant.price).toFixed(2)}
-                      </span>
-                      <button
-                        onClick={() => handleAddToCart(item.variantId)}
-                        className="flex items-center justify-center p-3 bg-gray-100 hover:bg-[#3F3F3F] hover:text-white text-gray-700 rounded-xl transition-all duration-300 group/btn"
-                        title="Agregar al carrito"
-                      >
-                        <ShoppingCart size={20} className="transform group-hover/btn:scale-110 transition-transform" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <ProductCard 
+                  key={item.id}
+                  variantId={item.variantId}
+                  productSlug={item.variant.product.slug}
+                  productName={item.variant.product.name}
+                  description={item.variant.product.description}
+                  images={item.variant.product.images}
+                  minPrice={Number(item.variant.price) * (1 - (item.variant.discountPercent || 0) / 100)}
+                  maxPrice={Number(item.variant.price) * (1 - (item.variant.discountPercent || 0) / 100)}
+                  minDiscount={item.variant.discountPercent || 0}
+                  maxDiscount={item.variant.discountPercent || 0}
+                  isOutOfStock={isOutOfStock}
+                  initialIsWishlisted={true}
+                  onFavoriteToggle={(variantId, isWishlisted) => {
+                    if (!isWishlisted) {
+                      setItems(prev => prev.filter(i => i.variantId !== variantId));
+                    }
+                  }}
+                />
               );
             })}
           </div>

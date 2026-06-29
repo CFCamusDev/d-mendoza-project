@@ -13,9 +13,16 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Control de Acceso por Roles (RBAC)](#control-de-acceso-por-roles-rbac)
   - [POST /api/v1/roles](#post-apiv1roles)
   - [PUT /api/v1/users/:id/role](#put-apiv1usersidrole)
+- [Administración de Clientes](#administración-de-clientes)
+  - [GET /api/v1/admin/clients](#get-apiv1adminclients)
 - [Perfil de Cliente](#perfil-de-cliente)
   - [GET /api/v1/profile](#get-apiv1profile)
   - [PATCH /api/v1/profile](#patch-apiv1profile)
+- [Direcciones de Envío — HU-006](#direcciones-de-envío--hu-006)
+  - [GET /api/v1/addresses](#get-apiv1addresses)
+  - [POST /api/v1/addresses](#post-apiv1addresses)
+  - [PUT /api/v1/addresses/:id](#put-apiv1addressesid)
+  - [DELETE /api/v1/addresses/:id](#delete-apiv1addressesid)
 - [Identidad Visual y Branding](#identidad-visual-y-branding)
   - [GET /api/v1/config/brand](#get-apiv1configbrand)
   - [PUT /api/v1/config/brand](#put-apiv1configbrand)
@@ -42,6 +49,18 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/cash-turns/open](#post-apiv1cashturnsopen)
   - [GET /api/v1/cash-registers](#get-apiv1cashregisters)
   - [GET /api/v1/cash-turns/active](#get-apiv1cashturnsactive)
+- [Blog y Posicionamiento SEO — HU-018](#blog-y-posicionamiento-seo--hu-018)
+  - [GET /api/v1/blog](#get-apiv1blog)
+  - [GET /api/v1/blog/:slug](#get-apiv1blogslug)
+  - [GET /api/v1/admin/blog](#get-apiv1adminblog)
+  - [GET /api/v1/admin/blog/:id](#get-apiv1adminblogid)
+  - [POST /api/v1/admin/blog](#post-apiv1adminblog)
+  - [PATCH /api/v1/admin/blog/:id](#patch-apiv1adminblogid)
+  - [DELETE /api/v1/admin/blog/:id](#delete-apiv1adminblogid)
+- [Exportación de Reportes — HU-053](#exportación-de-reportes--hu-053)
+  - [GET /api/v1/reports/export](#get-apiv1reportsexport)
+- [Conciliación de Transacciones — HU-073](#conciliación-de-transacciones--hu-073)
+  - [POST /api/v1/admin/reconcile/stripe](#post-apiv1adminreconcilestripe)
 
 ---
 
@@ -628,6 +647,101 @@ Emitido cuando el `id` de usuario en la URL no pertenece a ningún registro acti
 }
 ```
 
+## Administración de Clientes
+
+Este módulo permite a los administradores gestionar los perfiles de los clientes de la plataforma, listando registros unificados y vinculándolos con cuentas de e-commerce.
+
+### GET /api/v1/admin/clients
+
+Obtiene el listado unificado de clientes registrados en el sistema (POS y e-commerce), con paginación, filtros de tipo y búsqueda predictiva.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :----- | :----------------------- | :----------------- | :---------------- |
+| `GET`  | `/api/v1/admin/clients` | JWT `Bearer Token` | `users:read`      |
+
+#### 2. Parámetros Query (Query Parameters)
+
+| Parámetro | Tipo | Requerido | Descripción | Valores Permitidos | Default |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `page` | `number` | No | Número de página a consultar. | `>= 1` | `1` |
+| `limit` | `number` | No | Cantidad de registros por página. | `>= 1` | `10` |
+| `type` | `string` | No | Filtro de origen/estado de cuenta del cliente. | `POS`, `ECOMMERCE`, `ALL` | `ALL` |
+| `search` | `string` | No | Texto de búsqueda que coincide con DNI/RUC, Nombre o Apellido. | Cualquier cadena de texto | - |
+
+#### 3. Respuestas (Responses)
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "clients": [
+    {
+      "id": 1,
+      "email": "client1@example.com",
+      "name": "Juan",
+      "lastName": "Pérez",
+      "phone": "999888777",
+      "documentType": "DNI",
+      "documentId": "12345678",
+      "address": "Av. Larco 123",
+      "department": "Lima",
+      "province": "Lima",
+      "district": "Miraflores",
+      "ubigeo": "150122",
+      "userId": 10,
+      "isActive": true,
+      "type": "AMBOS",
+      "createdAt": "2026-06-25T15:40:00.000Z",
+      "updatedAt": "2026-06-25T15:40:00.000Z"
+    },
+    {
+      "id": 2,
+      "email": "client2@example.com",
+      "name": "María",
+      "lastName": "Gómez",
+      "phone": null,
+      "documentType": "RUC",
+      "documentId": "20123456789",
+      "address": null,
+      "department": null,
+      "province": null,
+      "district": null,
+      "ubigeo": null,
+      "userId": null,
+      "isActive": true,
+      "type": "POS",
+      "createdAt": "2026-06-25T15:42:00.000Z",
+      "updatedAt": "2026-06-25T15:42:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 2,
+    "page": 1,
+    "totalPages": 1,
+    "limit": 10
+  }
+}
+```
+
+##### Solicitud Incorrecta (HTTP 400 Bad Request)
+
+Se emite cuando algún parámetro query no cumple con las validaciones del esquema (por ejemplo, valor de tipo incorrecto).
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "field": "type",
+      "message": "Invalid enum value. Expected 'POS' | 'ECOMMERCE' | 'ALL', received 'INVALID'"
+    }
+  ]
+}
+```
+
 ---
 
 ## Perfil de Cliente
@@ -983,6 +1097,7 @@ No requiere cuerpo de petición.
       "address": "Av. Larco 123",
       "phone": "999888777",
       "isActive": true,
+      "isMain": true,
       "warehouse": {
         "id": 101,
         "createdAt": "2026-05-20T17:00:00.000Z"
@@ -1017,17 +1132,19 @@ Registra una nueva sucursal comercial en el sistema y crea atómicamente en una 
 {
   "name": "Sucursal Norte",
   "address": "Calle Las Flores 456",
-  "phone": "999888777"
+  "phone": "999888777",
+  "isMain": false
 }
 ```
 
 **Detalle de Campos:**
 
-| Parámetro | Tipo     | Requerido | Reglas de Validación                                                |
-| :-------- | :------- | :-------- | :------------------------------------------------------------------ |
-| `name`    | `string` | Sí        | Debe ser único. Mínimo 2 caracteres, máximo 100 caracteres.         |
-| `address` | `string` | No        | Dirección física de la sucursal. Máximo 255 caracteres.             |
-| `phone`   | `string` | No        | Número de teléfono de contacto. Máximo 20 caracteres.               |
+| Parámetro | Tipo      | Requerido | Reglas de Validación                                                |
+| :-------- | :-------- | :-------- | :------------------------------------------------------------------ |
+| `name`    | `string`  | Sí        | Debe ser único. Mínimo 2 caracteres, máximo 100 caracteres.         |
+| `address` | `string`  | No        | Dirección física de la sucursal. Máximo 255 caracteres.             |
+| `phone`   | `string`  | No        | Número de teléfono de contacto. Máximo 20 caracteres.               |
+| `isMain`  | `boolean` | No        | Si es `true`, marca la sucursal como principal y el resto en `false`.|
 
 #### 3. Respuestas (Responses)
 
@@ -1044,6 +1161,7 @@ Retornado cuando la sucursal y su almacén se crean de forma atómica y exitosa.
     "address": "Calle Las Flores 456",
     "phone": "999888777",
     "isActive": true,
+    "isMain": false,
     "warehouse": {
       "id": 102,
       "createdAt": "2026-05-20T17:30:00.000Z"
@@ -1086,17 +1204,19 @@ Actualiza parcialmente uno o más detalles de una sucursal existente por su ID n
 {
   "name": "Sucursal Norte Refactor",
   "address": null,
-  "phone": "987654321"
+  "phone": "987654321",
+  "isMain": true
 }
 ```
 
 **Detalle de Campos:**
 
-| Parámetro | Tipo     | Requerido | Reglas de Validación                                                  |
-| :-------- | :------- | :-------- | :-------------------------------------------------------------------- |
-| `name`    | `string` | No        | Si se provee, debe ser único. Mínimo 2 caracteres, máximo 100.        |
-| `address` | `string` | No        | Puede ser `null` para eliminar la dirección. Máximo 255 caracteres.   |
-| `phone`   | `string` | No        | Puede ser `null` para eliminar el teléfono. Máximo 20 caracteres.     |
+| Parámetro | Tipo      | Requerido | Reglas de Validación                                                  |
+| :-------- | :-------- | :-------- | :-------------------------------------------------------------------- |
+| `name`    | `string`  | No        | Si se provee, debe ser único. Mínimo 2 caracteres, máximo 100.        |
+| `address` | `string`  | No        | Puede ser `null` para eliminar la dirección. Máximo 255 caracteres.   |
+| `phone`   | `string`  | No        | Puede ser `null` para eliminar el teléfono. Máximo 20 caracteres.     |
+| `isMain`  | `boolean` | No        | Si es `true`, marca la sucursal como principal y el resto en `false`. |
 
 #### 3. Respuestas (Responses)
 
@@ -1111,6 +1231,7 @@ Actualiza parcialmente uno o más detalles de una sucursal existente por su ID n
     "address": null,
     "phone": "987654321",
     "isActive": true,
+    "isMain": true,
     "warehouse": {
       "id": 102,
       "createdAt": "2026-05-20T17:30:00.000Z"
@@ -1170,6 +1291,7 @@ Permite activar o desactivar una sucursal en el sistema, lo cual impacta su disp
     "address": null,
     "phone": "987654321",
     "isActive": false,
+    "isMain": true,
     "warehouse": {
       "id": 102,
       "createdAt": "2026-05-20T17:30:00.000Z"
@@ -2874,9 +2996,69 @@ Obtiene las ventas Cross-Branch que están pendientes de entrega física, agrupa
 }
 ```
 
+### GET /api/v1/admin/dashboard/kpis
+
+Obtiene los indicadores clave de negocio (KPIs) acumulados para el panel de administración. Incluye las ventas del día (POS + e-commerce), conteo de pedidos de e-commerce pendientes, lista de productos/variantes con stock crítico y una comparativa de ventas del día por sucursal física.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso / Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/admin/dashboard/kpis` | JWT `Bearer Token` | Permiso `sales:read` |
+
+#### 2. Respuestas (Responses)
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "todaySales": {
+      "total": 1550.50,
+      "pos": 1000.00,
+      "ecommerce": 550.50
+    },
+    "pendingOrdersCount": 3,
+    "criticalStock": {
+      "count": 2,
+      "products": [
+        {
+          "sku": "CAM-M-ROJO",
+          "productName": "Camisa Casual",
+          "branchName": "Sede Miraflores",
+          "currentStock": 2,
+          "minStock": 5
+        },
+        {
+          "sku": "PAN-L-NEGRO",
+          "productName": "Pantalón Denim Negro",
+          "branchName": "Sede San Isidro",
+          "currentStock": 1,
+          "minStock": 5
+        }
+      ]
+    },
+    "salesByBranch": [
+      {
+        "branchId": 1,
+        "branchName": "Sede Miraflores",
+        "totalSales": 600.00
+      },
+      {
+        "branchId": 2,
+        "branchName": "Sede San Isidro",
+        "totalSales": 400.00
+      }
+    ]
+  }
+}
+```
+
 ---
 
 ### GET /api/v1/receipts
+
 
 Consulta de manera paginada y filtrada las ventas/comprobantes electrónicos emitidos en el sistema POS.
 
@@ -3020,3 +3202,1003 @@ Elimina una variante de producto específica de la lista de favoritos.
   "message": "Eliminado de favoritos"
 }
 ```
+
+## E-commerce Public API
+
+### GET /api/v1/ecommerce/products/search
+
+Búsqueda predictiva y filtrado avanzado de productos para el portal público de e-commerce. Retorna productos activos paginados basados en un cursor.
+
+- **Parámetros de consulta (Query Params):**
+  - `q` (string, opcional): Término de búsqueda. Busca coincidencia parcial en nombre de producto, descripción, código base, nombre de categoría, nombre de marca, o SKU de variantes.
+  - `categoryId` (number, opcional): ID de la categoría para filtrar.
+  - `brandId` (number, opcional): ID de la marca para filtrar.
+  - `gender` (string, opcional): Género de la prenda.
+  - `minPrice` (number, opcional): Rango de precio mínimo de la variante.
+  - `maxPrice` (number, opcional): Rango de precio máximo de la variante.
+  - `branchId` (number, opcional): ID de la sucursal. Filtra la disponibilidad de stock a una sucursal específica.
+  - `cursor` (number, opcional): Cursor de paginación. Si el ordenamiento es por precio (`price_asc`, `price_desc`), el cursor representa el `offset` (salto). Si es por relevancia/fecha (`newest`, `relevance`), el cursor representa el ID de producto.
+  - `limit` (number, opcional, por defecto 10): Cantidad de productos a retornar por página.
+  - `orderBy` (string, opcional, por defecto `relevance`): Criterio de ordenamiento. Opciones: `relevance`, `newest`, `price_asc`, `price_desc`.
+
+- **Regla de Negocio de Precios y Stock:**
+  - El filtro de precio (`minPrice`/`maxPrice`) evalúa si alguna variante activa del producto cae en el rango y tiene stock.
+  - Si un producto no tiene stock en ninguna variante/sucursal (o en la sucursal especificada por `branchId`), se oculta y no es retornado.
+  - Si el producto tiene al menos una variante con stock, el producto se devuelve junto con todas sus variantes activas. Las variantes sin stock se marcan con `outOfStock: true`.
+
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "code": "CAM",
+      "name": "Camisa Casual",
+      "description": "Una linda camisa",
+      "categoryId": 2,
+      "brandId": 1,
+      "gender": "UNISEX",
+      "isActive": true,
+      "createdAt": "2026-06-24T00:00:00.000Z",
+      "updatedAt": "2026-06-24T00:00:00.000Z",
+      "category": {
+        "id": 2,
+        "name": "Camisas"
+      },
+      "brand": {
+        "id": 1,
+        "name": "D-Mendoza"
+      },
+      "images": [
+        {
+          "id": 1,
+          "productId": 1,
+          "url": "https://example.com/camisa.jpg",
+          "isMain": true
+        }
+      ],
+      "variants": [
+        {
+          "id": 10,
+          "productId": 1,
+          "sku": "CAM-M-NEGRO",
+          "price": 49.99,
+          "attributesJson": {"talla": "M", "color": "NEGRO"},
+          "isActive": true,
+          "minStock": 5,
+          "createdAt": "2026-06-24T00:00:00.000Z",
+          "updatedAt": "2026-06-24T00:00:00.000Z",
+          "stock": 5,
+          "outOfStock": false
+        },
+        {
+          "id": 11,
+          "productId": 1,
+          "sku": "CAM-S-NEGRO",
+          "price": 49.99,
+          "attributesJson": {"talla": "S", "color": "NEGRO"},
+          "isActive": true,
+          "minStock": 5,
+          "createdAt": "2026-06-24T00:00:00.000Z",
+          "updatedAt": "2026-06-24T00:00:00.000Z",
+          "stock": 0,
+          "outOfStock": true
+        }
+      ]
+    }
+  ],
+  "pagination": {
+    "nextCursor": "1"
+  }
+}
+
+---
+
+### GET /api/v1/ecommerce/products/:slug
+
+Obtiene la ficha técnica detallada de un producto activo basado en su `slug` único para el portal público de e-commerce. Retorna el producto con sus imágenes, categoría, marca, y sus variantes activas junto con el stock disponible de la sucursal principal (`isMain = true`).
+
+- **Parámetros de Ruta (Path Params):**
+  - `slug` (string, requerido): El identificador URL único generado automáticamente para el producto.
+
+- **Regla de Negocio de Stock:**
+  - El stock devuelto para cada variante corresponde únicamente al disponible en la sucursal principal (`isMain = true`). Si no hay una sucursal explícitamente marcada como principal, se usará por defecto la primera sucursal activa.
+  - Cada variante incluye un flag `outOfStock` calculado a partir del stock disponible en dicha sucursal principal.
+
+- **Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "code": "CAM",
+    "name": "Camisa Casual",
+    "slug": "camisa-casual-cam",
+    "description": "Una linda camisa",
+    "categoryId": 2,
+    "brandId": 1,
+    "gender": "UNISEX",
+    "isActive": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z",
+    "category": {
+      "id": 2,
+      "name": "Camisas"
+    },
+    "brand": {
+      "id": 1,
+      "name": "D-Mendoza"
+    },
+    "images": [
+      {
+        "id": 1,
+        "productId": 1,
+        "url": "https://example.com/camisa.jpg",
+        "isMain": true
+      }
+    ],
+    "variants": [
+      {
+        "id": 10,
+        "productId": 1,
+        "sku": "CAM-M-NEGRO",
+        "price": 49.99,
+        "attributesJson": {"talla": "M", "color": "NEGRO"},
+        "isActive": true,
+        "minStock": 5,
+        "createdAt": "2026-06-24T00:00:00.000Z",
+        "updatedAt": "2026-06-24T00:00:00.000Z",
+        "stock": 15,
+        "outOfStock": false
+      }
+    ],
+    "sizeGuideUrl": null
+  }
+}
+```
+
+- **Response Not Found (404 Not Found):**
+```json
+{
+  "success": false,
+  "error": "Producto no encontrado"
+}
+```
+```
+
+---
+
+## Direcciones de Envío — HU-006
+
+Este módulo permite al cliente autenticado autogestionar sus direcciones de envío para las compras en la tienda virtual. El sistema requiere que la primera dirección registrada sea la predeterminada (`isDefault = true`), no permite eliminar la única dirección del usuario, y si se elimina la dirección predeterminada teniendo otras registradas, la predeterminada pasará a ser automáticamente la más antigua que quede.
+
+### GET /api/v1/addresses
+
+Recupera la lista de todas las direcciones de envío registradas para el cliente autenticado, ordenadas con la dirección predeterminada primero, seguida por la fecha de creación de forma ascendente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                 | Autenticación      | Rol Requerido         |
+| :----- | :------------------- | :----------------- | :-------------------- |
+| `GET`  | `/api/v1/addresses`  | JWT `Bearer Token` | Cualquier Autenticado |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+No requiere cuerpo de petición.
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "userId": 5,
+      "alias": "Casa",
+      "fullAddress": "Av. Larco 123, Dpto 402",
+      "district": "Miraflores",
+      "reference": "Frente al parque Kennedy",
+      "isDefault": true,
+      "createdAt": "2026-06-24T14:00:00.000Z",
+      "updatedAt": "2026-06-24T14:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "userId": 5,
+      "alias": "Trabajo",
+      "fullAddress": "Av. Javier Prado Este 456",
+      "district": "San Isidro",
+      "reference": "Edificio Capital",
+      "isDefault": false,
+      "createdAt": "2026-06-24T14:05:00.000Z",
+      "updatedAt": "2026-06-24T14:05:00.000Z"
+    }
+  ]
+}
+```
+
+##### Error de Autenticación (HTTP 401 Unauthorized)
+
+```json
+{
+  "success": false,
+  "error": "Acceso no autorizado: Contexto de seguridad faltante"
+}
+```
+
+---
+
+### POST /api/v1/addresses
+
+Registra una nueva dirección de envío para el cliente autenticado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                 | Autenticación      | Rol Requerido         |
+| :----- | :------------------- | :----------------- | :-------------------- |
+| `POST` | `/api/v1/addresses`  | JWT `Bearer Token` | Cualquier Autenticado |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+Se espera un objeto JSON con la siguiente estructura:
+
+```json
+{
+  "alias": "Casa",
+  "fullAddress": "Av. Larco 123, Dpto 402",
+  "district": "Miraflores",
+  "reference": "Frente al parque Kennedy",
+  "isDefault": false
+}
+```
+
+**Detalle de Campos:**
+
+| Parámetro     | Tipo      | Requerido | Reglas de Validación                                                  |
+| :------------ | :-------- | :-------- | :-------------------------------------------------------------------- |
+| `alias`       | `string`  | Sí        | Mínimo 2 caracteres, máximo 50. Nombre identificador (ej: "Trabajo"). |
+| `fullAddress` | `string`  | Sí        | Mínimo 5 caracteres. Dirección completa.                              |
+| `district`    | `string`  | Sí        | Mínimo 2 caracteres. Nombre del distrito.                             |
+| `reference`   | `string`  | No        | Referencias físicas opcionales del domicilio.                         |
+| `isDefault`   | `boolean` | No        | Flag para indicar si es la dirección predeterminada.                  |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "message": "Dirección creada correctamente",
+  "data": {
+    "id": 1,
+    "userId": 5,
+    "alias": "Casa",
+    "fullAddress": "Av. Larco 123, Dpto 402",
+    "district": "Miraflores",
+    "reference": "Frente al parque Kennedy",
+    "isDefault": true,
+    "createdAt": "2026-06-24T14:00:00.000Z",
+    "updatedAt": "2026-06-24T14:00:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "alias",
+      "message": "El alias debe tener al menos 2 caracteres"
+    }
+  ]
+}
+```
+
+---
+
+### PUT /api/v1/addresses/:id
+
+Actualiza los datos de una dirección de envío existente que pertenece al cliente autenticado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                     | Autenticación      | Rol Requerido         |
+| :----- | :----------------------- | :----------------- | :-------------------- |
+| `PUT`  | `/api/v1/addresses/:id`  | JWT `Bearer Token` | Cualquier Autenticado |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+Permite actualizar parcialmente o en su totalidad los campos de la dirección:
+
+```json
+{
+  "alias": "Mi Nuevo Domicilio",
+  "isDefault": true
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Dirección actualizada correctamente",
+  "data": {
+    "id": 1,
+    "userId": 5,
+    "alias": "Mi Nuevo Domicilio",
+    "fullAddress": "Av. Larco 123, Dpto 402",
+    "district": "Miraflores",
+    "reference": "Frente al parque Kennedy",
+    "isDefault": true,
+    "createdAt": "2026-06-24T14:00:00.000Z",
+    "updatedAt": "2026-06-24T14:10:00.000Z"
+  }
+}
+```
+
+##### Error de Validación o Negocio (HTTP 400 Bad Request)
+
+- Intento de quitar `isDefault` a la dirección predeterminada sin haber asignado otra dirección como default:
+```json
+{
+  "success": false,
+  "error": "Debe marcar otra dirección como predeterminada en su lugar"
+}
+```
+
+---
+
+### DELETE /api/v1/addresses/:id
+
+Elimina una dirección de envío del cliente autenticado.
+
+#### 1. Especificación del Endpoint
+
+| Método   | Ruta                     | Autenticación      | Rol Requerido         |
+| :------- | :----------------------- | :----------------- | :-------------------- |
+| `DELETE` | `/api/v1/addresses/:id`  | JWT `Bearer Token` | Cualquier Autenticado |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+No requiere cuerpo de petición.
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Dirección eliminada correctamente"
+}
+```
+
+##### Error de Negocio (HTTP 400 Bad Request)
+
+- Intento de eliminar la única dirección registrada por el usuario:
+```json
+{
+  "success": false,
+  "error": "No puede eliminar su única dirección"
+}
+```
+
+##### Dirección No Encontrada (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "Dirección no encontrada"
+}
+```
+
+---
+
+## Blog y Posicionamiento SEO — HU-018
+
+### GET /api/v1/blog
+
+Obtiene la lista de todos los artículos de blog publicados (activos).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta            | Autenticación | Rol Requerido |
+| :----- | :-------------- | :------------ | :------------ |
+| `GET`  | `/api/v1/blog`  | Ninguna       | Público       |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "title": "Mi Primer Post",
+      "slug": "mi-primer-post",
+      "content": "<p>Contenido del post en HTML</p>",
+      "status": "PUBLISHED",
+      "metaTitle": "SEO Title",
+      "metaDescription": "SEO Desc",
+      "authorId": 1,
+      "createdAt": "2026-06-24T14:00:00.000Z",
+      "updatedAt": "2026-06-24T14:10:00.000Z",
+      "author": {
+        "name": "Administrador"
+      }
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/v1/blog/:slug
+
+Obtiene un artículo de blog publicado a partir de su slug único. Cada consulta exitosa incrementa el contador de vistas (`views`) del artículo en 1 de forma atómica.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                  | Autenticación | Rol Requerido |
+| :----- | :-------------------- | :------------ | :------------ |
+| `GET`  | `/api/v1/blog/:slug`  | Ninguna       | Público       |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "Mi Primer Post",
+    "slug": "mi-primer-post",
+    "content": "<p>Contenido del post en HTML</p>",
+    "status": "PUBLISHED",
+    "metaTitle": "SEO Title",
+    "metaDescription": "SEO Desc",
+    "views": 1,
+    "authorId": 1,
+    "createdAt": "2026-06-24T14:00:00.000Z",
+    "updatedAt": "2026-06-24T14:10:00.000Z",
+    "author": {
+      "name": "Administrador"
+    }
+  }
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "El artículo no existe o no está publicado"
+}
+```
+
+---
+
+### GET /api/v1/admin/blog
+
+Obtiene todos los artículos de blog (incluyendo borradores) para su gestión en el panel administrativo.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                  | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :-------------------- | :----------------- | :------------ | :---------------- |
+| `GET`  | `/api/v1/admin/blog`  | JWT `Bearer Token` | `ADMIN`       | `roles:manage`    |
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "title": "Mi Primer Post",
+      "slug": "mi-primer-post",
+      "content": "<p>Contenido del post en HTML</p>",
+      "status": "DRAFT",
+      "metaTitle": "SEO Title",
+      "metaDescription": "SEO Desc",
+      "authorId": 1,
+      "createdAt": "2026-06-24T14:00:00.000Z",
+      "updatedAt": "2026-06-24T14:10:00.000Z",
+      "author": {
+        "name": "Administrador"
+      }
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/v1/admin/blog/:id
+
+Obtiene el detalle completo de un artículo de blog por su ID.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                      | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :------------------------ | :----------------- | :------------ | :---------------- |
+| `GET`  | `/api/v1/admin/blog/:id`  | JWT `Bearer Token` | `ADMIN`       | `roles:manage`    |
+
+---
+
+### POST /api/v1/admin/blog
+
+Crea un nuevo artículo de blog. El slug se genera automáticamente de forma única a partir de un slugify del título.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                  | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :-------------------- | :----------------- | :------------ | :---------------- |
+| `POST` | `/api/v1/admin/blog`  | JWT `Bearer Token` | `ADMIN`       | `roles:manage`    |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "title": "Mi Primer Post",
+  "content": "<p>Contenido detallado...</p>",
+  "status": "DRAFT",
+  "metaTitle": "Título SEO Opcional",
+  "metaDescription": "Meta Descripción SEO Opcional"
+}
+```
+
+---
+
+### PATCH /api/v1/admin/blog/:id
+
+Actualiza parcialmente un artículo de blog existente.
+
+#### 1. Especificación del Endpoint
+
+| Método  | Ruta                      | Autenticación      | Rol Requerido | Permiso Requerido |
+| :------ | :------------------------ | :----------------- | :------------ | :---------------- |
+| `PATCH` | `/api/v1/admin/blog/:id`  | JWT `Bearer Token` | `ADMIN`       | `roles:manage`    |
+
+---
+
+### DELETE /api/v1/admin/blog/:id
+
+Elimina físicamente o inactiva un artículo de blog.
+
+#### 1. Especificación del Endpoint
+
+| Método   | Ruta                      | Autenticación      | Rol Requerido | Permiso Requerido |
+| :------- | :------------------------ | :----------------- | :------------ | :---------------- |
+| `DELETE` | `/api/v1/admin/blog/:id`  | JWT `Bearer Token` | `ADMIN`       | `roles:manage`    |
+
+---
+
+## 10. Módulo de Checkout y Pagos (Stripe) — HU-043
+
+### POST /api/v1/checkout/payment-intent
+
+Crea un PaymentIntent en Stripe a partir del carrito y la dirección de envío del usuario autenticado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                              | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :-------------------------------- | :----------------- | :------------ | :---------------- |
+| `POST` | `/api/v1/checkout/payment-intent` | JWT `Bearer Token` | Cualquiera    | Ninguno           |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "cartId": 2,
+  "addressId": 5
+}
+```
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "clientSecret": "pi_123456_secret_7890abc"
+  }
+}
+```
+
+---
+
+### POST /api/v1/checkout/webhook
+
+Endpoint público que recibe eventos de Stripe (Webhooks). Procesa el evento `payment_intent.succeeded` de forma atómica para registrar la orden, decrementar stock de la variante en la sucursal principal, generar el Kardex de salida y vaciar el carrito.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                       | Autenticación     | Rol Requerido |
+| :----- | :------------------------- | :---------------- | :------------ |
+| `POST` | `/api/v1/checkout/webhook` | Ninguna (Público) | Stripe Agent  |
+
+> [!IMPORTANT]
+> Requiere incluir la cabecera `stripe-signature` enviada por Stripe para verificar la autenticidad del payload utilizando la clave secreta configurada.
+
+#### 2. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "received": true,
+  "processed": true,
+  "orderId": 12
+}
+```
+
+---
+
+## 11. Módulo de Historial de Pedidos y Comprobantes (PDF) — HU-044
+
+### GET /api/v1/orders
+
+Obtiene la lista de pedidos del usuario autenticado de forma paginada y opcionalmente filtrada por estado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta              | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :---------------- | :----------------- | :------------ | :---------------- |
+| `GET`  | `/api/v1/orders`  | JWT `Bearer Token` | Cualquiera    | Ninguno           |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo     | Requerido | Valor por Defecto | Descripción                                                                                   |
+| :-------- | :------- | :-------- | :---------------- | :-------------------------------------------------------------------------------------------- |
+| `status`  | `string` | No        | N/A               | Filtra los pedidos por su estado (`PENDING`, `PAID`, `SHIPPED`, `DELIVERED`, `CANCELLED`).   |
+| `page`    | `number` | No        | `1`               | El número de página para la paginación (debe ser mayor a 0).                                  |
+| `limit`   | `number` | No        | `10`              | El número de elementos por página (debe ser mayor a 0).                                       |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "orders": [
+      {
+        "id": 12,
+        "status": "PAID",
+        "total": 115,
+        "shippingCost": 15,
+        "addressSnapshot": {
+          "alias": "Casa",
+          "fullAddress": "Av Larco 123",
+          "district": "Miraflores",
+          "reference": "Frente al parque"
+        },
+        "paymentIntentId": "pi_123456_secret_7890abc",
+        "createdAt": "2026-06-25T12:00:00.000Z",
+        "items": [
+          {
+            "id": 1,
+            "variantId": 20,
+            "qty": 2,
+            "unitPrice": 50,
+            "variantSku": "SKU-JEAN-M-BLUE",
+            "productName": "Pantalón Jean Slim"
+          }
+        ]
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### GET /api/v1/orders/:id/receipt/pdf
+
+Genera y descarga el comprobante de pago en formato PDF del pedido especificado, devolviendo un stream eficiente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta                                  | Autenticación      | Rol Requerido | Permiso Requerido |
+| :----- | :------------------------------------ | :----------------- | :------------ | :---------------- |
+| `GET`  | `/api/v1/orders/:id/receipt/pdf`      | JWT `Bearer Token` | Cualquiera    | Ninguno           |
+
+> [!IMPORTANT]
+> Se valida estrictamente que la orden pertenezca al usuario autenticado (extraído de su JWT). De lo contrario, se retornará HTTP 403.
+
+#### 2. Parámetros de Ruta (Path Params)
+
+| Parámetro | Tipo     | Requerido | Descripción |
+| :-------- | :------- | :-------- | :---------- |
+| `id`      | `number` | Sí        | ID de la orden de la cual se desea descargar el comprobante. |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+- **Content-Type**: `application/pdf`
+- **Content-Disposition**: `attachment; filename=comprobante-pedido-12.pdf`
+- **Body**: Stream de datos binarios del PDF.
+
+##### No Autorizado (HTTP 403 Forbidden)
+
+```json
+{
+  "success": false,
+  "error": "No autorizado para ver este comprobante"
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "Pedido no encontrado"
+}
+```
+
+### PATCH /api/v1/admin/orders/:id/status
+
+Actualiza el estado de un pedido y notifica automáticamente al cliente por correo electrónico vía Resend. Adicionalmente, audita de forma transparente el cambio mediante una extensión de Prisma Client que escribe en la tabla `OrderStatusLog`.
+
+#### 1. Especificación del Endpoint
+
+| Método  | Ruta                                   | Autenticación      | Rol Requerido  | Permiso Requerido |
+| :------ | :------------------------------------- | :----------------- | :------------- | :---------------- |
+| `PATCH` | `/api/v1/admin/orders/:id/status`      | JWT `Bearer Token` | Administrador  | `roles:manage`    |
+
+#### 2. Parámetros de Ruta (Path Params)
+
+| Parámetro | Tipo     | Requerido | Descripción |
+| :-------- | :------- | :-------- | :---------- |
+| `id`      | `number` | Sí        | ID de la orden de la cual se desea actualizar el estado. |
+
+#### 3. Cuerpo de la Petición (Request Body)
+
+- **Content-Type**: `application/json`
+
+```json
+{
+  "status": "SHIPPED"
+}
+```
+
+*Valores válidos para `status`:* `PENDING`, `PAID`, `SHIPPED`, `DELIVERED`, `CANCELLED`.
+
+#### 4. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Estado del pedido actualizado correctamente",
+  "data": {
+    "id": 10,
+    "userId": 1,
+    "status": "SHIPPED",
+    "total": 115.00,
+    "shippingCost": 15.00,
+    "addressSnapshot": { "alias": "Casa", "fullAddress": "Av Larco 123", "district": "Miraflores" },
+    "paymentIntentId": "pi_test_123",
+    "createdAt": "2026-06-25T15:00:00.000Z",
+    "updatedAt": "2026-06-25T15:45:00.000Z"
+  }
+}
+```
+
+##### Solicitud Incorrecta (HTTP 400 Bad Request)
+
+```json
+{
+  "success": false,
+  "error": "Estado de pedido inválido. Los permitidos son: PENDING, PAID, SHIPPED, DELIVERED, CANCELLED"
+}
+```
+
+##### No Encontrado (HTTP 404 Not Found)
+
+```json
+{
+  "success": false,
+  "error": "Pedido no encontrado"
+}
+```
+
+---
+
+## Exportación de Reportes — HU-053
+
+### GET /api/v1/reports/export
+
+Permite exportar reportes de ventas, inventario y clientes en formatos estándar (PDF, Excel, CSV) con filtros de fecha.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/reports/export` | JWT `Bearer Token` | `sales:read` |
+
+#### 2. Parámetros Query (Query Parameters)
+
+| Parámetro | Tipo | Requerido | Descripción | Valores Permitidos |
+| :--- | :--- | :--- | :--- | :--- |
+| `type` | String | Sí | Tipo de reporte a exportar | `sales`, `inventory`, `clients` |
+| `format` | String | Sí | Formato de archivo a descargar | `pdf`, `excel`, `csv` |
+| `from` | String | No | Fecha de inicio del rango (formato YYYY-MM-DD) | ej. `2026-06-01` |
+| `to` | String | No | Fecha de fin del rango (formato YYYY-MM-DD) | ej. `2026-06-30` |
+
+#### 3. Respuestas del Servidor
+
+##### Exportación Exitosa (HTTP 200 OK)
+
+Devuelve un flujo binario/plano con la cabecera correspondiente al formato:
+
+*   **PDF (`format=pdf`)**:
+    *   `Content-Type: application/pdf`
+    *   `Content-Disposition: attachment; filename="reporte-sales-YYYY-MM-DD.pdf"`
+*   **Excel (`format=excel`)**:
+    *   `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+    *   `Content-Disposition: attachment; filename="reporte-sales-YYYY-MM-DD.xlsx"`
+*   **CSV (`format=csv`)**:
+    *   `Content-Type: text/csv`
+    *   `Content-Disposition: attachment; filename="reporte-sales-YYYY-MM-DD.csv"`
+
+##### Solicitud Incorrecta (HTTP 400 Bad Request)
+
+Se emite cuando algún parámetro requerido falta o no cumple con el formato (por ejemplo, fecha inválida).
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "field": "type",
+      "message": "El tipo de reporte debe ser 'sales', 'inventory' o 'clients'"
+    }
+  ]
+}
+```
+
+##### Acceso Prohibido (HTTP 403 Forbidden)
+
+Se emite cuando el usuario autenticado no cuenta con el permiso `sales:read`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el permiso 'sales:read'"
+}
+```
+
+## Conciliación de Transacciones — HU-073
+
+### POST /api/v1/admin/reconcile/stripe
+
+Realiza el cruce de transacciones de Stripe y órdenes persistidas en MariaDB para un periodo de fechas determinado, devolviendo las transacciones conciliadas (matched) y las discrepancias (unmatched: stripeOnly y dbOnly).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido | Permiso Requerido |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/admin/reconcile/stripe` | JWT `Bearer Token` | Administrador | `roles:manage` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+- **Content-Type**: `application/json`
+
+```json
+{
+  "from": "2026-06-01T00:00:00.000Z",
+  "to": "2026-06-26T23:59:59.999Z"
+}
+```
+
+*Nota: Ambas fechas deben ser cadenas de fecha ISO 8601 válidas, y `from` debe ser anterior o igual a `to`.*
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+Devuelve las listas de conciliaciones coincidentes (`matched`) y con discrepancia (`unmatched`).
+
+```json
+{
+  "success": true,
+  "data": {
+    "matched": [
+      {
+        "stripePaymentIntentId": "pi_3M7t9zLkdIwHu7ix0yU2jKxR",
+        "orderId": 1024,
+        "stripeAmount": 150.00,
+        "orderAmount": 150.00,
+        "status": "MATCHED"
+      },
+      {
+        "stripePaymentIntentId": "pi_3M7t9zLkdIwHu7ix0yU2jKxS",
+        "orderId": 1025,
+        "stripeAmount": 200.00,
+        "orderAmount": 195.00,
+        "status": "AMOUNT_MISMATCH"
+      }
+    ],
+    "unmatched": {
+      "stripeOnly": [
+        {
+          "id": "pi_3M7t9zLkdIwHu7ix0yU2jKxT",
+          "amount": 75.00,
+          "currency": "pen",
+          "status": "succeeded",
+          "createdAt": "2026-06-20T12:00:00.000Z"
+        }
+      ],
+      "dbOnly": [
+        {
+          "id": 1026,
+          "paymentIntentId": "pi_3M7t9zLkdIwHu7ix0yU2jKxU",
+          "total": 50.00,
+          "status": "PAID",
+          "createdAt": "2026-06-21T10:30:00.000Z"
+        }
+      ]
+    }
+  }
+}
+```
+
+##### Solicitud Incorrecta (HTTP 400 Bad Request)
+
+Se emite cuando la validación de fechas o del body falla.
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "field": "from",
+      "message": "La fecha 'from' debe ser anterior o igual a la fecha 'to'"
+    }
+  ]
+}
+```
+
+##### Acceso Prohibido (HTTP 403 Forbidden)
+
+Se emite cuando el usuario no tiene la sesión activa o carece del permiso `roles:manage`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el permiso 'roles:manage'"
+}
+```
+
+
+
+

@@ -9,6 +9,7 @@ export interface ProductVariant {
   attributesJson: Record<string, string>; // Atributos clave-valor de la variante
   isActive: boolean;
   minStock: number;
+  discountPercent?: number; // Descuento porcentual aplicable a la variante (0-99)
   createdAt: Date;
   updatedAt: Date;
 }

@@ -34,6 +34,11 @@ model User {
   client          Client?
   cashTurns       CashTurn[] // HU-032
   wishlists       Wishlist[] // HU-010
+  carts           Cart[]     // HU-041
+  addresses       Address[]
+  blogPosts       BlogPost[]
+  coupons         Coupon[]
+  orders          Order[]
 }
 
 model Client {
@@ -74,6 +79,7 @@ model Branch {
   address         String?
   phone           String?
   isActive        Boolean          @default(true)
+  isMain          Boolean          @default(false)
   employees       Employee[]
   branchStock     BranchStock[]
   kardexEntries   KardexEntry[]
@@ -167,8 +173,10 @@ model Category {
   parentId  Int?
   parent    Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
   children  Category[] @relation("CategoryChildren")
-  isActive  Boolean    @default(true)
-  products  Product[]
+  isActive     Boolean    @default(true)
+  imageUrl     String?    @db.Text
+  sizeGuideUrl String?
+  products     Product[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 }
@@ -186,22 +194,24 @@ model Brand {
 // ─── HU-012 ───────────────────────────────────────────────────────────────────
 
 model Attribute {
-  id        Int              @id @default(autoincrement())
-  name      String           @unique
-  isActive  Boolean          @default(true)
-  values    AttributeValue[]
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  isVisualDriver Boolean          @default(false)
+  isActive       Boolean          @default(true)
+  values         AttributeValue[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
 model AttributeValue {
-  id          Int       @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   value       String
-  isActive    Boolean   @default(true)
+  isActive    Boolean        @default(true)
   attributeId Int
-  attribute   Attribute @relation(fields: [attributeId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  attribute   Attribute      @relation(fields: [attributeId], references: [id])
+  images      ProductImage[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   @@unique([attributeId, value])
 }
@@ -212,12 +222,15 @@ model Product {
   id          Int              @id @default(autoincrement())
   code        String           @unique // Código base para auto-generación de SKU (ej. "CAM")
   name        String
+  slug        String           @unique
   description String?          @db.Text
+  model       String?
   categoryId  Int?
   category    Category?        @relation(fields: [categoryId], references: [id])
   brandId     Int?
   brand       Brand?           @relation(fields: [brandId], references: [id])
-  gender      String?
+  genderId    Int?
+  gender      Gender?          @relation(fields: [genderId], references: [id])
   isActive    Boolean          @default(true)
   images      ProductImage[]
   variants    ProductVariant[]
@@ -225,13 +238,24 @@ model Product {
   updatedAt   DateTime         @updatedAt
 }
 
+model Gender {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  isActive  Boolean   @default(true)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model ProductImage {
-  id        Int      @id @default(autoincrement())
-  productId Int
-  product   Product  @relation(fields: [productId], references: [id])
-  url       String
-  isMain    Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id               Int             @id @default(autoincrement())
+  productId        Int
+  product          Product         @relation(fields: [productId], references: [id])
+  url              String
+  isMain           Boolean         @default(false)
+  attributeValueId Int?
+  attributeValue   AttributeValue? @relation(fields: [attributeValueId], references: [id], onDelete: SetNull)
+  createdAt        DateTime        @default(now())
 }
 
 // ─── HU-026 (dependencies: ProductVariant + BranchStock) ─────────────────────
@@ -242,6 +266,7 @@ model ProductVariant {
   product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
   sku             String           @unique // SKU único auto-generado: código_producto-talla-color
   price           Decimal          @default(0) @db.Decimal(10, 2)
+  discountPercent Int              @default(0) // HU-017
   attributesJson  Json? // JSON con los atributos de la variante
   isActive        Boolean          @default(true)
   minStock        Int              @default(5)
@@ -255,6 +280,8 @@ model ProductVariant {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   stockTransfers  StockTransfer[]
+  cartItems       CartItem[]       // HU-041
+  orderItems      OrderItem[]
 
   @@index([productId])
 }
@@ -552,4 +579,149 @@ model StockTransfer {
   @@index([fromBranchId])
   @@index([toBranchId])
   @@index([variantId])
+}
+
+// ─── HU-041: Carrito de Compras Persistente ───────────────────────────────────
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int?
+  user      User?      @relation(fields: [userId], references: [id])
+  sessionId String?    @unique // Para carritos anónimos
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model CartItem {
+  id        Int            @id @default(autoincrement())
+  cartId    Int
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId Int
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int            @default(1)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([cartId, variantId])
+}
+
+model Address {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alias       String   // Ej: "Casa", "Trabajo"
+  fullAddress String   @db.Text
+  district    String
+  reference   String?  @db.Text
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model BlogPost {
+  id              Int        @id @default(autoincrement())
+  title           String
+  slug            String     @unique
+  content         String     @db.Text
+  status          PostStatus @default(DRAFT)
+  metaTitle       String?
+  metaDescription String?
+  views           Int        @default(0)
+  authorId        Int
+  author          User       @relation(fields: [authorId], references: [id])
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([authorId])
+}
+
+// ─── HU-054: Configuración de Zonas de Delivery ───────────────────────────────
+
+model DeliveryZone {
+  id            Int      @id @default(autoincrement())
+  districts     Json     // Almacenado como JSON en MySQL para guardar arreglo de strings
+  deliveryCost  Decimal  @db.Decimal(10, 2)
+  estimatedDays Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model Coupon {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
+  type        CouponType
+  value       Decimal   @db.Decimal(10, 2)
+  expiresAt   DateTime?
+  maxUses     Int?
+  usedCount   Int       @default(0)
+  userId      Int?
+  user        User?     @relation(fields: [userId], references: [id])
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  userId          Int
+  user            User        @relation(fields: [userId], references: [id])
+  status          OrderStatus @default(PENDING)
+  total           Decimal     @db.Decimal(10, 2)
+  shippingCost    Decimal     @db.Decimal(10, 2)
+  addressSnapshot Json
+  paymentIntentId String      @unique
+  items           OrderItem[]
+  statusLogs      OrderStatusLog[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id        Int            @id @default(autoincrement())
+  orderId   Int
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId Int
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  qty       Int
+  unitPrice Decimal        @db.Decimal(10, 2)
+
+  @@index([orderId])
+  @@index([variantId])
+}
+
+model OrderStatusLog {
+  id        Int         @id @default(autoincrement())
+  orderId   Int
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  changedAt DateTime    @default(now())
+  changedBy String
+
+  @@index([orderId])
 }

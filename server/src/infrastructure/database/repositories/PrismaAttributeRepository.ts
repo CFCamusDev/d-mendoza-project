@@ -17,12 +17,12 @@ export class PrismaAttributeRepository {
     }) as Promise<Attribute | null>;
   }
 
-  async create(name: string): Promise<Attribute> {
-    return prisma.attribute.create({ data: { name } }) as Promise<Attribute>;
+  async create(name: string, isVisualDriver?: boolean): Promise<Attribute> {
+    return prisma.attribute.create({ data: { name, isVisualDriver: isVisualDriver ?? false } }) as Promise<Attribute>;
   }
 
-  async update(id: number, name: string): Promise<Attribute> {
-    return prisma.attribute.update({ where: { id }, data: { name } }) as Promise<Attribute>;
+  async update(id: number, name: string, isVisualDriver?: boolean): Promise<Attribute> {
+    return prisma.attribute.update({ where: { id }, data: { name, isVisualDriver } }) as Promise<Attribute>;
   }
 
   async deactivate(id: number): Promise<void> {

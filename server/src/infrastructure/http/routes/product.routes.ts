@@ -60,6 +60,13 @@ router.post(
   productController.uploadImages.bind(productController)
 );
 
+// DELETE /api/v1/products/:id/images/:imageId — Eliminar imagen de producto
+router.delete(
+  '/products/:id/images/:imageId',
+  requirePermission('products:write'),
+  productController.deleteImage.bind(productController)
+);
+
 // GET /api/v1/products/:id/variants — Listar variantes de un producto
 router.get(
   '/products/:id/variants',

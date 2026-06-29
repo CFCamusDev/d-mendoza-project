@@ -29,6 +29,7 @@ const BrandsPage: React.FC = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchBrands = async () => {
@@ -59,24 +60,33 @@ const BrandsPage: React.FC = () => {
     return { total, active, inactive };
   }, [brands]);
 
-  const openCreate = () => { setEditing(null); setForm({ name: '', logoUrl: '' }); setPreview(null); setShowModal(true); };
-  const openEdit = (b: Brand) => { setEditing(b); setForm({ name: b.name, logoUrl: b.logoUrl ?? '' }); setPreview(b.logoUrl); setShowModal(true); };
+  const openCreate = () => { setEditing(null); setForm({ name: '', logoUrl: '' }); setPreview(null); setSelectedFile(null); setShowModal(true); };
+  const openEdit = (b: Brand) => { setEditing(b); setForm({ name: b.name, logoUrl: b.logoUrl ?? '' }); setPreview(b.logoUrl); setSelectedFile(null); setShowModal(true); };
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowed.includes(file.type)) { toast.error('Solo JPEG, PNG o WEBP'); return; }
+    setSelectedFile(file);
     const url = URL.createObjectURL(file);
     setPreview(url);
-    setForm(f => ({ ...f, logoUrl: url }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const payload = { name: form.name, logoUrl: form.logoUrl || null };
+      let finalLogoUrl = form.logoUrl;
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append('image', selectedFile);
+        const { data } = await axiosInstance.post('/v1/brands/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        finalLogoUrl = data.data.url;
+      }
+      const payload = { name: form.name, logoUrl: finalLogoUrl || null };
       if (editing) {
         await axiosInstance.patch(`/v1/brands/${editing.id}`, payload);
         toast.success('Marca actualizada');

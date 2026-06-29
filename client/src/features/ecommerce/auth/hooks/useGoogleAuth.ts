@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/shared/context/AuthContext';
 import { getApiUrl } from '@/shared/config/env';
 
+import { useCartContext } from '../../context/CartContext';
+
 /**
  * useGoogleAuth — HU-001 / T-036
  *
@@ -15,6 +17,7 @@ export const useGoogleAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const auth = useAuth();
+  const cartContext = useCartContext();
 
   useEffect(() => {
     const extractSession = async () => {
@@ -33,6 +36,9 @@ export const useGoogleAuth = () => {
 
         // Hydrate AuthContext with the extracted tokens
         auth.login(result.data.tokens);
+
+        // Merge cart after successful Google login (HU-041)
+        await cartContext.mergeCart();
 
         // Redirect to e-commerce Home
         navigate('/', { replace: true });

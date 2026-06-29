@@ -14,6 +14,7 @@ import brandRoutes from '@infrastructure/http/routes/brand.routes';
 import clientRoutes from '@infrastructure/http/routes/client.routes';
 import bannerRoutes from '@infrastructure/http/routes/banner.routes';
 import productRoutes from '@infrastructure/http/routes/product.routes'; // HU-014 / HU-015
+import ecommerceProductsRoutes from '@infrastructure/http/routes/ecommerce-products.routes';
 import catalogRoutes from '@infrastructure/http/routes/catalog.routes';
 import attributeRoutes from '@infrastructure/http/routes/attribute.routes';
 import kardexRoutes from '@infrastructure/http/routes/kardex.routes';
@@ -32,6 +33,19 @@ import posStockRoutes from '@infrastructure/http/routes/pos-stock.routes';
 import stockTransferRoutes from '@infrastructure/http/routes/stock-transfer.routes';
 import adminCrossBranchRoutes from '@infrastructure/http/routes/admin-cross-branch.routes';
 import receiptRoutes from '@infrastructure/http/routes/receipt.routes';
+import addressRoutes from '@infrastructure/http/routes/address.routes';
+import blogRoutes from '@infrastructure/http/routes/blog.routes';
+import adminDashboardRoutes from '@infrastructure/http/routes/admin-dashboard.routes';
+import adminReconciliationRoutes from '@infrastructure/http/routes/admin-reconciliation.routes';
+import genderRoutes from '@infrastructure/http/routes/gender.routes';
+
+
+import ecommerceCartRoutes from '@infrastructure/http/routes/ecommerce-cart.routes';
+import deliveryZoneRoutes from '@infrastructure/http/routes/delivery-zone.routes';
+import checkoutRoutes from '@infrastructure/http/routes/checkout.routes';
+import couponRoutes from '@infrastructure/http/routes/coupon.routes';
+import orderRoutes from '@infrastructure/http/routes/order.routes';
+import { requestContextMiddleware } from '@infrastructure/context/RequestContext';
 
 const app = express();
 
@@ -43,10 +57,15 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN,
   credentials: true, // Allow cookies cross-origin for OAuth flow
 }));
-app.use(express.json());
+app.use(express.json({
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
+app.use(requestContextMiddleware);
 
 // Health check endpoint para Docker
 app.get('/api/health', (_req: Request, res: Response) => {
@@ -64,6 +83,7 @@ app.use('/api/v1', brandRoutes);
 app.use('/api/v1', clientRoutes);
 app.use('/api/v1', bannerRoutes); // HU-019 Banners
 app.use('/api/v1', productRoutes); // HU-014 — Variantes SKU / HU-015 — Inactivación Lógica
+app.use('/api/v1', ecommerceProductsRoutes);
 app.use('/api/v1', catalogRoutes);
 app.use('/api/v1', attributeRoutes);
 app.use('/api/v1', kardexRoutes);
@@ -78,10 +98,21 @@ app.use('/api/v1', cashRegisterRoutes);
 app.use('/api/v1', posProductRoutes);
 app.use('/api/v1', posClientRoutes);
 app.use('/api/v1/wishlist', wishlistRoutes); // HU-010 — Wishlist
+app.use('/api/v1/cart', ecommerceCartRoutes); // HU-041 — Carrito de Compras
 app.use('/api/v1', posStockRoutes);
 app.use('/api/v1', stockTransferRoutes);
 app.use('/api/v1', adminCrossBranchRoutes);
 app.use('/api/v1', receiptRoutes);
+app.use('/api/v1', addressRoutes);
+app.use('/api/v1', blogRoutes);
+app.use('/api/v1', adminDashboardRoutes);
+app.use('/api/v1', adminReconciliationRoutes);
+app.use('/api/v1', genderRoutes);
+
+app.use('/api/v1', deliveryZoneRoutes);
+app.use('/api/v1/checkout', checkoutRoutes);
+app.use('/api/v1/coupons', couponRoutes);
+app.use('/api/v1', orderRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });

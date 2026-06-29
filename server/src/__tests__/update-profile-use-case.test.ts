@@ -51,6 +51,7 @@ describe('UpdateProfileUseCase (HU-005)', () => {
 
     mockStorageService = {
       uploadImage: jest.fn<IStorageService['uploadImage']>().mockResolvedValue('https://cloudinary.com/new_avatar.png'),
+      deleteImage: jest.fn<IStorageService['deleteImage']>(),
     };
 
     useCase = new UpdateProfileUseCase(mockUserRepository, mockStorageService);

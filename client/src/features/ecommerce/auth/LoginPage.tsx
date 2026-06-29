@@ -5,10 +5,13 @@ import { LoginForm } from './components/LoginForm';
 import { GoogleLoginButton } from './components/GoogleLoginButton';
 import { useLogin } from './hooks/useLogin';
 import { useAuth } from '@/shared/context/AuthContext';
+import { getDefaultRouteForRole } from '@/shared/types/auth.types';
 import type { LoginFormData } from './schemas/login.schema';
 import { useBrand } from '@/shared/context/BrandContext';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { ForcePasswordChangeModal } from './components/ForcePasswordChangeModal';
+
+import { useCartContext } from '../context/CartContext';
 
 export default function LoginPage() {
   useDocumentTitle('Iniciar sesión');
@@ -17,6 +20,7 @@ export default function LoginPage() {
   const { login: loginHook, isLoading } = useLogin();
   const auth = useAuth();
   const { brandConfig } = useBrand();
+  const cartContext = useCartContext();
 
   const [isForceModalOpen, setIsForceModalOpen] = useState(false);
 
@@ -29,8 +33,8 @@ export default function LoginPage() {
 
   // Automatic redirect if already authenticated
   useEffect(() => {
-    if (auth.isAuthenticated && (auth.user?.role === 'ADMIN' || auth.user?.role === 'SELLER')) {
-      navigate('/admin/inventory/stock', { replace: true });
+    if (auth.isAuthenticated && auth.user && auth.user.role !== 'CLIENT') {
+      navigate(getDefaultRouteForRole(auth.user.role), { replace: true });
     }
   }, [auth.isAuthenticated, auth.user, navigate]);
 
@@ -41,12 +45,15 @@ export default function LoginPage() {
       // Persist tokens and hydrate user state in AuthContext
       auth.login(result.data.tokens);
 
+      // Merge cart after successful login (HU-041)
+      await cartContext.mergeCart();
+
       toast.success('¡Bienvenido!');
 
       // Role-based redirect (RBAC)
       const role = auth.user?.role ?? result.data.user?.role;
-      if (role === 'ADMIN' || role === 'SELLER') {
-        navigate('/admin/inventory/stock');
+      if (role && role !== 'CLIENT') {
+        navigate(getDefaultRouteForRole(role));
       } else {
         // CLIENT or unknown → e-commerce home
         navigate('/');

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { JwtService } from '@infrastructure/services/JwtService';
 import prisma from '@infrastructure/database/prisma';
+import { setContextUser } from '@infrastructure/context/RequestContext';
 
 const jwtService = new JwtService();
 
@@ -33,7 +34,9 @@ export const requirePermission = (requiredPermission: string) => {
         userId: payload.userId,
         email: payload.email,
         role: payload.role,
+        branchId: payload.branchId,
       };
+      setContextUser(payload.userId, payload.email);
 
       // 3. Fetch deep relational tree: User -> Roles -> Permissions
       const dbUser = await prisma.user.findUnique({
@@ -138,7 +141,9 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       userId: payload.userId,
       email: payload.email,
       role: payload.role,
+      branchId: payload.branchId,
     };
+    setContextUser(payload.userId, payload.email);
 
     next();
   } catch (error: any) {
@@ -153,5 +158,45 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       success: false,
       error: 'Acceso denegado: Token de autenticación inválido',
     });
+  }
+};
+
+/**
+ * Optional authentication middleware.
+ * If a valid JWT is provided, attaches req.auth context. Otherwise, continues without it.
+ */
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+    let payload;
+    try {
+      payload = jwtService.verifyAccessToken(token);
+    } catch (err) {
+      // Si el token es inválido o expiró, simplemente lo ignoramos para el modo opcional
+      return next();
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: payload.userId },
+    });
+
+    if (dbUser && dbUser.isActive) {
+      req.auth = {
+        userId: payload.userId,
+        email: payload.email,
+        role: payload.role,
+        branchId: payload.branchId,
+      };
+      setContextUser(payload.userId, payload.email);
+    }
+
+    next();
+  } catch (error) {
+    next();
   }
 };

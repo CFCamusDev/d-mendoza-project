@@ -20,6 +20,7 @@ export interface User {
   verificationPin?: string | null;
   pinExpiresAt?: Date | null;
   roles?: string[];
+  branchId?: number; // Asociado al empleado si corresponde
   createdAt: Date;
   updatedAt: Date;
 }

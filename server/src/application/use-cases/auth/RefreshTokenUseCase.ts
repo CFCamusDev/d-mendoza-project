@@ -49,6 +49,7 @@ export class RefreshTokenUseCase {
       userId: user.id,
       email: user.email,
       role: userRole,
+      branchId: user.branchId, // Included if the user is an employee
     });
   }
 }

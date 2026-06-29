@@ -1,4 +1,5 @@
 import { ProductVariant } from './ProductVariant';
+import { Gender } from './Gender';
 
 export interface ProductImage {
   id: number;
@@ -12,10 +13,13 @@ export interface Product {
   id: number;
   code: string;
   name: string;
+  slug: string;
   description: string | null;
   categoryId: number | null;
   brandId?: number | null;
-  gender?: string | null;
+  genderId?: number | null;
+  gender?: Gender | null;
+  model?: string | null;
   isActive: boolean;
   variants?: ProductVariant[];
   images?: ProductImage[];
@@ -26,8 +30,10 @@ export interface Product {
 export interface CreateProductDTO {
   code: string;
   name: string;
+  slug?: string;
   description?: string | null;
   categoryId: number;
   brandId: number;
-  gender?: string | null;
+  genderId?: number | null;
+  model?: string | null;
 }

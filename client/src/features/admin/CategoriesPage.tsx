@@ -13,7 +13,10 @@ import {
   FolderOpen,
   Sparkles,
   Tag,
-  Search
+  Search,
+  Ruler,
+  UploadCloud,
+  Trash2
 } from 'lucide-react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 
@@ -22,10 +25,12 @@ interface Category {
   name: string;
   parentId: number | null;
   isActive: boolean;
+  sizeGuideUrl: string | null;
+  imageUrl: string | null;
   children?: Category[];
 }
 
-interface FormState { name: string; parentId: number | null; }
+interface FormState { name: string; parentId: number | null; sizeGuideUrl: string | null; imageUrl: string | null; }
 
 const CategoryNode: React.FC<{
   cat: Category;
@@ -56,7 +61,14 @@ const CategoryNode: React.FC<{
             {hasChildren ? (open ? <ChevronDown size={14} /> : <ChevronRight size={14} />) : <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />}
           </button>
 
-          <div className="text-gray-400 shrink-0">
+          <div className="text-gray-400 shrink-0 flex items-center gap-2">
+            {cat.imageUrl && (
+              <img 
+                src={cat.imageUrl} 
+                alt={cat.name} 
+                className="w-6 h-6 rounded-md object-cover border border-neutral-200" 
+              />
+            )}
             {hasChildren 
               ? (open ? <FolderOpen className="w-4 h-4 text-[#3F3F3F]" /> : <Folder className="w-4 h-4 text-[#6B6B6B]" />) 
               : <Tag className="w-3.5 h-3.5 text-gray-400" />
@@ -66,6 +78,19 @@ const CategoryNode: React.FC<{
           <span className={`text-sm font-bold text-[#3F3F3F] truncate ${!cat.isActive ? 'text-gray-400 line-through font-normal' : ''}`}>
             {cat.name}
           </span>
+          {cat.sizeGuideUrl && (
+            <a
+              href={cat.sizeGuideUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#8B6E4E] hover:text-[#5F4B35] transition-colors ml-2 bg-[#FAF5EF] px-2 py-0.5 rounded-full border border-[#8B6E4E]/20"
+              onClick={(e) => e.stopPropagation()}
+              title="Ver Guía de Tallas"
+            >
+              <Ruler size={10} />
+              <span>Guía</span>
+            </a>
+          )}
         </div>
 
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -112,9 +137,13 @@ const CategoriesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
-  const [form, setForm] = useState<FormState>({ name: '', parentId: null });
+  const [form, setForm] = useState<FormState>({ name: '', parentId: null, sizeGuideUrl: null, imageUrl: null });
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [categoryImageFile, setCategoryImageFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingCategory, setIsDraggingCategory] = useState(false);
 
   const fetchCategories = async () => {
     try {
@@ -131,21 +160,62 @@ const CategoriesPage: React.FC = () => {
     fetchCategories(); 
   }, []);
 
-  const openCreate = () => { setEditing(null); setForm({ name: '', parentId: null }); setShowModal(true); };
-  const openEdit = (cat: Category) => { setEditing(cat); setForm({ name: cat.name, parentId: cat.parentId }); setShowModal(true); };
+  const openCreate = () => { 
+    setEditing(null); 
+    setForm({ name: '', parentId: null, sizeGuideUrl: null, imageUrl: null }); 
+    setImageFile(null);
+    setCategoryImageFile(null);
+    setShowModal(true); 
+  };
+  
+  const openEdit = (cat: Category) => { 
+    setEditing(cat); 
+    setForm({ name: cat.name, parentId: cat.parentId, sizeGuideUrl: cat.sizeGuideUrl, imageUrl: cat.imageUrl }); 
+    setImageFile(null);
+    setCategoryImageFile(null);
+    setShowModal(true); 
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      let currentSizeGuideUrl = form.sizeGuideUrl;
+      if (imageFile) {
+        const uploadData = new FormData();
+        uploadData.append('image', imageFile);
+        const { data: uploadRes } = await axiosInstance.post('/v1/categories/upload', uploadData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        currentSizeGuideUrl = uploadRes.data.url;
+      }
+
+      const formData = new FormData();
+      formData.append('name', form.name);
+      if (form.parentId !== null) {
+        formData.append('parentId', String(form.parentId));
+      }
+      if (currentSizeGuideUrl) {
+        formData.append('sizeGuideUrl', currentSizeGuideUrl);
+      }
+      if (categoryImageFile) {
+        formData.append('image', categoryImageFile);
+      }
+
       if (editing) {
-        await axiosInstance.patch(`/v1/categories/${editing.id}`, form);
+        await axiosInstance.patch(`/v1/categories/${editing.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         toast.success('Categoría actualizada');
       } else {
-        await axiosInstance.post('/v1/categories', form);
+        await axiosInstance.post('/v1/categories', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         toast.success('Categoría creada');
       }
       setShowModal(false);
+      setImageFile(null);
+      setCategoryImageFile(null);
       fetchCategories();
     } catch { 
       toast.error('Error al guardar'); 
@@ -348,6 +418,150 @@ const CategoriesPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#3F3F3F] uppercase tracking-wider mb-2">
+                  Imagen de Categoría (Para la Tienda)
+                </label>
+                <div 
+                  className={`relative flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl transition-all duration-200 overflow-hidden cursor-pointer
+                    ${isDraggingCategory ? 'border-[#3F3F3F] bg-[#D9D9D2]/20' : 'border-[#D9D9D2] bg-white hover:border-[#3F3F3F] hover:bg-[#F7F7F5]'}`}
+                  onDragOver={(e) => { e.preventDefault(); setIsDraggingCategory(true); }}
+                  onDragLeave={() => setIsDraggingCategory(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDraggingCategory(false);
+                    if (e.dataTransfer.files?.[0]) {
+                      setCategoryImageFile(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  onClick={() => document.getElementById('category-image-file')?.click()}
+                >
+                  <input 
+                    type="file" 
+                    id="category-image-file" 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        setCategoryImageFile(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  {categoryImageFile || form.imageUrl ? (
+                    <div className="relative w-full h-32 flex items-center justify-center group bg-white/50 rounded p-2">
+                      <img 
+                        src={categoryImageFile ? URL.createObjectURL(categoryImageFile) : form.imageUrl!} 
+                        alt="Imagen de categoría" 
+                        className="max-w-full max-h-full object-contain" 
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-opacity rounded">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById('category-image-file')?.click();
+                          }}
+                          className="bg-white text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                          title="Cambiar imagen"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCategoryImageFile(null);
+                            setForm(f => ({ ...f, imageUrl: null }));
+                          }}
+                          className="bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors"
+                          title="Eliminar imagen"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center text-[#3F3F3F]/50 py-4">
+                      <UploadCloud className="w-8 h-8 mb-2 text-[#D9D9D2]" />
+                      <span className="text-sm font-medium text-[#3F3F3F]">Clic o arrastra la imagen aquí</span>
+                      <span className="text-xs text-gray-400 mt-1">Formatos permitidos: JPG, PNG, WEBP (Máx. 2MB)</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#3F3F3F] uppercase tracking-wider mb-2">
+                  Guía de Tallas (Imagen)
+                </label>
+                <div 
+                  className={`relative flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl transition-all duration-200 overflow-hidden cursor-pointer
+                    ${isDragging ? 'border-[#3F3F3F] bg-[#D9D9D2]/20' : 'border-[#D9D9D2] bg-white hover:border-[#3F3F3F] hover:bg-[#F7F7F5]'}`}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    if (e.dataTransfer.files?.[0]) {
+                      setImageFile(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  onClick={() => document.getElementById('size-guide-file')?.click()}
+                >
+                  <input 
+                    type="file" 
+                    id="size-guide-file" 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        setImageFile(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  {imageFile || form.sizeGuideUrl ? (
+                    <div className="relative w-full h-32 flex items-center justify-center group bg-white/50 rounded p-2">
+                      <img 
+                        src={imageFile ? URL.createObjectURL(imageFile) : form.sizeGuideUrl!} 
+                        alt="Guía de tallas" 
+                        className="max-w-full max-h-full object-contain" 
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-opacity rounded">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById('size-guide-file')?.click();
+                          }}
+                          className="bg-white text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                          title="Cambiar imagen"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setImageFile(null);
+                            setForm(f => ({ ...f, sizeGuideUrl: null }));
+                          }}
+                          className="bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors"
+                          title="Eliminar imagen"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center text-[#3F3F3F]/50 py-4">
+                      <UploadCloud className="w-8 h-8 mb-2 text-[#D9D9D2]" />
+                      <span className="text-sm font-medium text-[#3F3F3F]">Clic o arrastra la imagen aquí</span>
+                      <span className="text-xs text-gray-400 mt-1">Formatos permitidos: JPG, PNG, WEBP (Máx. 2MB)</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4 border-t border-[#D9D9D2]/30">

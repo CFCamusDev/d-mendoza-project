@@ -367,6 +367,7 @@ export class AuthController {
             id: payload.userId,
             email: payload.email,
             role: payload.role,
+            branchId: payload.branchId,
           },
           tokens: {
             accessToken,

@@ -6,6 +6,15 @@ const router = Router();
 const clientController = new ClientController();
 
 /**
+ * T-205: List unified clients base
+ */
+router.get(
+  '/admin/clients',
+  requirePermission('users:read'),
+  clientController.getUnifiedClients.bind(clientController)
+);
+
+/**
  * T-059 helper: List clients without account
  */
 router.get(
@@ -30,6 +39,15 @@ router.post(
   '/admin/clients/bulk-link',
   requirePermission('users:write'),
   clientController.bulkLink.bind(clientController)
+);
+
+/**
+ * T-206: Update client details
+ */
+router.put(
+  '/admin/clients/:id',
+  requirePermission('users:write'),
+  clientController.updateClient.bind(clientController)
 );
 
 export default router;

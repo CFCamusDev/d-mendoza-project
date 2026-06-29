@@ -67,6 +67,7 @@ const dummyBranchRecord = {
   address: 'Av. Larco 123',
   phone: '999888777',
   isActive: true,
+  isMain: false,
   warehouse: {
     id: 100,
     branchId: 10,

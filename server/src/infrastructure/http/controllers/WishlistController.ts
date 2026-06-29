@@ -19,6 +19,11 @@ export class WishlistController {
               product: {
                 include: {
                   images: true,
+                  variants: {
+                    include: {
+                      branchStock: true
+                    }
+                  }
                 }
               }
             }
