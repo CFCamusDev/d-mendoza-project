@@ -94,6 +94,7 @@ export class LoginUseCase {
       userId: user.id,
       email: user.email,
       role: userRole,
+      branchId: user.branchId, // Included if the user is an employee
     });
 
     // Step 7: Return user data (without password) + tokens
@@ -102,6 +103,7 @@ export class LoginUseCase {
         id: user.id,
         email: user.email,
         name: user.name,
+        branchId: user.branchId, // Added for frontend context
         lastLogin: now,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,

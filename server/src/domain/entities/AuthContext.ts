@@ -7,4 +7,5 @@ export interface AuthContext {
   userId: number;
   email: string;
   role: string;
+  branchId?: number;
 }

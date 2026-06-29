@@ -4,6 +4,7 @@ export interface TokenPayload {
   userId: number;
   email: string;
   role: string;
+  branchId?: number;
 }
 
 export interface AuthTokens {

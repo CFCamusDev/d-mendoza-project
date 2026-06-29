@@ -34,6 +34,7 @@ export const requirePermission = (requiredPermission: string) => {
         userId: payload.userId,
         email: payload.email,
         role: payload.role,
+        branchId: payload.branchId,
       };
       setContextUser(payload.userId, payload.email);
 
@@ -140,6 +141,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       userId: payload.userId,
       email: payload.email,
       role: payload.role,
+      branchId: payload.branchId,
     };
     setContextUser(payload.userId, payload.email);
 
@@ -188,6 +190,7 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
         userId: payload.userId,
         email: payload.email,
         role: payload.role,
+        branchId: payload.branchId,
       };
       setContextUser(payload.userId, payload.email);
     }

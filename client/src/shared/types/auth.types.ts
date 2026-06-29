@@ -5,6 +5,7 @@ export interface JwtPayload {
   role: UserRole;
   iat: number;
   exp: number;
+  branchId?: number;
 }
 
 // Roles defined by the backend RBAC system
@@ -18,6 +19,7 @@ export interface AuthUser {
   name?: string;
   avatarUrl?: string;
   authProvider?: 'local' | 'google';
+  branchId?: number;
 }
 
 // Token pair returned on successful login
