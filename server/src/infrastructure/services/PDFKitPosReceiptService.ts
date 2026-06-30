@@ -73,12 +73,11 @@ export class PDFKitPosReceiptService {
     // ── Encabezado tabla de ítems ──────────────────────────────────────────────
     const headerY = tableStart + 12;
     doc.fillColor(dark).fontSize(10)
-       .text('Producto', 50, headerY, { width: 180 })
-       .text('SKU', 235, headerY, { width: 90 })
-       .text('Cant.', 330, headerY, { width: 40, align: 'right' })
-       .text('P.Unit.', 375, headerY, { width: 60, align: 'right' })
-       .text('Desc.', 440, headerY, { width: 45, align: 'right' })
-       .text('Total', 490, headerY, { width: 55, align: 'right' });
+       .text('Producto', 50, headerY, { width: 280 })
+       .text('Cant.', 335, headerY, { width: 40, align: 'right' })
+       .text('P.Unit.', 380, headerY, { width: 60, align: 'right' })
+       .text('Desc.', 445, headerY, { width: 45, align: 'right' })
+       .text('Total', 495, headerY, { width: 50, align: 'right' });
 
     doc.moveTo(50, headerY + 15).lineTo(545, headerY + 15).strokeColor(dark).stroke();
 
@@ -87,12 +86,11 @@ export class PDFKitPosReceiptService {
 
     for (const item of receipt.items) {
       doc.fillColor(gray).fontSize(9)
-         .text(item.productName, 50, y, { width: 180 })
-         .text(item.sku, 235, y, { width: 90 })
-         .text(item.quantity.toString(), 330, y, { width: 40, align: 'right' })
-         .text(`S/ ${item.unitPrice.toFixed(2)}`, 375, y, { width: 60, align: 'right' })
-         .text(item.discountAmount > 0 ? `-S/ ${item.discountAmount.toFixed(2)}` : '—', 440, y, { width: 45, align: 'right' })
-         .text(`S/ ${item.lineTotal.toFixed(2)}`, 490, y, { width: 55, align: 'right' });
+         .text(item.productName, 50, y, { width: 280 })
+         .text(item.quantity.toString(), 335, y, { width: 40, align: 'right' })
+         .text(`S/ ${item.unitPrice.toFixed(2)}`, 380, y, { width: 60, align: 'right' })
+         .text(item.discountAmount > 0 ? `-S/ ${item.discountAmount.toFixed(2)}` : '—', 445, y, { width: 45, align: 'right' })
+         .text(`S/ ${item.lineTotal.toFixed(2)}`, 495, y, { width: 50, align: 'right' });
 
       y += 18;
       if (y > 720) { doc.addPage(); y = 50; }

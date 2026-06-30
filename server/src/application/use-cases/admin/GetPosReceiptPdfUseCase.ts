@@ -13,7 +13,6 @@ export interface PosReceiptData {
   seller: { name: string; lastName: string | null; email: string } | null;
   client: { name: string; lastName: string | null; documentType: string | null; documentId: string | null } | null;
   items: Array<{
-    sku: string;
     productName: string;
     quantity: number;
     unitPrice: number;
@@ -33,8 +32,7 @@ export class GetPosReceiptPdfUseCase {
         items: {
           include: {
             variant: {
-              select: {
-                sku: true,
+              include: {
                 product: { select: { name: true } },
               },
             },
@@ -77,7 +75,6 @@ export class GetPosReceiptPdfUseCase {
       seller,
       client,
       items: order.items.map((item) => ({
-        sku: item.variant.sku,
         productName: item.variant.product.name,
         quantity: item.quantity,
         unitPrice: Number(item.unitPrice),
