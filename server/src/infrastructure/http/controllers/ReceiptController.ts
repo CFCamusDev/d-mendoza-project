@@ -2,23 +2,26 @@ import { Request, Response, NextFunction } from 'express';
 import { GetReceiptsUseCase } from '@application/use-cases/admin/GetReceiptsUseCase';
 import { GetPosReceiptPdfUseCase } from '@application/use-cases/admin/GetPosReceiptPdfUseCase';
 import { PDFKitPosReceiptService } from '@infrastructure/services/PDFKitPosReceiptService';
+import { PDFKitTicketReceiptService } from '@infrastructure/services/PDFKitTicketReceiptService';
 
 const getReceiptsUseCase = new GetReceiptsUseCase();
 const getPosReceiptPdfUseCase = new GetPosReceiptPdfUseCase();
 const pdfService = new PDFKitPosReceiptService();
+const ticketService = new PDFKitTicketReceiptService();
 
 export class ReceiptController {
   /**
-   * GET /api/v1/receipts/:id/pdf  (HU-055 T-152)
-   * Genera y descarga el PDF de un comprobante POS usando PDFKit.
+   * GET /api/v1/receipts/:id/pdf?format=ticket  (HU-055 T-152)
+   * Genera PDF A4 (default) o ticket de 80 mm según el parámetro ?format.
    */
   async getReceiptPdf(req: Request, res: Response, next: NextFunction) {
     try {
       const id = parseInt(String(req.params.id), 10);
       if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID inválido' });
 
+      const isTicket = req.query.format === 'ticket';
       const receipt = await getPosReceiptPdfUseCase.execute(id);
-      const doc = pdfService.generate(receipt);
+      const doc = isTicket ? ticketService.generate(receipt) : pdfService.generate(receipt);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="comprobante-${id}.pdf"`);

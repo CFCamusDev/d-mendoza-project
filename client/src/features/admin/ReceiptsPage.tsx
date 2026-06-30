@@ -124,7 +124,7 @@ export const ReceiptsPage: React.FC = () => {
   const handleReprint = async (orderId: number) => {
     setPrintingId(orderId);
     try {
-      const response = await axiosInstance.get(`/v1/receipts/${orderId}/pdf`, {
+      const response = await axiosInstance.get(`/v1/receipts/${orderId}/pdf?format=ticket`, {
         responseType: 'blob',
       });
       const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
