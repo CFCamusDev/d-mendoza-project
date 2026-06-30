@@ -1,35 +1,50 @@
 import prisma from '@infrastructure/database/prisma';
 import { Product, CreateProductDTO } from '@domain/entities/Product';
 import { IProductRepository } from '@domain/repositories/IProductVariantRepository';
+import { normalizeAttributesJson } from '../utils/AttributeNormalizer';
 
 export class PrismaProductRepository implements IProductRepository {
+  private mapProduct(product: any): Product {
+    if (!product) return product;
+    if (product.variants) {
+      product.variants = product.variants.map((v: any) => ({
+        ...v,
+        attributesJson: normalizeAttributesJson(v.attributesJson),
+      }));
+    }
+    return product;
+  }
   async findAll(): Promise<Product[]> {
-    return prisma.product.findMany({
+    const products = await prisma.product.findMany({
       include: { images: true, category: true, brand: true, variants: true, gender: true },
       orderBy: { name: 'asc' },
-    }) as unknown as Promise<Product[]>;
+    });
+    return products.map(p => this.mapProduct(p)) as unknown as Product[];
   }
 
   async findAllActive(): Promise<Product[]> {
-    return prisma.product.findMany({
+    const products = await prisma.product.findMany({
       where: { isActive: true },
       include: { images: true, category: true, brand: true, variants: true, gender: true },
       orderBy: { name: 'asc' },
-    }) as unknown as Promise<Product[]>;
+    });
+    return products.map(p => this.mapProduct(p)) as unknown as Product[];
   }
 
   async findById(id: number): Promise<Product | null> {
-    return prisma.product.findUnique({
+    const product = await prisma.product.findUnique({
       where: { id },
       include: { images: true, category: true, brand: true, variants: true, gender: true },
-    }) as unknown as Promise<Product | null>;
+    });
+    return product ? this.mapProduct(product) as unknown as Product : null;
   }
 
   async findByCode(code: string): Promise<Product | null> {
-    return prisma.product.findUnique({
+    const product = await prisma.product.findUnique({
       where: { code },
       include: { images: true, category: true, brand: true, variants: true, gender: true },
-    }) as unknown as Promise<Product | null>;
+    });
+    return product ? this.mapProduct(product) as unknown as Product : null;
   }
 
   async create(data: CreateProductDTO | { code: string; name: string; description?: string }): Promise<Product> {
@@ -39,7 +54,7 @@ export class PrismaProductRepository implements IProductRepository {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)+/g, '') + '-' + fullData.code.toLowerCase());
 
-    return prisma.product.create({
+    const product = await prisma.product.create({
       data: {
         code: fullData.code,
         name: fullData.name,
@@ -51,23 +66,26 @@ export class PrismaProductRepository implements IProductRepository {
         genderId: fullData.genderId ?? null,
       },
       include: { images: true, variants: true, gender: true },
-    }) as unknown as Promise<Product>;
+    });
+    return this.mapProduct(product) as unknown as Product;
   }
 
   async update(id: number, data: Partial<CreateProductDTO & { isActive: boolean }>): Promise<Product> {
-    return prisma.product.update({
+    const product = await prisma.product.update({
       where: { id },
       data,
       include: { images: true, variants: true, gender: true },
-    }) as unknown as Promise<Product>;
+    });
+    return this.mapProduct(product) as unknown as Product;
   }
 
   async updateStatus(id: number, isActive: boolean): Promise<Product> {
-    return prisma.product.update({
+    const product = await prisma.product.update({
       where: { id },
       data: { isActive },
       include: { images: true, variants: true, gender: true },
-    }) as unknown as Promise<Product>;
+    });
+    return this.mapProduct(product) as unknown as Product;
   }
 
   async addImage(productId: number, url: string, isMain: boolean, attributeValueId?: number | null): Promise<void> {

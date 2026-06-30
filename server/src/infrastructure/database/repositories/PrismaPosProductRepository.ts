@@ -40,13 +40,26 @@ export class PrismaPosProductRepository implements IPosProductRepository {
       const branchStockRecord = record.branchStock[0];
       const stock = branchStockRecord ? branchStockRecord.quantity : 0;
 
-      // Generar un nombre descriptivo concatenando atributos si existen
-      let fullName = record.product.name;
+      // Normalizar attributes a un Record<string, string> plano
       const attributes = record.attributesJson as any;
+      const flatAttributes: Record<string, string> = {};
+      
       if (attributes && typeof attributes === 'object') {
-        const parts = Object.entries(attributes)
-          .map(([_, val]) => String(val))
-          .join(' - ');
+        Object.entries(attributes).forEach(([key, val]) => {
+          if (val && typeof val === 'object' && 'value' in (val as any)) {
+            // Formato enriquecido: { "1": { name: "Color", value: "Negro" } }
+            const name = (val as any).name || key;
+            flatAttributes[name] = String((val as any).value);
+          } else {
+            // Formato simple: { "color": "Blanco", "talla": "40" }
+            flatAttributes[key] = String(val);
+          }
+        });
+      }
+
+      let fullName = record.product.name;
+      if (Object.keys(flatAttributes).length > 0) {
+        const parts = Object.values(flatAttributes).join(' - ');
         if (parts) {
           fullName += ` - ${parts}`;
         }
@@ -60,7 +73,7 @@ export class PrismaPosProductRepository implements IPosProductRepository {
         baseName: record.product.name,
         price: Number(record.price),
         stock: stock,
-        attributes: attributes || {},
+        attributes: flatAttributes,
       };
     });
   }
