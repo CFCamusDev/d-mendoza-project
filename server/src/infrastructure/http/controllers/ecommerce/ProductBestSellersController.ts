@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import prisma from '@infrastructure/database/prisma';
+import { normalizeAttributesJson } from '@infrastructure/database/utils/AttributeNormalizer';
 
 const BestSellersQuerySchema = z.object({
   limit: z.preprocess((val) => (val ? Number(val) : undefined), z.number().int().positive().default(10)),
@@ -88,7 +89,7 @@ export class ProductBestSellersController {
             sku: variant.sku,
             price: Number(variant.price),
             discountPercent: variant.discountPercent,
-            attributesJson: variant.attributesJson,
+            attributesJson: normalizeAttributesJson(variant.attributesJson),
             isActive: variant.isActive,
             minStock: variant.minStock,
             createdAt: variant.createdAt,
