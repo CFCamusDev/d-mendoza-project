@@ -12,4 +12,11 @@ router.get(
   controller.getReceipts.bind(controller)
 );
 
+// GET /api/v1/receipts/:id/pdf - Descargar PDF de comprobante POS (HU-055 T-152)
+router.get(
+  '/receipts/:id/pdf',
+  requirePermission('sales:read'),
+  controller.getReceiptPdf.bind(controller)
+);
+
 export default router;

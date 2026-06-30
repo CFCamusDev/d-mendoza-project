@@ -15,7 +15,6 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
-import { Receipt, type ReceiptData } from '../pos/components/Receipt';
 
 interface BranchOption {
   id: number;
@@ -71,9 +70,9 @@ export const ReceiptsPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Printing State
-  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+  // Action States
   const [printingId, setPrintingId] = useState<number | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const fetchBranches = async () => {
     try {
@@ -122,40 +121,40 @@ export const ReceiptsPage: React.FC = () => {
     fetchReceipts();
   }, [branchId, type, from, to, page]);
 
-  // Handle printing
-  useEffect(() => {
-    if (receiptData) {
-      setTimeout(() => {
-        window.print();
-        setTimeout(() => {
-          setReceiptData(null);
-          setPrintingId(null);
-        }, 500);
-      }, 100);
-    }
-  }, [receiptData]);
-
   const handleReprint = async (orderId: number) => {
     setPrintingId(orderId);
     try {
-      const { data } = await axiosInstance.get(`/v1/pos/sales/${orderId}/receipt`);
-      if (data.success) {
-        setReceiptData(data.data);
-      } else {
-        toast.error(data.error || 'No se pudo obtener el comprobante.');
-        setPrintingId(null);
-      }
+      const response = await axiosInstance.get(`/v1/receipts/${orderId}/pdf?format=ticket`, {
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const win = window.open(url, '_blank');
+      if (win) win.focus();
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
     } catch (err: any) {
-      console.error(err);
-      toast.error(err.response?.data?.error || 'Error al conectar con el servidor.');
+      toast.error(err.response?.data?.error || 'Error al reimprimir el comprobante.');
+    } finally {
       setPrintingId(null);
     }
   };
 
-  const handleDownloadPDF = (orderId: number) => {
-    // Under generic ticket printer workflow, "reprinting" prompts the system printing dialog.
-    // cashiers can configure 'Save as PDF' from this dialog. We trigger the same print layout.
-    void handleReprint(orderId);
+  const handleDownloadPDF = async (orderId: number) => {
+    setDownloadingId(orderId);
+    try {
+      const response = await axiosInstance.get(`/v1/receipts/${orderId}/pdf`, {
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `comprobante-${orderId}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Error al generar el PDF.');
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const clearFilters = () => {
@@ -169,12 +168,7 @@ export const ReceiptsPage: React.FC = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       
-      {/* Hidden print component */}
-      <div className="hidden print:block">
-        {receiptData && <Receipt data={receiptData} />}
-      </div>
-
-      <div className="print:hidden space-y-6">
+      <div className="space-y-6">
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#D9D9D2]/40 pb-5">
@@ -375,11 +369,15 @@ export const ReceiptsPage: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleDownloadPDF(row.orderId)}
-                            disabled={printingId === row.orderId}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#3F3F3F] hover:bg-black text-white text-[10px] font-bold rounded-lg cursor-pointer transition-all"
-                            title="Guardar PDF / Descargar"
+                            disabled={downloadingId === row.orderId}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#3F3F3F] hover:bg-black text-white text-[10px] font-bold rounded-lg cursor-pointer transition-all disabled:opacity-50"
+                            title="Descargar PDF del comprobante"
                           >
-                            <Download className="w-3 h-3" />
+                            {downloadingId === row.orderId ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Download className="w-3 h-3" />
+                            )}
                             <span>PDF</span>
                           </button>
                         </div>
