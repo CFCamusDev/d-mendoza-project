@@ -74,6 +74,7 @@ export const ReceiptsPage: React.FC = () => {
   // Printing State
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [printingId, setPrintingId] = useState<number | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const fetchBranches = async () => {
     try {
@@ -152,10 +153,23 @@ export const ReceiptsPage: React.FC = () => {
     }
   };
 
-  const handleDownloadPDF = (orderId: number) => {
-    // Under generic ticket printer workflow, "reprinting" prompts the system printing dialog.
-    // cashiers can configure 'Save as PDF' from this dialog. We trigger the same print layout.
-    void handleReprint(orderId);
+  const handleDownloadPDF = async (orderId: number) => {
+    setDownloadingId(orderId);
+    try {
+      const response = await axiosInstance.get(`/v1/receipts/${orderId}/pdf`, {
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `comprobante-${orderId}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Error al generar el PDF.');
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const clearFilters = () => {
@@ -375,11 +389,15 @@ export const ReceiptsPage: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleDownloadPDF(row.orderId)}
-                            disabled={printingId === row.orderId}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#3F3F3F] hover:bg-black text-white text-[10px] font-bold rounded-lg cursor-pointer transition-all"
-                            title="Guardar PDF / Descargar"
+                            disabled={downloadingId === row.orderId}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#3F3F3F] hover:bg-black text-white text-[10px] font-bold rounded-lg cursor-pointer transition-all disabled:opacity-50"
+                            title="Descargar PDF del comprobante"
                           >
-                            <Download className="w-3 h-3" />
+                            {downloadingId === row.orderId ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Download className="w-3 h-3" />
+                            )}
                             <span>PDF</span>
                           </button>
                         </div>

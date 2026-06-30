@@ -1,9 +1,37 @@
 import { Request, Response, NextFunction } from 'express';
 import { GetReceiptsUseCase } from '@application/use-cases/admin/GetReceiptsUseCase';
+import { GetPosReceiptPdfUseCase } from '@application/use-cases/admin/GetPosReceiptPdfUseCase';
+import { PDFKitPosReceiptService } from '@infrastructure/services/PDFKitPosReceiptService';
 
 const getReceiptsUseCase = new GetReceiptsUseCase();
+const getPosReceiptPdfUseCase = new GetPosReceiptPdfUseCase();
+const pdfService = new PDFKitPosReceiptService();
 
 export class ReceiptController {
+  /**
+   * GET /api/v1/receipts/:id/pdf  (HU-055 T-152)
+   * Genera y descarga el PDF de un comprobante POS usando PDFKit.
+   */
+  async getReceiptPdf(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = parseInt(String(req.params.id), 10);
+      if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID inválido' });
+
+      const receipt = await getPosReceiptPdfUseCase.execute(id);
+      const doc = pdfService.generate(receipt);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="comprobante-${id}.pdf"`);
+
+      doc.pipe(res);
+    } catch (error: any) {
+      if (error.message?.includes('no encontrado')) {
+        return res.status(404).json({ success: false, error: error.message });
+      }
+      next(error);
+    }
+  }
+
   /**
    * GET /api/v1/receipts
    * Listar de manera paginada y filtrada las ventas/comprobantes del sistema POS.
@@ -23,7 +51,6 @@ export class ReceiptController {
       let to: Date | undefined = undefined;
       if (req.query.to) {
         to = new Date(String(req.query.to));
-        // Ajustamos la fecha de fin al final del día si solo viene formato YYYY-MM-DD
         if (!String(req.query.to).includes('T')) {
           to.setHours(23, 59, 59, 999);
         }
