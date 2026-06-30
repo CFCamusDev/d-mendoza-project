@@ -1,4 +1,5 @@
 import prisma from '@infrastructure/database/prisma';
+import { normalizeAttributesJson } from '../utils/AttributeNormalizer';
 import {
   IProductRepository,
   IProductVariantRepository,
@@ -102,7 +103,7 @@ export class PrismaProductVariantRepository implements IProductVariantRepository
       productId: record.productId,
       sku: record.sku,
       price: Number(record.price), // Decimal → number
-      attributesJson: record.attributesJson as Record<string, string>,
+      attributesJson: normalizeAttributesJson(record.attributesJson),
       isActive: record.isActive,
       minStock: record.minStock,
       discountPercent: record.discountPercent,
