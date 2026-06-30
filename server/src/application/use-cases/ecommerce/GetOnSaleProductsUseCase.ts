@@ -1,4 +1,5 @@
 import prisma from '@infrastructure/database/prisma';
+import { normalizeAttributesJson } from '@infrastructure/database/utils/AttributeNormalizer';
 
 export class GetOnSaleProductsUseCase {
   async execute() {
@@ -32,7 +33,10 @@ export class GetOnSaleProductsUseCase {
 
     // 2. Mapear y calcular los rangos de precio y descuento para cada producto
     return products.map((product) => {
-      const activeSaleVariants = product.variants;
+      const activeSaleVariants = product.variants.map((v: any) => ({
+        ...v,
+        attributesJson: normalizeAttributesJson(v.attributesJson),
+      }));
 
       const discounts = activeSaleVariants.map((v) => v.discountPercent);
       const minDiscount = discounts.length > 0 ? Math.min(...discounts) : 0;
@@ -48,8 +52,8 @@ export class GetOnSaleProductsUseCase {
       const maxPrice = finalPrices.length > 0 ? Math.max(...finalPrices) : 0;
 
       // Calcular stock total para determinar si está agotado
-      const totalStock = activeSaleVariants.reduce((sum, v) => {
-        const stockQty = v.branchStock.reduce((s, bs) => s + bs.quantity, 0);
+      const totalStock = activeSaleVariants.reduce((sum: number, v: any) => {
+        const stockQty = v.branchStock.reduce((s: number, bs: any) => s + bs.quantity, 0);
         return sum + stockQty;
       }, 0);
 

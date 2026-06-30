@@ -1,6 +1,7 @@
 import prisma from '@infrastructure/database/prisma';
 import { ProductSearchCriteria } from '@domain/criteria/ProductSearchCriteria';
 import { ProductQueryBuilder } from '@infrastructure/database/queries/ProductQueryBuilder';
+import { normalizeAttributesJson } from '@infrastructure/database/utils/AttributeNormalizer';
 
 export interface SearchProductsResponse {
   products: any[];
@@ -31,7 +32,7 @@ export class SearchProductsUseCase {
           sku: variant.sku,
           price: Number(variant.price),
           discountPercent: variant.discountPercent,
-          attributesJson: variant.attributesJson,
+          attributesJson: normalizeAttributesJson(variant.attributesJson),
           isActive: variant.isActive,
           minStock: variant.minStock,
           createdAt: variant.createdAt,
