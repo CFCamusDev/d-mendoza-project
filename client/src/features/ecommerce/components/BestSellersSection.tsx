@@ -34,6 +34,11 @@ export default function BestSellersSection() {
     return null; // Ocultar si no hay productos
   }
 
+  // Deduplicar variantes para que no se muestre el mismo producto varias veces
+  const uniqueVariants = Array.from(
+    new Map(variants.map(v => [v.productId, v])).values()
+  );
+
   return (
     <section className="py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,7 +61,7 @@ export default function BestSellersSection() {
           }}
           className="pb-12" // padding para la paginación
         >
-          {variants.map((variant) => {
+          {uniqueVariants.map((variant) => {
             const price = Number(variant.price);
             const discountAmount = variant.discountPercent > 0 ? (price * variant.discountPercent) / 100 : 0;
             const finalPrice = price - discountAmount;
