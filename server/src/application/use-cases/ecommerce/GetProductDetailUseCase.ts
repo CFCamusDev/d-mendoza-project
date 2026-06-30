@@ -1,5 +1,6 @@
 import prisma from '@infrastructure/database/prisma';
 import { Gender } from '@domain/entities/Gender';
+import { normalizeAttributesJson } from '@infrastructure/database/utils/AttributeNormalizer';
 
 export interface ProductDetailResponse {
   id: number;
@@ -74,7 +75,7 @@ export class GetProductDetailUseCase {
         productId: variant.productId,
         sku: variant.sku,
         price: Number(variant.price),
-        attributesJson: variant.attributesJson,
+        attributesJson: normalizeAttributesJson(variant.attributesJson),
         isActive: variant.isActive,
         minStock: variant.minStock,
         createdAt: variant.createdAt,
