@@ -275,7 +275,7 @@ export const AppRouter = () => {
         <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><RotationReportPage /></ProtectedRoute>} />
 
         {/* HU-058 Logistics & Picking */}
-        <Route path="/admin/logistics/picking" element={<ProtectedRoute allowedRoles={['ADMIN', 'DELIVERY']}><PickingPage /></ProtectedRoute>} />
+        <Route path="/admin/logistics/picking" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><PickingPage /></ProtectedRoute>} />
 
 
 

@@ -50,15 +50,16 @@ const PickingPage: React.FC = () => {
   };
 
   const handleGeneratePicking = async () => {
-    // Si la API generará todo, la validación de selectedOrders es opcional
-    // Pero según el requerimiento de la interfaz, el usuario debe seleccionar
+    if (orders.length === 0) return;
+
     if (selectedOrders.length === 0) {
-      toast.error('Debe seleccionar al menos un pedido para generar el picking list.');
-      return;
+      const confirmAll = window.confirm('¿Desea generar el picking list de TODOS los pedidos pendientes?');
+      if (!confirmAll) return;
+      await generatePickingList(); // masivo
+    } else {
+      await generatePickingList(selectedOrders); // parcial
+      setSelectedOrders([]);
     }
-    
-    await generatePickingList();
-    setSelectedOrders([]);
   };
 
   return (
@@ -88,15 +89,21 @@ const PickingPage: React.FC = () => {
 
           <button
             onClick={handleGeneratePicking}
-            disabled={selectedOrders.length === 0 || isGenerating}
+            disabled={orders.length === 0 || isGenerating}
             className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm ${
-              selectedOrders.length === 0 || isGenerating
+              orders.length === 0 || isGenerating
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
                 : 'bg-black text-white hover:bg-gray-800 border border-transparent'
             }`}
           >
             {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
-            <span>{isGenerating ? 'Generando...' : 'Generar Picking List'}</span>
+            <span>
+              {isGenerating 
+                ? 'Generando...' 
+                : selectedOrders.length > 0 
+                  ? `Generar Picking (${selectedOrders.length} sel.)` 
+                  : 'Generar Picking Masivo'}
+            </span>
           </button>
         </div>
 

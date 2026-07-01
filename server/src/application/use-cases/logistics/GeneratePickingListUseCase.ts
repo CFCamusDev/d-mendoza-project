@@ -4,8 +4,8 @@ import { IDeliveryRepository } from '@domain/repositories/IDeliveryRepository';
 export class GeneratePickingListUseCase {
   constructor(private readonly deliveryRepository: IDeliveryRepository) {}
 
-  async execute(): Promise<Delivery[]> {
-    const orders = await this.deliveryRepository.findPaidOrdersWithoutDelivery();
+  async execute(orderIds?: number[]): Promise<Delivery[]> {
+    const orders = await this.deliveryRepository.findPaidOrdersWithoutDelivery(orderIds);
     const deliveries: Delivery[] = [];
 
     for (const order of orders) {

@@ -4207,17 +4207,18 @@ Se emite cuando el usuario no tiene la sesión activa o carece del permiso `role
 
 ### POST /api/v1/logistics/picking
 
-Genera una lista de picking agrupando todas las órdenes que tienen estado `PAID` y que no cuentan con un despacho (`Delivery`) asociado.
+Genera una lista de picking agrupando todas las órdenes (o una lista específica) que tienen estado `PAID` y que no cuentan con un despacho (`Delivery`) asociado.
 
 #### 1. Especificación del Endpoint
 
 | Método | Ruta | Autenticación | Rol Requerido |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/logistics/picking` | Requerida (Bearer Token) | `ADMIN` o `LOGISTICS` |
+| `POST` | `/api/v1/logistics/picking` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
 
 #### 2. Parámetros de Solicitud
 
-No requiere parámetros en el cuerpo (body) ni query params.
+- **Cuerpo (JSON) - Opcional**:
+  - `orderIds` (Array de Numbers, Opcional): Lista de IDs de órdenes a procesar. Si no se envía o está vacío, se procesan todas las órdenes con estado `PAID` sin despacho asociado (picking masivo).
 
 #### 3. Respuestas del Servidor
 
@@ -4258,7 +4259,7 @@ Devuelve la lista de despachos (`Delivery`) creados, cada uno incluyendo sus cor
 ```json
 {
   "success": false,
-  "error": "Acceso denegado: Se requiere el rol de Admin o Personal de Logística"
+  "error": "Acceso denegado: Se requiere el rol de Admin o Abastecimiento"
 }
 ```
 
@@ -4272,7 +4273,7 @@ Asigna un repartidor (`deliveryManId`) a un despacho (`Delivery`) existente y ac
 
 | Método | Ruta | Autenticación | Rol Requerido |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/logistics/deliveries/:id/assign` | Requerida (Bearer Token) | `ADMIN` o `LOGISTICS` |
+| `POST` | `/api/v1/logistics/deliveries/:id/assign` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
 
 #### 2. Parámetros de Solicitud
 
@@ -4318,7 +4319,7 @@ Genera y descarga la etiqueta de despacho en formato PDF utilizando PDFKit.
 
 | Método | Ruta | Autenticación | Rol Requerido |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/logistics/deliveries/:id/label` | Requerida (Bearer Token) | `ADMIN` o `LOGISTICS` |
+| `GET` | `/api/v1/logistics/deliveries/:id/label` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
 
 #### 2. Parámetros de Solicitud
 

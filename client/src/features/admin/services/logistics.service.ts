@@ -1,14 +1,22 @@
 import axiosInstance from '@/shared/api/axiosInstance';
-import type { Delivery, PickingResponse, AssignDeliveryManResponse } from '../types/logistics.types';
+  import type { Delivery, PickingResponse, AssignDeliveryManResponse, OrderToPick } from '../types/logistics.types';
 
 export const logisticsService = {
   /**
-   * Genera una lista de picking agrupando todas las órdenes que tienen estado PAID 
-   * y que no cuentan con un despacho (Delivery) asociado.
+   * Obtiene la lista de pedidos pagados sin despacho asociado desde el backend
    */
-  generatePickingList: async (): Promise<Delivery[]> => {
-    const { data } = await axiosInstance.post<PickingResponse>('/v1/logistics/picking');
-    return data.data; // Return the array of Deliveries
+  getPendingOrders: async (): Promise<OrderToPick[]> => {
+    const { data } = await axiosInstance.get<{ success: boolean; data: OrderToPick[] }>('/v1/logistics/orders/pending');
+    return data.data;
+  },
+
+  /**
+   * Genera una lista de picking agrupando todas las órdenes que tienen estado PAID 
+   * y que no cuentan con un despacho (Delivery) asociado. Permite enviar orderIds.
+   */
+  generatePickingList: async (orderIds?: number[]): Promise<Delivery[]> => {
+    const { data } = await axiosInstance.post<PickingResponse>('/v1/logistics/picking', { orderIds });
+    return data.data;
   },
 
   /**

@@ -97,15 +97,22 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
     return this.toDomain(record);
   }
 
-  async findPaidOrdersWithoutDelivery(): Promise<any[]> {
-    // Orders with status 'PAID' that do NOT have a Delivery record
-    return await prisma.order.findMany({
-      where: {
-        status: 'PAID',
-        delivery: {
-          is: null,
-        },
+  async findPaidOrdersWithoutDelivery(orderIds?: number[]): Promise<any[]> {
+    const whereClause: any = {
+      status: 'PAID',
+      delivery: {
+        is: null,
       },
+    };
+
+    if (orderIds && orderIds.length > 0) {
+      whereClause.id = {
+        in: orderIds,
+      };
+    }
+
+    return await prisma.order.findMany({
+      where: whereClause,
       include: {
         items: true,
       },

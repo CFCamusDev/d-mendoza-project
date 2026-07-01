@@ -7,6 +7,6 @@ export interface IDeliveryRepository {
     items: Array<{ variantId: number; qty: number }>
   ): Promise<Delivery>;
   assignDeliveryMan(id: number, deliveryManId: number): Promise<Delivery>;
-  findPaidOrdersWithoutDelivery(): Promise<any[]>;
+  findPaidOrdersWithoutDelivery(orderIds?: number[]): Promise<any[]>;
   findDeliveriesByStatus(status: string): Promise<Delivery[]>;
 }

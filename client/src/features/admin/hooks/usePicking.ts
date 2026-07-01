@@ -10,17 +10,11 @@ export const usePicking = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // MOCK: Obtener pedidos listos (estado PAID)
-  // Como la API no especifica un endpoint para listar pedidos listos para picking, lo mockeamos
   const fetchPendingOrders = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Simular llamada de red
-      await new Promise(res => setTimeout(res, 500));
-      setOrders([
-        { id: 1, orderId: 1001, customerName: 'Juan Perez', itemsCount: 3, totalAmount: 150.0, status: 'PAID', createdAt: new Date().toISOString() },
-        { id: 2, orderId: 1002, customerName: 'Maria Lopez', itemsCount: 1, totalAmount: 45.5, status: 'PAID', createdAt: new Date().toISOString() },
-      ]);
+      const data = await logisticsService.getPendingOrders();
+      setOrders(data);
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Error al cargar los pedidos');
@@ -29,14 +23,19 @@ export const usePicking = () => {
     }
   }, []);
 
-  const generatePickingList = async () => {
+  const generatePickingList = async (orderIds?: number[]) => {
     setIsGenerating(true);
     try {
-      // POST /api/v1/logistics/picking
-      const newDeliveries = await logisticsService.generatePickingList();
+      // POST /api/v1/logistics/picking con orderIds en body
+      const newDeliveries = await logisticsService.generatePickingList(orderIds);
       
-      // En la vida real, los orders seleccionados ya fueron procesados, así que los vaciamos de la lista
-      setOrders([]);
+      if (orderIds && orderIds.length > 0) {
+        // Eliminar de la tabla solo los pedidos que se procesaron
+        setOrders((prev) => prev.filter((o) => !orderIds.includes(o.id)));
+      } else {
+        // Si fue masivo, vaciar todas las órdenes
+        setOrders([]);
+      }
       
       // Añadimos los nuevos despachos generados a nuestra tabla local
       setDeliveries((prev) => [...newDeliveries, ...prev]);
