@@ -25,6 +25,8 @@ export interface Delivery {
   updatedAt: string;
   pickingItems: PickingItem[];
   failedAttempts?: FailedAttempt[];
+  deliveryPhotoUrl?: string | null;
+  deliveredAt?: string | null;
   orderUser?: {
     id: number;
     name: string;
