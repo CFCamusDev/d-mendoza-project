@@ -1,5 +1,5 @@
 import axiosInstance from '@/shared/api/axiosInstance';
-  import type { Delivery, PickingResponse, AssignDeliveryManResponse, OrderToPick } from '../types/logistics.types';
+import type { Delivery, PickingResponse, AssignDeliveryManResponse, OrderToPick, DeliveryMan } from '../types/logistics.types';
 
 export const logisticsService = {
   /**
@@ -26,6 +26,13 @@ export const logisticsService = {
     const { data } = await axiosInstance.get<{ success: boolean; data: Delivery[] }>('/v1/logistics/deliveries', {
       params: { status }
     });
+    return data.data;
+  },
+  /**
+   * Obtiene la lista de repartidores (usuarios con rol DELIVERY)
+   */
+  getDeliveryMen: async (): Promise<DeliveryMan[]> => {
+    const { data } = await axiosInstance.get<{ success: boolean; data: DeliveryMan[] }>('/v1/logistics/delivery-men');
     return data.data;
   },
 

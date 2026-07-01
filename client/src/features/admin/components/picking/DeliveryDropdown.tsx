@@ -1,20 +1,11 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
-
-interface DeliveryMan {
-  id: number;
-  name: string;
-}
-
-// Mocks for Phase 2
-const MOCK_DELIVERY_MEN: DeliveryMan[] = [
-  { id: 99, name: 'Carlos Repartidor' },
-  { id: 100, name: 'Luis Logistica' },
-];
+import type { DeliveryMan } from '../../types/logistics.types';
 
 interface DeliveryDropdownProps {
   deliveryId: number;
   currentDeliveryManId: number | null;
+  deliveryMen: DeliveryMan[];
   onAssign: (deliveryId: number, deliveryManId: number) => void;
   isLoading?: boolean;
 }
@@ -22,6 +13,7 @@ interface DeliveryDropdownProps {
 export const DeliveryDropdown: React.FC<DeliveryDropdownProps> = ({
   deliveryId,
   currentDeliveryManId,
+  deliveryMen,
   onAssign,
   isLoading = false
 }) => {
@@ -41,7 +33,7 @@ export const DeliveryDropdown: React.FC<DeliveryDropdownProps> = ({
         className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md disabled:bg-gray-100"
       >
         <option value="" disabled>Seleccione repartidor</option>
-        {MOCK_DELIVERY_MEN.map((man) => (
+        {deliveryMen.map((man) => (
           <option key={man.id} value={man.id}>
             {man.name}
           </option>

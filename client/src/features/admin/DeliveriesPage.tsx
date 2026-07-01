@@ -4,10 +4,13 @@ import { DeliveriesTable } from './components/picking/DeliveriesTable';
 import { useDeliveries } from './hooks/useDeliveries';
 import { useDeliveryAssignment } from './hooks/useDeliveryAssignment';
 import { Truck, Loader2 } from 'lucide-react';
-import type { Delivery } from './types/logistics.types';
+import type { Delivery, DeliveryMan } from './types/logistics.types';
+import { logisticsService } from './services/logistics.service';
 
 const DeliveriesPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [deliveryMen, setDeliveryMen] = useState<DeliveryMan[]>([]);
+  const [isLoadingDeliveryMen, setIsLoadingDeliveryMen] = useState(false);
   
   const { 
     deliveries, 
@@ -21,6 +24,22 @@ const DeliveriesPage: React.FC = () => {
   useEffect(() => {
     fetchDeliveries(statusFilter || undefined);
   }, [fetchDeliveries, statusFilter]);
+
+  // Load delivery men on mount
+  useEffect(() => {
+    const fetchDeliveryMen = async () => {
+      setIsLoadingDeliveryMen(true);
+      try {
+        const data = await logisticsService.getDeliveryMen();
+        setDeliveryMen(data);
+      } catch (err) {
+        console.error('Error fetching delivery men', err);
+      } finally {
+        setIsLoadingDeliveryMen(false);
+      }
+    };
+    fetchDeliveryMen();
+  }, []);
 
   const updateDeliveryState = (deliveryId: number, deliveryManId: number, status: Delivery['status']) => {
     setDeliveries((prev) => 
@@ -76,13 +95,14 @@ const DeliveriesPage: React.FC = () => {
           </div>
         </div>
 
-        {isLoading ? (
+        {isLoading || isLoadingDeliveryMen ? (
           <div className="flex justify-center items-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm">
             <Loader2 className="w-10 h-10 animate-spin text-brand-accent" />
           </div>
         ) : (
           <DeliveriesTable 
             deliveries={deliveries}
+            deliveryMen={deliveryMen}
             onAssignDeliveryMan={assignDeliveryMan}
             onDownloadLabel={downloadLabel}
             assigningId={assigningId}

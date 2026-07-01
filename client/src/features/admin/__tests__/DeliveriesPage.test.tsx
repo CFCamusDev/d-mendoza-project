@@ -41,10 +41,18 @@ describe('DeliveriesPage', () => {
     { id: 102, orderId: 1002, deliveryManId: 99, status: 'ASSIGNED', createdAt: '2026-07-01T10:00:00Z', pickingItems: [] }
   ];
 
+  const mockDeliveryMen = [
+    { id: 101, name: 'Repartidor 1', email: 'rep1@test.com' },
+    { id: 102, name: 'Repartidor 2', email: 'rep2@test.com' }
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
-    (axiosInstance.get as any).mockResolvedValue({
-      data: { success: true, data: mockDeliveries }
+    (axiosInstance.get as any).mockImplementation((url: string) => {
+      if (url.includes('/delivery-men')) {
+        return Promise.resolve({ data: { success: true, data: mockDeliveryMen } });
+      }
+      return Promise.resolve({ data: { success: true, data: mockDeliveries } });
     });
   });
 
@@ -84,10 +92,10 @@ describe('DeliveriesPage', () => {
     const selects = screen.getAllByRole('combobox');
     const dlvSelect = selects[1]; 
     
-    fireEvent.change(dlvSelect, { target: { value: '100' } });
+    fireEvent.change(dlvSelect, { target: { value: '101' } });
 
     await waitFor(() => {
-      expect(axiosInstance.post).toHaveBeenCalledWith('/v1/logistics/deliveries/101/assign', { deliveryManId: 100 });
+      expect(axiosInstance.post).toHaveBeenCalledWith('/v1/logistics/deliveries/101/assign', { deliveryManId: 101 });
     });
   });
 
@@ -95,6 +103,9 @@ describe('DeliveriesPage', () => {
     (axiosInstance.get as any).mockImplementation((url: string) => {
       if (url.includes('/label')) {
         return Promise.resolve({ data: new Blob() });
+      }
+      if (url.includes('/delivery-men')) {
+        return Promise.resolve({ data: { success: true, data: mockDeliveryMen } });
       }
       return Promise.resolve({ data: { success: true, data: mockDeliveries } });
     });

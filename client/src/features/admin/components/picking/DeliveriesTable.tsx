@@ -1,9 +1,10 @@
 import React from 'react';
-import type { Delivery } from '../../types/logistics.types';
+import type { Delivery, DeliveryMan } from '../../types/logistics.types';
 import { DeliveryDropdown } from './DeliveryDropdown';
 
 interface DeliveriesTableProps {
   deliveries: Delivery[];
+  deliveryMen: DeliveryMan[];
   onAssignDeliveryMan: (deliveryId: number, deliveryManId: number) => void;
   onDownloadLabel: (deliveryId: number) => void;
   assigningId?: number | null;
@@ -11,6 +12,7 @@ interface DeliveriesTableProps {
 
 export const DeliveriesTable: React.FC<DeliveriesTableProps> = ({
   deliveries,
+  deliveryMen,
   onAssignDeliveryMan,
   onDownloadLabel,
   assigningId
@@ -71,6 +73,7 @@ export const DeliveriesTable: React.FC<DeliveriesTableProps> = ({
                     <DeliveryDropdown 
                       deliveryId={delivery.id}
                       currentDeliveryManId={delivery.deliveryManId}
+                      deliveryMen={deliveryMen}
                       onAssign={onAssignDeliveryMan}
                       isLoading={assigningId === delivery.id}
                     />
