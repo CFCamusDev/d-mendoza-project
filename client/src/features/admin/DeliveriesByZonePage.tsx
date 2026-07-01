@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Map, Loader2, ChevronDown, ChevronUp, Package, Clock, DollarSign } from 'lucide-react';
 import { logisticsService } from './services/logistics.service';
-import type { DeliveriesByZoneGroup, Delivery } from './types/logistics.types';
-import { formatCurrency } from '@/shared/utils/formatCurrency';
+import type { DeliveriesByZoneGroup } from './types/logistics.types';
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(amount);
+};
 
 export default function DeliveriesByZonePage() {
   const [groups, setGroups] = useState<DeliveriesByZoneGroup[]>([]);
