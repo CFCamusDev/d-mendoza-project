@@ -1,6 +1,9 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { LogisticsController } from '../controllers/LogisticsController';
 import { requireAuth } from '../middlewares/auth.middleware';
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = Router();
 const controller = new LogisticsController();
@@ -31,5 +34,6 @@ router.post('/logistics/deliveries/:id/assign', requireAuth, checkSupplyOrAdmin,
 router.get('/logistics/deliveries/:id/label', requireAuth, checkSupplyOrAdmin, controller.getLabel);
 router.patch('/logistics/deliveries/:id/status', requireAuth, checkSupplyOrAdmin, controller.updateStatus);
 router.post('/logistics/deliveries/:id/failed-attempt', requireAuth, checkSupplyOrAdmin, controller.registerFailedAttempt);
+router.patch('/logistics/deliveries/:id/confirm', requireAuth, checkSupplyOrAdmin, upload.single('photo'), controller.confirmDelivery);
 
 export default router;

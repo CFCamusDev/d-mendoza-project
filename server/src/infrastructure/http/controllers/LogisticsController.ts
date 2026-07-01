@@ -11,6 +11,8 @@ import { GetDeliveriesUseCase } from '@application/use-cases/logistics/GetDelive
 import { GetDeliveryMenUseCase } from '@application/use-cases/logistics/GetDeliveryMenUseCase';
 import { UpdateDeliveryStatusUseCase } from '@application/use-cases/logistics/UpdateDeliveryStatusUseCase';
 import { RegisterFailedAttemptUseCase } from '@application/use-cases/logistics/RegisterFailedAttemptUseCase';
+import { ConfirmDeliveryUseCase } from '@application/use-cases/logistics/ConfirmDeliveryUseCase';
+import { CloudinaryStorageService } from '@infrastructure/services/CloudinaryStorageService';
 import { ResendEmailService } from '@infrastructure/services/ResendEmailService';
 import { InvalidDeliveryStateTransitionError } from '@domain/errors/InvalidDeliveryStateTransitionError';
 
@@ -23,6 +25,8 @@ export class LogisticsController {
   private getDeliveryMenUseCase: GetDeliveryMenUseCase;
   private updateDeliveryStatusUseCase: UpdateDeliveryStatusUseCase;
   private registerFailedAttemptUseCase: RegisterFailedAttemptUseCase;
+  private confirmDeliveryUseCase: ConfirmDeliveryUseCase;
+  private storageService: CloudinaryStorageService;
 
   constructor() {
     const deliveryRepo = new PrismaDeliveryRepository();
@@ -43,6 +47,8 @@ export class LogisticsController {
     this.getDeliveryMenUseCase = new GetDeliveryMenUseCase(userRepo);
     this.updateDeliveryStatusUseCase = new UpdateDeliveryStatusUseCase(deliveryRepo, emailService);
     this.registerFailedAttemptUseCase = new RegisterFailedAttemptUseCase();
+    this.confirmDeliveryUseCase = new ConfirmDeliveryUseCase();
+    this.storageService = new CloudinaryStorageService();
   }
 
   picking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -147,6 +153,36 @@ export class LogisticsController {
       });
 
       res.status(201).json({ success: true, data: attempt });
+    } catch (error: any) {
+      if (error.message?.includes('no encontrado')) {
+        res.status(404).json({ success: false, error: error.message });
+        return;
+      }
+      next(error);
+    }
+  };
+
+  confirmDelivery = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const deliveryId = Number(req.params.id);
+      if (isNaN(deliveryId)) {
+        res.status(400).json({ success: false, error: 'ID de delivery inválido' });
+        return;
+      }
+
+      if (!req.file) {
+        res.status(400).json({ success: false, error: 'Se requiere una foto de evidencia' });
+        return;
+      }
+
+      const photoUrl = await this.storageService.uploadImage(
+        req.file.buffer,
+        req.file.originalname,
+        'deliveries',
+      );
+
+      const result = await this.confirmDeliveryUseCase.execute({ deliveryId, deliveryPhotoUrl: photoUrl });
+      res.status(200).json({ success: true, data: result });
     } catch (error: any) {
       if (error.message?.includes('no encontrado')) {
         res.status(404).json({ success: false, error: error.message });
