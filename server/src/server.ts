@@ -5,6 +5,7 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 import app from './app';
 import prisma from './infrastructure/database/prisma';
 import { StockAlertJob } from './infrastructure/jobs/StockAlertJob';
+import { PendingOrderAlertJob } from './infrastructure/jobs/PendingOrderAlertJob';
 
 const PORT = process.env.SERVER_PORT || 3000;
 
@@ -14,6 +15,7 @@ const startServer = async () => {
     console.log('✅ Conexión a la base de datos establecida correctamente.');
 
     StockAlertJob.start();
+    PendingOrderAlertJob.start();
     console.log('✅ Tareas programadas iniciadas correctamente.');
 
     app.listen(PORT, () => {
