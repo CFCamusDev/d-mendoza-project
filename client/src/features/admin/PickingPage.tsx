@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { PickingTable } from './components/picking/PickingTable';
-import { OrderToPick } from './types/logistics.types';
+import { DeliveriesTable } from './components/picking/DeliveriesTable';
+import { OrderToPick, Delivery } from './types/logistics.types';
 import toast from 'react-hot-toast';
 import { PackageSearch, FileText } from 'lucide-react';
 
@@ -11,8 +12,15 @@ const mockOrders: OrderToPick[] = [
   { id: 2, orderId: 1002, customerName: 'Maria Lopez', itemsCount: 1, totalAmount: 45.5, status: 'PAID', createdAt: new Date().toISOString() },
 ];
 
+const mockDeliveries: Delivery[] = [
+  { id: 101, orderId: 1003, deliveryManId: null, status: 'PENDING', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), pickingItems: [] },
+  { id: 102, orderId: 1004, deliveryManId: 99, status: 'ASSIGNED', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), pickingItems: [] },
+];
+
 const PickingPage: React.FC = () => {
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
+  const [deliveries, setDeliveries] = useState<Delivery[]>(mockDeliveries);
+  const [assigningId, setAssigningId] = useState<number | null>(null);
 
   const handleSelectOrder = (orderId: number, isSelected: boolean) => {
     setSelectedOrders((prev) =>
@@ -35,6 +43,18 @@ const PickingPage: React.FC = () => {
     }
     // Lógica temporal para Fase 1
     toast.success(`Generando picking list para ${selectedOrders.length} pedido(s)...`);
+  };
+
+  const handleAssignDeliveryMan = (deliveryId: number, deliveryManId: number) => {
+    setAssigningId(deliveryId);
+    // Simular llamada a API
+    setTimeout(() => {
+      setDeliveries((prev) => 
+        prev.map(d => d.id === deliveryId ? { ...d, deliveryManId, status: 'ASSIGNED' } : d)
+      );
+      setAssigningId(null);
+      toast.success('Repartidor asignado exitosamente.');
+    }, 600);
   };
 
   return (
@@ -75,6 +95,12 @@ const PickingPage: React.FC = () => {
           selectedOrders={selectedOrders}
           onSelectOrder={handleSelectOrder}
           onSelectAll={handleSelectAll}
+        />
+
+        <DeliveriesTable 
+          deliveries={deliveries}
+          onAssignDeliveryMan={handleAssignDeliveryMan}
+          assigningId={assigningId}
         />
       </div>
     </>
