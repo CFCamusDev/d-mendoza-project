@@ -59,6 +59,7 @@ describe('Anulación de Venta (E2E) - HU-038', () => {
       });
       (prisma.user.findUnique as any).mockResolvedValue({
         id: 1,
+        isActive: true,
         roles: [{ name: 'ADMIN' }],
       });
 
@@ -95,6 +96,7 @@ describe('Anulación de Venta (E2E) - HU-038', () => {
       });
       (prisma.user.findUnique as any).mockResolvedValue({
         id: 2,
+        isActive: true,
         roles: [{ name: 'SELLER' }],
       });
 
@@ -127,11 +129,12 @@ describe('Anulación de Venta (E2E) - HU-038', () => {
           return Promise.resolve({
             id: 1,
             email: 'admin@test.com',
+            isActive: true,
             password: hashedPass,
             roles: [{ name: 'ADMIN' }]
           });
         }
-        return Promise.resolve({ id: 2, roles: [{ name: 'SELLER' }] });
+        return Promise.resolve({ id: 2, isActive: true, roles: [{ name: 'SELLER' }] });
       });
 
       (prisma.posOrder.findUnique as any).mockResolvedValue({

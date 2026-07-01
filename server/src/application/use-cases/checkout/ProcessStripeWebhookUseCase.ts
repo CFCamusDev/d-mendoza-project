@@ -96,7 +96,14 @@ export class ProcessStripeWebhookUseCase {
       // C) Calcular subtotal de los ítems
       let subtotal = 0;
       for (const item of cart.items) {
-        subtotal += Number(item.variant.price) * item.quantity;
+        const itemPrice = Number(item.variant.price);
+        const itemDiscount = item.variant.discountPercent || 0;
+        
+        const finalPrice = itemDiscount > 0 
+          ? itemPrice - (itemPrice * itemDiscount) / 100 
+          : itemPrice;
+          
+        subtotal += finalPrice * item.quantity;
       }
       const total = subtotal + shippingCost;
 
@@ -138,13 +145,21 @@ export class ProcessStripeWebhookUseCase {
 
       // F) Crear OrderItems, actualizar stock y generar Kardex por cada item
       for (const item of cart.items) {
+        // Calcular precio final con descuento
+        const itemPrice = Number(item.variant.price);
+        const itemDiscount = item.variant.discountPercent || 0;
+        
+        const finalPrice = itemDiscount > 0 
+          ? itemPrice - (itemPrice * itemDiscount) / 100 
+          : itemPrice;
+
         // Crear OrderItem
         await tx.orderItem.create({
           data: {
             orderId: order.id,
             variantId: item.variantId,
             qty: item.quantity,
-            unitPrice: item.variant.price,
+            unitPrice: finalPrice,
           },
         });
 

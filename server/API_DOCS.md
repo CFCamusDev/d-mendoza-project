@@ -61,6 +61,13 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [GET /api/v1/reports/export](#get-apiv1reportsexport)
 - [Conciliación de Transacciones — HU-073](#conciliación-de-transacciones--hu-073)
   - [POST /api/v1/admin/reconcile/stripe](#post-apiv1adminreconcilestripe)
+- [Logística y Despachos — HU-058](#logística-y-despachos--hu-058)
+  - [GET /api/v1/logistics/orders/pending](#get-apiv1logisticsorderspending)
+  - [POST /api/v1/logistics/picking](#post-apiv1logisticspicking)
+  - [GET /api/v1/logistics/deliveries](#get-apiv1logisticsdeliveries)
+  - [GET /api/v1/logistics/delivery-men](#get-apiv1logisticsdelivery-men)
+  - [POST /api/v1/logistics/deliveries/:id/assign](#post-apiv1logisticsdeliveriesidassign)
+  - [GET /api/v1/logistics/deliveries/:id/label](#get-apiv1logisticsdeliveriesidlabel)
 
 ---
 
@@ -4199,6 +4206,259 @@ Se emite cuando el usuario no tiene la sesión activa o carece del permiso `role
 }
 ```
 
+## Logística y Despachos — HU-058
 
+### GET /api/v1/logistics/orders/pending
 
+Lista todas las órdenes en estado `PAID` que no tienen ningún despacho (`Delivery`) asociado.
 
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/logistics/orders/pending` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
+
+#### 2. Parámetros de Solicitud
+
+No requiere parámetros.
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "count": 1,
+  "data": [
+    {
+      "id": 101,
+      "orderId": 101,
+      "customerName": "Juan Pérez",
+      "itemsCount": 3,
+      "totalAmount": 150.00,
+      "status": "PAID",
+      "createdAt": "2026-07-01T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/v1/logistics/picking
+
+Genera una lista de picking agrupando todas las órdenes (o una lista específica) que tienen estado `PAID` y que no cuentan con un despacho (`Delivery`) asociado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/logistics/picking` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
+
+#### 2. Parámetros de Solicitud
+
+- **Cuerpo (JSON) - Opcional**:
+  - `orderIds` (Array de Numbers, Opcional): Lista de IDs de órdenes a procesar. Si no se envía o está vacío, se procesan todas las órdenes con estado `PAID` sin despacho asociado (picking masivo).
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 201 Created)
+
+Devuelve la lista de despachos (`Delivery`) creados, cada uno incluyendo sus correspondientes ítems de picking (`PickingItem`).
+
+```json
+{
+  "success": true,
+  "count": 1,
+  "data": [
+    {
+      "id": 1,
+      "orderId": 101,
+      "deliveryManId": null,
+      "status": "PENDING",
+      "createdAt": "2026-07-01T10:00:00.000Z",
+      "updatedAt": "2026-07-01T10:00:00.000Z",
+      "pickingItems": [
+        {
+          "id": 1,
+          "deliveryId": 1,
+          "variantId": 5,
+          "qty": 2,
+          "pickedAt": null,
+          "variantSku": "SKU-PROD-M-RED",
+          "productName": "Camiseta Básica"
+        }
+      ]
+    }
+  ]
+}
+```
+
+##### Acceso Prohibido (HTTP 403 Forbidden)
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el rol de Admin o Abastecimiento"
+}
+```
+
+---
+
+### POST /api/v1/logistics/deliveries/:id/assign
+
+Asigna un repartidor (`deliveryManId`) a un despacho (`Delivery`) existente y actualiza su estado a `ASSIGNED`.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/logistics/deliveries/:id/assign` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
+
+#### 2. Parámetros de Solicitud
+
+- **Cuerpo (JSON)**:
+  - `deliveryManId` (Number, Obligatorio): ID del usuario que tiene el rol `DELIVERY`.
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "orderId": 101,
+    "deliveryManId": 99,
+    "status": "ASSIGNED",
+    "createdAt": "2026-07-01T10:00:00.000Z",
+    "updatedAt": "2026-07-01T10:05:00.000Z"
+  }
+}
+```
+
+##### Solicitud Incorrecta (HTTP 400 Bad Request)
+
+Se emite cuando el usuario a asignar no posee el rol `DELIVERY`.
+
+```json
+{
+  "success": false,
+  "error": "User does not have the DELIVERY role"
+}
+```
+
+---
+
+### GET /api/v1/logistics/deliveries/:id/label
+
+Genera y descarga la etiqueta de despacho en formato PDF utilizando PDFKit.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/logistics/deliveries/:id/label` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
+
+#### 2. Parámetros de Solicitud
+
+- **URL (Params)**:
+  - `id` (Number, Obligatorio): ID del despacho (`Delivery`).
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+Retorna un archivo binario PDF con cabecera `Content-Type: application/pdf` y `Content-Disposition: attachment; filename="shipping-label-:id.pdf"`.
+
+```
+
+---
+
+### GET /api/v1/logistics/deliveries
+
+Consulta todos los despachos generados en la base de datos, con la opción de filtrar por estado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/logistics/deliveries` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
+
+#### 2. Parámetros de Solicitud
+
+- **Query Params (Opcionales)**:
+  - `status` (String, Opcional): Filtrar por estado de despacho (PENDING, ASSIGNED, IN_TRANSIT, DELIVERED, CANCELLED).
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "count": 1,
+  "data": [
+    {
+      "id": 1,
+      "orderId": 101,
+      "deliveryManId": null,
+      "status": "PENDING",
+      "createdAt": "2026-07-01T10:00:00.000Z",
+      "updatedAt": "2026-07-01T10:00:00.000Z",
+      "pickingItems": [
+        {
+          "id": 1,
+          "deliveryId": 1,
+          "variantId": 5,
+          "qty": 2,
+          "pickedAt": null,
+          "variantSku": "SKU-PROD-M-RED",
+          "productName": "Camiseta Básica"
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/v1/logistics/delivery-men
+
+Consulta y retorna todos los usuarios del sistema que cuentan con el rol `DELIVERY`. Utilizado para popular el dropdown de asignación de repartidores en el frontend.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/logistics/delivery-men` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
+
+#### 2. Parámetros de Solicitud
+
+No requiere parámetros.
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "count": 2,
+  "data": [
+    {
+      "id": 99,
+      "name": "Juan Repartidor",
+      "email": "juan.repartidor@example.com"
+    },
+    {
+      "id": 100,
+      "name": "Maria Envíos",
+      "email": "maria.envios@example.com"
+    }
+  ]
+}
+```

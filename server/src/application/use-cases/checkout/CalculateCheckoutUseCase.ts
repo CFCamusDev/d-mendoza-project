@@ -27,7 +27,14 @@ export class CalculateCheckoutUseCase {
 
     let subtotal = 0;
     cart.items.forEach(item => {
-      subtotal += Number(item.variant.price) * item.quantity;
+      const itemPrice = Number(item.variant.price);
+      const itemDiscount = item.variant.discountPercent || 0;
+      
+      const finalPrice = itemDiscount > 0 
+        ? itemPrice - (itemPrice * itemDiscount) / 100 
+        : itemPrice;
+        
+      subtotal += finalPrice * item.quantity;
     });
 
     // 2. Obtener dirección

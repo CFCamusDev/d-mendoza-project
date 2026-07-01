@@ -50,7 +50,7 @@ describe('Branding Endpoints (E2E)', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.brandName).toBe("D'Mendoza");
-      expect(res.body.data.primaryColor).toBe('#4F46E5');
+      expect(res.body.data.colorBrandPrimary).toBe('#D9D9D2');
       expect(prisma.brandConfig.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
       });
@@ -60,8 +60,8 @@ describe('Branding Endpoints (E2E)', () => {
       const mockConfig = {
         id: 1,
         brandName: 'Mi Marca Especial',
-        logoUrl: 'https://logo.com/img.png',
-        primaryColor: '#123456',
+        logoHorizontalUrl: 'https://logo.com/img.png',
+        colorBrandPrimary: '#123456',
         socialLinksJson: { facebook: 'fb.com' },
         updatedAt: new Date(),
       };
@@ -72,7 +72,7 @@ describe('Branding Endpoints (E2E)', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.brandName).toBe('Mi Marca Especial');
-      expect(res.body.data.primaryColor).toBe('#123456');
+      expect(res.body.data.colorBrandPrimary).toBe('#123456');
     });
   });
 
@@ -82,7 +82,10 @@ describe('Branding Endpoints (E2E)', () => {
         .put('/api/v1/config/brand')
         .send({
           brandName: 'Nueva Marca',
-          primaryColor: '#999999',
+          colorBrandPrimary: '#999999',
+          colorBrandBg: '#F7F7F5',
+          colorBrandText: '#6B6B6B',
+          colorBrandAccent: '#3F3F3F',
         });
 
       expect(res.status).toBe(401);
@@ -114,7 +117,10 @@ describe('Branding Endpoints (E2E)', () => {
         .set('Authorization', 'Bearer dummy_token')
         .send({
           brandName: 'Nueva Marca',
-          primaryColor: '#999999',
+          colorBrandPrimary: '#999999',
+          colorBrandBg: '#F7F7F5',
+          colorBrandText: '#6B6B6B',
+          colorBrandAccent: '#3F3F3F',
         });
 
       expect(res.status).toBe(403);
@@ -146,8 +152,8 @@ describe('Branding Endpoints (E2E)', () => {
       const updatedConfig = {
         id: 1,
         brandName: 'Marca Admin',
-        logoUrl: 'https://logo.com/new.png',
-        primaryColor: '#00ff00',
+        logoHorizontalUrl: 'https://logo.com/new.png',
+        colorBrandPrimary: '#00ff00',
         socialLinksJson: { twitter: 'twitter.com' },
         updatedAt: new Date(),
       };
@@ -160,8 +166,11 @@ describe('Branding Endpoints (E2E)', () => {
         .set('Authorization', 'Bearer admin_token')
         .send({
           brandName: 'Marca Admin',
-          logoUrl: 'https://logo.com/new.png',
-          primaryColor: '#00ff00',
+          logoHorizontalUrl: 'https://logo.com/new.png',
+          colorBrandPrimary: '#00ff00',
+          colorBrandBg: '#F7F7F5',
+          colorBrandText: '#6B6B6B',
+          colorBrandAccent: '#3F3F3F',
           socialLinksJson: { twitter: 'twitter.com' },
         });
 
@@ -174,11 +183,17 @@ describe('Branding Endpoints (E2E)', () => {
         where: { id: 1 },
         update: expect.objectContaining({
           brandName: 'Marca Admin',
-          primaryColor: '#00ff00',
+          colorBrandPrimary: '#00ff00',
+          colorBrandBg: '#F7F7F5',
+          colorBrandText: '#6B6B6B',
+          colorBrandAccent: '#3F3F3F',
         }),
         create: expect.objectContaining({
           brandName: 'Marca Admin',
-          primaryColor: '#00ff00',
+          colorBrandPrimary: '#00ff00',
+          colorBrandBg: '#F7F7F5',
+          colorBrandText: '#6B6B6B',
+          colorBrandAccent: '#3F3F3F',
         }),
       });
 

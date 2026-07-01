@@ -151,6 +151,24 @@ export class PrismaUserRepository implements IUserRepository {
     return this.toDomain(record);
   }
 
+  async findUsersByRoleName(roleName: string): Promise<User[]> {
+    const records = await prisma.user.findMany({
+      where: {
+        roles: {
+          some: {
+            name: roleName,
+          },
+        },
+      },
+      include: {
+        roles: true,
+        employee: true,
+      },
+    });
+
+    return records.map((record) => this.toDomain(record));
+  }
+
   /**
    * Mapea el registro de Prisma a la entidad del dominio,
    * desacoplando los tipos de Prisma del dominio.
