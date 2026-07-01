@@ -142,4 +142,36 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
     });
     return records.map((record) => this.toDomain(record));
   }
+
+  async updateStatus(id: number, status: string): Promise<Delivery> {
+    const record = await prisma.delivery.update({
+      where: { id },
+      data: { status: status as any },
+      include: {
+        pickingItems: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
+        order: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+    // We attach the user to the delivery domain object so the Use Case can access the email.
+    // The Delivery entity might not strictly have user, but we can pass it along or cast it.
+    // Wait, let's just return what `toDomain` expects. We might need to extend `toDomain` or just return it as any if we need the user.
+    // Let's modify toDomain to include user if it's there.
+    const domainObj = this.toDomain(record);
+    if ((record as any).order?.user) {
+      (domainObj as any).orderUser = (record as any).order.user;
+    }
+    return domainObj;
+  }
 }

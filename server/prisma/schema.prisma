@@ -735,6 +735,8 @@ enum DeliveryStatus {
   IN_TRANSIT
   DELIVERED
   CANCELLED
+  FAILED
+  RETURNED
 }
 
 model Delivery {
