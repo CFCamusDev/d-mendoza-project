@@ -197,6 +197,22 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
         },
       },
     });
+
+    let newOrderStatus: string | null = null;
+    if (status === 'IN_TRANSIT') {
+      newOrderStatus = 'SHIPPED';
+    } else if (status === 'DELIVERED') {
+      newOrderStatus = 'DELIVERED';
+    }
+
+    if (newOrderStatus && record.order && record.order.status !== newOrderStatus) {
+      await prisma.order.update({
+        where: { id: record.orderId },
+        data: { status: newOrderStatus as any },
+      });
+      record.order.status = newOrderStatus as any;
+    }
+
     const domainObj = this.toDomain(record);
     if (record.order) {
       (domainObj as any).orderUser = record.order.user;

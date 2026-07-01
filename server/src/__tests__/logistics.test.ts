@@ -26,6 +26,7 @@ jest.mock('@infrastructure/database/prisma', () => {
     findUnique: jest.fn(),
     findMany: jest.fn(),
     create: jest.fn(),
+    update: jest.fn(),
   };
 
   const mockDelivery = {
@@ -296,6 +297,11 @@ describe('Logistics Endpoints', () => {
         id: 1,
         orderId: 101,
         status: 'ASSIGNED',
+      });
+
+      (prisma.order.update as any).mockResolvedValue({
+        id: 101,
+        status: 'SHIPPED',
       });
 
       (prisma.delivery.update as any).mockResolvedValue({
