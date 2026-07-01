@@ -20,6 +20,16 @@ export const logisticsService = {
   },
 
   /**
+   * Obtiene la lista de despachos generados (Deliveries), con opción de filtrar por status
+   */
+  getDeliveries: async (status?: string): Promise<Delivery[]> => {
+    const { data } = await axiosInstance.get<{ success: boolean; data: Delivery[] }>('/v1/logistics/deliveries', {
+      params: { status }
+    });
+    return data.data;
+  },
+
+  /**
    * Asigna un repartidor a un despacho existente
    */
   assignDeliveryMan: async (deliveryId: number, deliveryManId: number): Promise<Delivery> => {

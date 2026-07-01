@@ -1,11 +1,10 @@
 import { useState, useCallback } from 'react';
 import { logisticsService } from '../services/logistics.service';
-import type { Delivery, OrderToPick } from '../types/logistics.types';
+import type { OrderToPick } from '../types/logistics.types';
 import toast from 'react-hot-toast';
 
 export const usePicking = () => {
   const [orders, setOrders] = useState<OrderToPick[]>([]);
-  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,8 +36,6 @@ export const usePicking = () => {
         setOrders([]);
       }
       
-      // Añadimos los nuevos despachos generados a nuestra tabla local
-      setDeliveries((prev) => [...newDeliveries, ...prev]);
       toast.success('Picking lists generados con éxito.');
       return newDeliveries;
     } catch (err: any) {
@@ -52,8 +49,6 @@ export const usePicking = () => {
 
   return {
     orders,
-    deliveries,
-    setDeliveries,
     isLoading,
     isGenerating,
     error,

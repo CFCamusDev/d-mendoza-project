@@ -104,41 +104,6 @@ describe('PickingPage', () => {
     await waitFor(() => {
       expect(axiosInstance.post).toHaveBeenCalledWith('/v1/logistics/picking', { orderIds: [1, 2] });
     });
-
-    // Validar que la tabla de despachos muestre los nuevos IDs generados
-    expect(await screen.findByText('DLV-101')).toBeInTheDocument();
-    expect(await screen.findByText('DLV-102')).toBeInTheDocument();
-  });
-
-  it('debe llamar al endpoint de asignación al seleccionar un repartidor en el dropdown', async () => {
-    const mockDeliveries = [
-      { id: 101, orderId: 1001, deliveryManId: null, status: 'PENDING', createdAt: '2026-07-01T10:00:00Z', pickingItems: [] }
-    ];
-    
-    (axiosInstance.post as any)
-      .mockResolvedValueOnce({ data: { success: true, data: mockDeliveries } }) // Para el picking
-      .mockResolvedValueOnce({ data: { success: true, data: { ...mockDeliveries[0], deliveryManId: 99, status: 'ASSIGNED' } } }); // Para el assign
-
-    renderWithProviders(<PickingPage />);
-    
-    // 1. Generar picking parcial de 1 orden
-    const checkboxes = await screen.findAllByRole('checkbox');
-    fireEvent.click(checkboxes[1]); // Seleccionar primera orden (id: 1)
-    
-    const btnGenerar = await screen.findByRole('button', { name: /Generar Picking \(1 sel\.\)/i });
-    fireEvent.click(btnGenerar);
-    
-    // 2. Esperar a que aparezca la tabla de Deliveries con el dropdown
-    const select = await screen.findByRole('combobox');
-    expect(select).toBeInTheDocument();
-
-    // 3. Seleccionar repartidor
-    fireEvent.change(select, { target: { value: '99' } });
-
-    // 4. Verificar llamada a API
-    await waitFor(() => {
-      expect(axiosInstance.post).toHaveBeenCalledWith('/v1/logistics/deliveries/101/assign', { deliveryManId: 99 });
-    });
   });
 });
 

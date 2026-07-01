@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { PickingTable } from './components/picking/PickingTable';
-import { DeliveriesTable } from './components/picking/DeliveriesTable';
 import { usePicking } from './hooks/usePicking';
-import { useDeliveryAssignment } from './hooks/useDeliveryAssignment';
 import { PackageSearch, FileText, Loader2 } from 'lucide-react';
-import type { Delivery } from './types/logistics.types';
 
 const PickingPage: React.FC = () => {
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   
   const { 
     orders, 
-    deliveries, 
-    setDeliveries, 
     isLoading, 
     isGenerating, 
     error, 
@@ -25,14 +20,6 @@ const PickingPage: React.FC = () => {
   useEffect(() => {
     fetchPendingOrders();
   }, [fetchPendingOrders]);
-
-  const updateDeliveryState = (deliveryId: number, deliveryManId: number, status: Delivery['status']) => {
-    setDeliveries((prev) => 
-      prev.map(d => d.id === deliveryId ? { ...d, deliveryManId, status } : d)
-    );
-  };
-
-  const { assignDeliveryMan, downloadLabel, assigningId } = useDeliveryAssignment(updateDeliveryState);
 
   const handleSelectOrder = (orderId: number, isSelected: boolean) => {
     setSelectedOrders((prev) =>
@@ -116,15 +103,6 @@ const PickingPage: React.FC = () => {
             selectedOrders={selectedOrders}
             onSelectOrder={handleSelectOrder}
             onSelectAll={handleSelectAll}
-          />
-        )}
-
-        {deliveries.length > 0 && (
-          <DeliveriesTable 
-            deliveries={deliveries}
-            onAssignDeliveryMan={assignDeliveryMan}
-            onDownloadLabel={downloadLabel}
-            assigningId={assigningId}
           />
         )}
       </div>

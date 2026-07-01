@@ -595,7 +595,7 @@ export const AdminShell: React.FC = () => {
           )}
 
           {/* Grupo 8: Logística */}
-          {(user?.role === 'ADMIN' || user?.role === 'DELIVERY') && (
+          {(user?.role === 'ADMIN' || user?.role === 'SUPPLY') && (
           <AccordionMenu 
             menuKey="logistica" 
             title="Logística" 
@@ -608,10 +608,20 @@ export const AdminShell: React.FC = () => {
               className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
                 isActiveRoute('/admin/logistics/picking') ? activeClass : inactiveClass
               } ${isCollapsed ? 'justify-center' : ''}`}
-              title="Gestión de Picking"
+              title="Generar Picking"
+            >
+              <ClipboardCheck className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Generar Picking</span>}
+            </Link>
+            <Link
+              to="/admin/logistics/deliveries"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/logistics/deliveries') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Control de Despachos"
             >
               <Truck className="w-4 h-4 shrink-0" />
-              {!isCollapsed && <span>Gestión de Picking</span>}
+              {!isCollapsed && <span>Control de Despachos</span>}
             </Link>
           </AccordionMenu>
           )}
