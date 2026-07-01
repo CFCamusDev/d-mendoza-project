@@ -28,6 +28,7 @@ const checkSupplyOrAdmin = (req: any, res: any, next: any) => {
 
 router.get('/logistics/orders/pending', requireAuth, checkSupplyOrAdmin, controller.getPendingOrders);
 router.post('/logistics/picking', requireAuth, checkSupplyOrAdmin, controller.picking);
+router.get('/logistics/deliveries/by-zone', requireAuth, checkSupplyOrAdmin, controller.getPendingDeliveriesByZone);
 router.get('/logistics/deliveries', requireAuth, checkSupplyOrAdmin, controller.getDeliveries);
 router.get('/logistics/delivery-men', requireAuth, checkSupplyOrAdmin, controller.getDeliveryMen);
 router.post('/logistics/deliveries/:id/assign', requireAuth, checkSupplyOrAdmin, controller.assign);
@@ -35,5 +36,6 @@ router.get('/logistics/deliveries/:id/label', requireAuth, checkSupplyOrAdmin, c
 router.patch('/logistics/deliveries/:id/status', requireAuth, checkSupplyOrAdmin, controller.updateStatus);
 router.post('/logistics/deliveries/:id/failed-attempt', requireAuth, checkSupplyOrAdmin, controller.registerFailedAttempt);
 router.patch('/logistics/deliveries/:id/confirm', requireAuth, checkSupplyOrAdmin, upload.single('photo'), controller.confirmDelivery);
+router.patch('/logistics/deliveries/:id/return', requireAuth, checkSupplyOrAdmin, controller.returnDelivery);
 
 export default router;

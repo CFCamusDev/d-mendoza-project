@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { PrismaDeliveryRepository } from '@infrastructure/database/repositories/PrismaDeliveryRepository';
 import { PrismaUserRepository } from '@infrastructure/database/repositories/PrismaUserRepository';
 import { PrismaOrderRepository } from '@infrastructure/database/repositories/PrismaOrderRepository';
+import { PrismaDeliveryZoneRepository } from '@infrastructure/database/repositories/PrismaDeliveryZoneRepository';
 import { PdfKitShippingLabelService } from '@infrastructure/services/PdfKitShippingLabelService';
 import { GeneratePickingListUseCase } from '@application/use-cases/logistics/GeneratePickingListUseCase';
 import { AssignDeliveryManUseCase } from '@application/use-cases/logistics/AssignDeliveryManUseCase';
@@ -12,6 +13,8 @@ import { GetDeliveryMenUseCase } from '@application/use-cases/logistics/GetDeliv
 import { UpdateDeliveryStatusUseCase } from '@application/use-cases/logistics/UpdateDeliveryStatusUseCase';
 import { RegisterFailedAttemptUseCase } from '@application/use-cases/logistics/RegisterFailedAttemptUseCase';
 import { ConfirmDeliveryUseCase } from '@application/use-cases/logistics/ConfirmDeliveryUseCase';
+import { GetPendingDeliveriesByZoneUseCase } from '@application/use-cases/logistics/GetPendingDeliveriesByZoneUseCase';
+import { ReturnDeliveryUseCase } from '@application/use-cases/logistics/ReturnDeliveryUseCase';
 import { CloudinaryStorageService } from '@infrastructure/services/CloudinaryStorageService';
 import { ResendEmailService } from '@infrastructure/services/ResendEmailService';
 import { InvalidDeliveryStateTransitionError } from '@domain/errors/InvalidDeliveryStateTransitionError';
@@ -26,12 +29,15 @@ export class LogisticsController {
   private updateDeliveryStatusUseCase: UpdateDeliveryStatusUseCase;
   private registerFailedAttemptUseCase: RegisterFailedAttemptUseCase;
   private confirmDeliveryUseCase: ConfirmDeliveryUseCase;
+  private getPendingDeliveriesByZoneUseCase: GetPendingDeliveriesByZoneUseCase;
+  private returnDeliveryUseCase: ReturnDeliveryUseCase;
   private storageService: CloudinaryStorageService;
 
   constructor() {
     const deliveryRepo = new PrismaDeliveryRepository();
     const userRepo = new PrismaUserRepository();
     const orderRepo = new PrismaOrderRepository();
+    const deliveryZoneRepo = new PrismaDeliveryZoneRepository();
     const shippingLabelService = new PdfKitShippingLabelService();
     const emailService = new ResendEmailService();
 
@@ -48,6 +54,8 @@ export class LogisticsController {
     this.updateDeliveryStatusUseCase = new UpdateDeliveryStatusUseCase(deliveryRepo, emailService);
     this.registerFailedAttemptUseCase = new RegisterFailedAttemptUseCase();
     this.confirmDeliveryUseCase = new ConfirmDeliveryUseCase();
+    this.getPendingDeliveriesByZoneUseCase = new GetPendingDeliveriesByZoneUseCase(deliveryRepo, deliveryZoneRepo);
+    this.returnDeliveryUseCase = new ReturnDeliveryUseCase();
     this.storageService = new CloudinaryStorageService();
   }
 
@@ -67,6 +75,15 @@ export class LogisticsController {
     try {
       const orders = await this.getPendingOrdersUseCase.execute();
       res.status(200).json({ success: true, count: orders.length, data: orders });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getPendingDeliveriesByZone = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const groupedDeliveries = await this.getPendingDeliveriesByZoneUseCase.execute();
+      res.status(200).json({ success: true, data: groupedDeliveries });
     } catch (error) {
       next(error);
     }
@@ -203,6 +220,30 @@ export class LogisticsController {
       }
 
       const delivery = await this.updateDeliveryStatusUseCase.execute(deliveryId, status);
+      res.status(200).json({ success: true, data: delivery });
+    } catch (error: any) {
+      if (error instanceof InvalidDeliveryStateTransitionError) {
+        res.status(409).json({ success: false, error: error.message });
+        return;
+      }
+      if (error.message?.includes('not found') || error.message?.includes('no encontrado')) {
+        res.status(404).json({ success: false, error: error.message });
+        return;
+      }
+      res.status(400).json({ success: false, error: error.message });
+    }
+  };
+
+  returnDelivery = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const deliveryId = Number(req.params.id);
+
+      if (isNaN(deliveryId)) {
+        res.status(400).json({ success: false, error: 'Invalid delivery ID' });
+        return;
+      }
+
+      const delivery = await this.returnDeliveryUseCase.execute(deliveryId);
       res.status(200).json({ success: true, data: delivery });
     } catch (error: any) {
       if (error instanceof InvalidDeliveryStateTransitionError) {
