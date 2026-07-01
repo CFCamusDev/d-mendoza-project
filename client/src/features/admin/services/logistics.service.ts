@@ -78,6 +78,20 @@ export const logisticsService = {
   },
 
   /**
+   * Confirma la entrega subiendo foto de evidencia — cambia status a DELIVERED
+   */
+  confirmDelivery: async (deliveryId: number, photoFile: File): Promise<Delivery> => {
+    const formData = new FormData();
+    formData.append('photo', photoFile);
+    const { data } = await axiosInstance.patch<{ success: boolean; data: Delivery }>(
+      `/v1/logistics/deliveries/${deliveryId}/confirm`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return data.data;
+  },
+
+  /**
    * Registra un intento de entrega fallido y cambia el status a FAILED
    */
   registerFailedAttempt: async (

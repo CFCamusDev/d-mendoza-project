@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Delivery, DeliveryMan, FailedAttempt } from '../../types/logistics.types';
-import { X, FileText, MapPin, Truck, AlertCircle, ShoppingBag, AlertTriangle, Clock, CalendarX } from 'lucide-react';
+import { X, FileText, MapPin, Truck, AlertCircle, ShoppingBag, AlertTriangle, Clock, CalendarX, CheckCircle, Camera, Upload } from 'lucide-react';
 import { getStatusStyle } from '../../../../shared/utils/statusColors';
 import { logisticsService } from '../../services/logistics.service';
 import { toast } from 'react-hot-toast';
@@ -28,6 +28,9 @@ export const DeliveryDetailPanel: React.FC<DeliveryDetailPanelProps> = ({
   const [rescheduledFor, setRescheduledFor] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [localAttempts, setLocalAttempts] = useState<FailedAttempt[]>([]);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmedPhotoUrl, setConfirmedPhotoUrl] = useState<string | null>(null);
 
   if (!isOpen || !delivery) return null;
 
@@ -77,6 +80,28 @@ export const DeliveryDetailPanel: React.FC<DeliveryDetailPanelProps> = ({
       setSubmitting(false);
     }
   };
+
+  const handleConfirmDelivery = async () => {
+    if (!photoFile) {
+      toast.error('Debes adjuntar una foto de evidencia.');
+      return;
+    }
+    setConfirming(true);
+    try {
+      const updated = await logisticsService.confirmDelivery(delivery.id, photoFile);
+      setConfirmedPhotoUrl(updated.deliveryPhotoUrl ?? null);
+      onDeliveryUpdated?.(delivery.id, { status: 'DELIVERED', deliveryPhotoUrl: updated.deliveryPhotoUrl, deliveredAt: updated.deliveredAt });
+      setPhotoFile(null);
+      toast.success('Entrega confirmada correctamente.');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Error al confirmar la entrega.');
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const effectivePhotoUrl = confirmedPhotoUrl ?? delivery.deliveryPhotoUrl ?? null;
+  const isDelivered = delivery.status === 'DELIVERED' || !!effectivePhotoUrl;
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' });
@@ -275,6 +300,62 @@ export const DeliveryDetailPanel: React.FC<DeliveryDetailPanelProps> = ({
               {submitting ? 'Registrando...' : 'Registrar Intento Fallido'}
             </button>
           </div>
+        </div>
+        {/* ── Confirmación de entrega con evidencia ──────────────────────────── */}
+        <div className="space-y-3">
+          <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-wider flex items-center gap-1">
+            <CheckCircle className="w-3.5 h-3.5" />
+            <span>Confirmación de Entrega</span>
+          </h4>
+
+          {isDelivered && effectivePhotoUrl ? (
+            <div className="space-y-2">
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-emerald-800">Entrega confirmada</p>
+                  {delivery.deliveredAt && (
+                    <p className="text-[10px] text-emerald-600 font-semibold">{formatDate(delivery.deliveredAt)}</p>
+                  )}
+                </div>
+              </div>
+              <a
+                href={effectivePhotoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl overflow-hidden border border-gray-100"
+              >
+                <img src={effectivePhotoUrl} alt="Evidencia de entrega" className="w-full object-cover max-h-48" />
+              </a>
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl border border-emerald-100 bg-emerald-50/40 space-y-3">
+              <p className="text-[10px] font-black uppercase text-emerald-700 tracking-wider">Registrar confirmación</p>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Foto de evidencia *</label>
+                <label className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-emerald-300 rounded-xl bg-white cursor-pointer hover:border-emerald-500 transition-colors">
+                  <Camera className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span className="text-xs text-gray-500 font-semibold truncate">
+                    {photoFile ? photoFile.name : 'Seleccionar foto...'}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              </div>
+              <button
+                onClick={handleConfirmDelivery}
+                disabled={confirming || !photoFile}
+                className="w-full py-2 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:pointer-events-none text-white text-xs font-bold rounded-xl transition-colors"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                {confirming ? 'Confirmando...' : 'Confirmar Entrega'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
