@@ -10,6 +10,7 @@ import { GetPendingOrdersUseCase } from '@application/use-cases/logistics/GetPen
 import { GetDeliveriesUseCase } from '@application/use-cases/logistics/GetDeliveriesUseCase';
 import { GetDeliveryMenUseCase } from '@application/use-cases/logistics/GetDeliveryMenUseCase';
 import { UpdateDeliveryStatusUseCase } from '@application/use-cases/logistics/UpdateDeliveryStatusUseCase';
+import { RegisterFailedAttemptUseCase } from '@application/use-cases/logistics/RegisterFailedAttemptUseCase';
 import { ResendEmailService } from '@infrastructure/services/ResendEmailService';
 import { InvalidDeliveryStateTransitionError } from '@domain/errors/InvalidDeliveryStateTransitionError';
 
@@ -21,6 +22,7 @@ export class LogisticsController {
   private getDeliveriesUseCase: GetDeliveriesUseCase;
   private getDeliveryMenUseCase: GetDeliveryMenUseCase;
   private updateDeliveryStatusUseCase: UpdateDeliveryStatusUseCase;
+  private registerFailedAttemptUseCase: RegisterFailedAttemptUseCase;
 
   constructor() {
     const deliveryRepo = new PrismaDeliveryRepository();
@@ -40,6 +42,7 @@ export class LogisticsController {
     this.getDeliveriesUseCase = new GetDeliveriesUseCase(deliveryRepo);
     this.getDeliveryMenUseCase = new GetDeliveryMenUseCase(userRepo);
     this.updateDeliveryStatusUseCase = new UpdateDeliveryStatusUseCase(deliveryRepo, emailService);
+    this.registerFailedAttemptUseCase = new RegisterFailedAttemptUseCase();
   }
 
   picking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -120,6 +123,32 @@ export class LogisticsController {
       stream.pipe(res);
     } catch (error: any) {
       if (error.message?.includes('not found') || error.message?.includes('no encontrado')) {
+        res.status(404).json({ success: false, error: error.message });
+        return;
+      }
+      next(error);
+    }
+  };
+
+  registerFailedAttempt = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const deliveryId = Number(req.params.id);
+      const { reason, rescheduledFor } = req.body;
+
+      if (isNaN(deliveryId) || !reason?.trim()) {
+        res.status(400).json({ success: false, error: 'ID de delivery inválido o razón faltante' });
+        return;
+      }
+
+      const attempt = await this.registerFailedAttemptUseCase.execute({
+        deliveryId,
+        reason: reason.trim(),
+        rescheduledFor: rescheduledFor ? new Date(rescheduledFor) : undefined,
+      });
+
+      res.status(201).json({ success: true, data: attempt });
+    } catch (error: any) {
+      if (error.message?.includes('no encontrado')) {
         res.status(404).json({ success: false, error: error.message });
         return;
       }

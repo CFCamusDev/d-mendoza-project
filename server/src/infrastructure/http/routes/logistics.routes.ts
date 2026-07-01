@@ -30,5 +30,6 @@ router.get('/logistics/delivery-men', requireAuth, checkSupplyOrAdmin, controlle
 router.post('/logistics/deliveries/:id/assign', requireAuth, checkSupplyOrAdmin, controller.assign);
 router.get('/logistics/deliveries/:id/label', requireAuth, checkSupplyOrAdmin, controller.getLabel);
 router.patch('/logistics/deliveries/:id/status', requireAuth, checkSupplyOrAdmin, controller.updateStatus);
+router.post('/logistics/deliveries/:id/failed-attempt', requireAuth, checkSupplyOrAdmin, controller.registerFailedAttempt);
 
 export default router;
