@@ -1,5 +1,5 @@
 import React from 'react';
-import { OrderToPick } from '../../types/logistics.types';
+import type { OrderToPick } from '../../types/logistics.types';
 
 interface PickingTableProps {
   orders: OrderToPick[];

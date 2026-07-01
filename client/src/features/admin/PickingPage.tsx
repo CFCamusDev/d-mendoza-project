@@ -6,7 +6,7 @@ import { usePicking } from './hooks/usePicking';
 import { useDeliveryAssignment } from './hooks/useDeliveryAssignment';
 import toast from 'react-hot-toast';
 import { PackageSearch, FileText, Loader2 } from 'lucide-react';
-import { Delivery } from './types/logistics.types';
+import type { Delivery } from './types/logistics.types';
 
 const PickingPage: React.FC = () => {
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);

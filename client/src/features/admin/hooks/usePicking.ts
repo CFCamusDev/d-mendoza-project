@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { logisticsService } from '../services/logistics.service';
-import { Delivery, OrderToPick } from '../types/logistics.types';
+import type { Delivery, OrderToPick } from '../types/logistics.types';
 import toast from 'react-hot-toast';
 
 export const usePicking = () => {

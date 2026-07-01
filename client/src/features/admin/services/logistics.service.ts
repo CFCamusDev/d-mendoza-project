@@ -1,5 +1,5 @@
 import axiosInstance from '@/shared/api/axiosInstance';
-import { Delivery, PickingResponse, AssignDeliveryManResponse } from '../types/logistics.types';
+import type { Delivery, PickingResponse, AssignDeliveryManResponse } from '../types/logistics.types';
 
 export const logisticsService = {
   /**

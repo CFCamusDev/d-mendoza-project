@@ -1,5 +1,5 @@
 import React from 'react';
-import { Delivery } from '../../types/logistics.types';
+import type { Delivery } from '../../types/logistics.types';
 import { DeliveryDropdown } from './DeliveryDropdown';
 
 interface DeliveriesTableProps {
