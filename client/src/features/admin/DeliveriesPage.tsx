@@ -126,6 +126,10 @@ const DeliveriesPage: React.FC = () => {
               deliveryMen={deliveryMen}
               onDownloadLabel={downloadLabel}
               assigningId={assigningId}
+              onDeliveryUpdated={(deliveryId, updates) => {
+                setDeliveries(prev => prev.map(d => d.id === deliveryId ? { ...d, ...updates } : d));
+                setSelectedDelivery(prev => prev && prev.id === deliveryId ? { ...prev, ...updates } : prev);
+              }}
             />
           </div>
         )}

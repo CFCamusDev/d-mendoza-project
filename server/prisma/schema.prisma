@@ -742,17 +742,29 @@ enum DeliveryStatus {
 }
 
 model Delivery {
-  id            Int            @id @default(autoincrement())
-  orderId       Int            @unique
-  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  deliveryManId Int?
-  deliveryMan   User?          @relation("DeliveryMan", fields: [deliveryManId], references: [id])
-  status        DeliveryStatus @default(PENDING)
-  pickingItems  PickingItem[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id              Int                    @id @default(autoincrement())
+  orderId         Int                    @unique
+  order           Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  deliveryManId   Int?
+  deliveryMan     User?                  @relation("DeliveryMan", fields: [deliveryManId], references: [id])
+  status          DeliveryStatus         @default(PENDING)
+  pickingItems    PickingItem[]
+  failedAttempts  FailedDeliveryAttempt[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
 
   @@index([deliveryManId])
+}
+
+model FailedDeliveryAttempt {
+  id             Int       @id @default(autoincrement())
+  deliveryId     Int
+  delivery       Delivery  @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  reason         String    @db.VarChar(500)
+  attemptedAt    DateTime  @default(now())
+  rescheduledFor DateTime?
+
+  @@index([deliveryId])
 }
 
 model PickingItem {
