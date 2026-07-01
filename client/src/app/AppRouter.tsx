@@ -55,6 +55,7 @@ import BlogEditorPage from '../features/admin/BlogEditorPage';
 import BlogListPage from '../features/ecommerce/BlogListPage';
 import BlogPostPage from '../features/ecommerce/BlogPostPage';
 import { AdminOrdersPage } from '../features/admin/components/AdminOrdersPage';
+import PickingPage from '../features/admin/PickingPage';
 
 export const AppRouter = () => {
   return (
@@ -272,6 +273,9 @@ export const AppRouter = () => {
 
         {/* HU-030 */}
         <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><RotationReportPage /></ProtectedRoute>} />
+
+        {/* HU-058 Logistics & Picking */}
+        <Route path="/admin/logistics/picking" element={<ProtectedRoute allowedRoles={['ADMIN', 'LOGISTICS']}><PickingPage /></ProtectedRoute>} />
 
 
 
