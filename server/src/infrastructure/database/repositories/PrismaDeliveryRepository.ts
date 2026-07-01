@@ -111,23 +111,13 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
       };
     }
 
-    const orders = await prisma.order.findMany({
+    return await prisma.order.findMany({
       where: whereClause,
       include: {
         items: true,
         user: true,
       },
     });
-
-    return orders.map((order) => ({
-      id: order.id,
-      orderId: order.id,
-      customerName: [order.user?.name, order.user?.lastName].filter(Boolean).join(' ') || 'Cliente',
-      itemsCount: order.items.reduce((acc: number, item: any) => acc + item.qty, 0),
-      totalAmount: Number(order.total),
-      status: order.status,
-      createdAt: order.createdAt.toISOString(),
-    }));
   }
 
   async findDeliveriesByStatus(status: string): Promise<Delivery[]> {
