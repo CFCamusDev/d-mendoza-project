@@ -21,9 +21,7 @@ export class GenerateShippingLabelUseCase {
     }
 
     // Extract recipient information
-    const recipientName = order.user
-      ? `${order.user.name || ''} ${order.user.lastName || ''}`.trim()
-      : 'Customer';
+    const recipientName = order.user?.name || 'Customer';
 
     const addressSnap = order.addressSnapshot || {};
     const fullAddress = addressSnap.fullAddress || 'No Address Provided';
