@@ -26,6 +26,7 @@ jest.mock('@infrastructure/database/prisma', () => {
     findUnique: jest.fn(),
     findMany: jest.fn(),
     create: jest.fn(),
+    update: jest.fn(),
   };
 
   const mockDelivery = {
@@ -288,6 +289,58 @@ describe('Logistics Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.header['content-type']).toBe('application/pdf');
       expect(response.header['content-disposition']).toContain('shipping-label-1.pdf');
+    });
+  });
+  describe('PATCH /api/v1/logistics/deliveries/:id/status', () => {
+    it('should update delivery status and send email on valid transition', async () => {
+      (prisma.delivery.findUnique as any).mockResolvedValue({
+        id: 1,
+        orderId: 101,
+        status: 'ASSIGNED',
+      });
+
+      (prisma.order.update as any).mockResolvedValue({
+        id: 101,
+        status: 'SHIPPED',
+      });
+
+      (prisma.delivery.update as any).mockResolvedValue({
+        id: 1,
+        orderId: 101,
+        status: 'IN_TRANSIT',
+        order: {
+          user: {
+            email: 'customer@example.com',
+            name: 'Customer',
+          },
+        },
+      });
+
+      const response = await request(app)
+        .patch('/api/v1/logistics/deliveries/1/status')
+        .send({ status: 'IN_TRANSIT' })
+        .set('Authorization', 'Bearer dummy-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.status).toBe('IN_TRANSIT');
+    });
+
+    it('should return 409 Conflict on invalid state transition', async () => {
+      (prisma.delivery.findUnique as any).mockResolvedValue({
+        id: 1,
+        orderId: 101,
+        status: 'PENDING',
+      });
+
+      const response = await request(app)
+        .patch('/api/v1/logistics/deliveries/1/status')
+        .send({ status: 'DELIVERED' })
+        .set('Authorization', 'Bearer dummy-token');
+
+      expect(response.status).toBe(409);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('No se permite la transición');
     });
   });
 });

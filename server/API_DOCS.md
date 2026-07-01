@@ -68,6 +68,7 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [GET /api/v1/logistics/delivery-men](#get-apiv1logisticsdelivery-men)
   - [POST /api/v1/logistics/deliveries/:id/assign](#post-apiv1logisticsdeliveriesidassign)
   - [GET /api/v1/logistics/deliveries/:id/label](#get-apiv1logisticsdeliveriesidlabel)
+  - [PATCH /api/v1/logistics/deliveries/:id/status](#patch-apiv1logisticsdeliveriesidstatus)
 
 ---
 

@@ -40,9 +40,20 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
             },
           },
         },
+        order: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
-    return record ? this.toDomain(record) : null;
+    if (!record) return null;
+    const domainObj = this.toDomain(record);
+    if (record.order) {
+      (domainObj as any).orderUser = record.order.user;
+      (domainObj as any).orderAddress = record.order.addressSnapshot;
+    }
+    return domainObj;
   }
 
   async createDeliveryWithItems(
@@ -92,9 +103,19 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
             },
           },
         },
+        order: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
-    return this.toDomain(record);
+    const domainObj = this.toDomain(record);
+    if (record.order) {
+      (domainObj as any).orderUser = record.order.user;
+      (domainObj as any).orderAddress = record.order.addressSnapshot;
+    }
+    return domainObj;
   }
 
   async findPaidOrdersWithoutDelivery(orderIds?: number[]): Promise<any[]> {
@@ -138,8 +159,69 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
             },
           },
         },
+        order: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
-    return records.map((record) => this.toDomain(record));
+    return records.map((record) => {
+      const domainObj = this.toDomain(record);
+      if (record.order) {
+        (domainObj as any).orderUser = record.order.user;
+        (domainObj as any).orderAddress = record.order.addressSnapshot;
+      }
+      return domainObj;
+    });
+  }
+
+  async updateStatus(id: number, status: string): Promise<Delivery> {
+    const record = await prisma.delivery.update({
+      where: { id },
+      data: { status: status as any },
+      include: {
+        pickingItems: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
+        order: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    let newOrderStatus: string | null = null;
+    if (status === 'IN_TRANSIT') {
+      newOrderStatus = 'SHIPPED';
+    } else if (status === 'DELIVERED') {
+      newOrderStatus = 'DELIVERED';
+    } else if (status === 'FAILED') {
+      newOrderStatus = 'FAILED';
+    } else if (status === 'RETURNED') {
+      newOrderStatus = 'RETURNED';
+    }
+
+    if (newOrderStatus && record.order && record.order.status !== newOrderStatus) {
+      await prisma.order.update({
+        where: { id: record.orderId },
+        data: { status: newOrderStatus as any },
+      });
+      record.order.status = newOrderStatus as any;
+    }
+
+    const domainObj = this.toDomain(record);
+    if (record.order) {
+      (domainObj as any).orderUser = record.order.user;
+      (domainObj as any).orderAddress = record.order.addressSnapshot;
+    }
+    return domainObj;
   }
 }

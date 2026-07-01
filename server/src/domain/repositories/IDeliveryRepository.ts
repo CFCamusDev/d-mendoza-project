@@ -9,4 +9,5 @@ export interface IDeliveryRepository {
   assignDeliveryMan(id: number, deliveryManId: number): Promise<Delivery>;
   findPaidOrdersWithoutDelivery(orderIds?: number[]): Promise<any[]>;
   findDeliveries(status?: string): Promise<Delivery[]>;
+  updateStatus(id: number, status: string): Promise<Delivery>;
 }

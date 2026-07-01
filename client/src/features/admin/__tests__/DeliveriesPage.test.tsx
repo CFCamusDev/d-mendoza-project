@@ -23,6 +23,7 @@ vi.mock('@/shared/api/axiosInstance', () => ({
   default: {
     post: vi.fn(),
     get: vi.fn(),
+    patch: vi.fn(),
   },
 }));
 
@@ -42,6 +43,7 @@ describe('DeliveriesPage', () => {
   ];
 
   const mockDeliveryMen = [
+    { id: 99, name: 'Repartidor 99', email: 'rep99@test.com' },
     { id: 101, name: 'Repartidor 1', email: 'rep1@test.com' },
     { id: 102, name: 'Repartidor 2', email: 'rep2@test.com' }
   ];
@@ -56,50 +58,40 @@ describe('DeliveriesPage', () => {
     });
   });
 
-  it('debe renderizar el título, filtros y la tabla de despachos', async () => {
+  it('debe renderizar el título y las columnas del Kanban', async () => {
     renderWithProviders(<DeliveriesPage />);
     
     expect(screen.getByText('Control de Despachos')).toBeInTheDocument();
     
     // Deberían verse los despachos de la API
-    expect(await screen.findByText('DLV-101')).toBeInTheDocument();
-    expect(screen.getByText('DLV-102')).toBeInTheDocument();
+    expect(await screen.findByText('ENVÍO #101')).toBeInTheDocument();
+    expect(screen.getByText('ENVÍO #102')).toBeInTheDocument();
+    
+    // Deben estar las columnas principales
+    expect(screen.getByRole('heading', { name: /Pendiente/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Asignado/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /En Camino/i })).toBeInTheDocument();
   });
 
-  it('debe filtrar despachos al cambiar el dropdown de filtros', async () => {
+  it('debe abrir el panel de detalles al hacer clic en el botón de ver', async () => {
     renderWithProviders(<DeliveriesPage />);
     
-    const filterSelect = screen.getByRole('combobox', { name: '' }); // El select de filtrar por
-    fireEvent.change(filterSelect, { target: { value: 'PENDING' } });
-
-    await waitFor(() => {
-      expect(axiosInstance.get).toHaveBeenLastCalledWith('/v1/logistics/deliveries', {
-        params: { status: 'PENDING' }
-      });
-    });
-  });
-
-  it('debe llamar al endpoint de asignación al cambiar el repartidor de un despacho', async () => {
-    (axiosInstance.post as any).mockResolvedValueOnce({
-      data: { success: true, data: { id: 101, orderId: 1001, deliveryManId: 100, status: 'ASSIGNED', createdAt: '2026-07-01T10:00:00Z', pickingItems: [] } }
-    });
-
-    renderWithProviders(<DeliveriesPage />);
-
-    // Esperar a que se carguen los datos y se renderice la tabla
-    expect(await screen.findByText('DLV-101')).toBeInTheDocument();
-
-    const selects = screen.getAllByRole('combobox');
-    const dlvSelect = selects[1]; 
+    expect(await screen.findByText('ENVÍO #101')).toBeInTheDocument();
     
-    fireEvent.change(dlvSelect, { target: { value: '101' } });
+    // Encontrar el botón de ver dentro de la tarjeta de ENVÍO #101
+    const card101 = screen.getByText('ENVÍO #101').closest('div');
+    const viewBtn = card101?.querySelector('button');
+    expect(viewBtn).toBeInTheDocument();
+    
+    fireEvent.click(viewBtn!);
 
-    await waitFor(() => {
-      expect(axiosInstance.post).toHaveBeenCalledWith('/v1/logistics/deliveries/101/assign', { deliveryManId: 101 });
-    });
+    // Debe abrir el panel de detalles y mostrar información
+    expect(screen.getByText('Detalle de Envío')).toBeInTheDocument();
+    expect(screen.getByText('Pedido ID:')).toBeInTheDocument();
+    expect(screen.getByText('#1001')).toBeInTheDocument();
   });
 
-  it('debe llamar al endpoint de etiqueta al hacer clic en Descargar Etiqueta', async () => {
+  it('debe descargar la etiqueta cuando está asignado y se solicita desde el panel de detalles', async () => {
     (axiosInstance.get as any).mockImplementation((url: string) => {
       if (url.includes('/label')) {
         return Promise.resolve({ data: new Blob() });
@@ -111,12 +103,22 @@ describe('DeliveriesPage', () => {
     });
 
     renderWithProviders(<DeliveriesPage />);
+    
+    expect(await screen.findByText('ENVÍO #102')).toBeInTheDocument();
+    
+    // Encontrar el botón de ver dentro de la tarjeta de ENVÍO #102
+    const card102 = screen.getByText('ENVÍO #102').closest('div');
+    const viewBtn = card102?.querySelector('button');
+    expect(viewBtn).toBeInTheDocument();
+    
+    fireEvent.click(viewBtn!);
 
-    const downloadButtons = await screen.findAllByRole('button', { name: /Descargar Etiqueta/i });
-    fireEvent.click(downloadButtons[0]);
+    // Esperar a que se abra el panel y buscar el botón de descargar
+    const downloadBtn = await screen.findByRole('button', { name: /Descargar Guía de Envío/i });
+    fireEvent.click(downloadBtn);
 
     await waitFor(() => {
-      expect(axiosInstance.get).toHaveBeenCalledWith('/v1/logistics/deliveries/101/label', {
+      expect(axiosInstance.get).toHaveBeenCalledWith('/v1/logistics/deliveries/102/label', {
         responseType: 'blob'
       });
     });

@@ -65,5 +65,15 @@ export const logisticsService = {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  },
+
+  /**
+   * Actualiza el estado de un despacho existente
+   */
+  updateDeliveryStatus: async (deliveryId: number, status: string): Promise<Delivery> => {
+    const { data } = await axiosInstance.patch<{ success: boolean; data: Delivery }>(`/v1/logistics/deliveries/${deliveryId}/status`, {
+      status
+    });
+    return data.data;
   }
 };

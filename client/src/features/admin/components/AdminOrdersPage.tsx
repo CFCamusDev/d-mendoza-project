@@ -73,6 +73,8 @@ export const AdminOrdersPage: React.FC = () => {
     SHIPPED: 'bg-purple-100 text-purple-800',
     DELIVERED: 'bg-green-100 text-green-800',
     CANCELLED: 'bg-red-100 text-red-800',
+    FAILED: 'bg-red-100 text-red-800',
+    RETURNED: 'bg-gray-100 text-gray-800',
   };
 
   return (

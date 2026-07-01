@@ -16,16 +16,26 @@ export const OrderTimeline: React.FC<OrderTimelineProps> = ({ order }) => {
     { label: 'Entregado', key: 'DELIVERED', icon: Home },
   ];
 
-  const cancelLog = order.statusLogs?.find((log) => log.status === 'CANCELLED');
-  const cancelTime = cancelLog ? formatTimelineDate(cancelLog.changedAt) : formatTimelineDate(order.createdAt);
+  const failedLog = order.statusLogs?.find((log) => ['CANCELLED', 'FAILED', 'RETURNED'].includes(log.status));
+  const failedTime = failedLog ? formatTimelineDate(failedLog.changedAt) : formatTimelineDate(order.createdAt);
 
-  if (order.status === 'CANCELLED') {
+  if (['CANCELLED', 'FAILED', 'RETURNED'].includes(order.status)) {
+    const isFailed = order.status === 'FAILED';
+    const isReturned = order.status === 'RETURNED';
+    let title = 'Pedido Cancelado';
+    if (isFailed) title = 'Entrega Fallida';
+    if (isReturned) title = 'Pedido Devuelto';
+    
+    let sub = 'Cancelado el';
+    if (isFailed) sub = 'Falló el';
+    if (isReturned) sub = 'Devuelto el';
+
     return (
       <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-700 text-xs font-semibold w-full">
         <XCircle className="w-5 h-5 text-red-500 shrink-0" />
         <div>
-          <p className="font-extrabold text-red-800">Pedido Cancelado</p>
-          <p className="text-[10px] text-red-500 mt-0.5">Cancelado el {cancelTime}</p>
+          <p className="font-extrabold text-red-800">{title}</p>
+          <p className="text-[10px] text-red-500 mt-0.5">{sub} {failedTime}</p>
         </div>
       </div>
     );

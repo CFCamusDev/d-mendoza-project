@@ -685,6 +685,8 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+  FAILED
+  RETURNED
 }
 
 model Order {
@@ -735,6 +737,8 @@ enum DeliveryStatus {
   IN_TRANSIT
   DELIVERED
   CANCELLED
+  FAILED
+  RETURNED
 }
 
 model Delivery {

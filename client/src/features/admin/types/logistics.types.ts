@@ -12,10 +12,16 @@ export interface Delivery {
   id: number;
   orderId: number;
   deliveryManId: number | null;
-  status: 'PENDING' | 'ASSIGNED' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED';
+  status: 'PENDING' | 'ASSIGNED' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED' | 'FAILED' | 'RETURNED';
   createdAt: string;
   updatedAt: string;
   pickingItems: PickingItem[];
+  orderUser?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  orderAddress?: any;
 }
 
 export interface PickingResponse {
