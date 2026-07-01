@@ -203,6 +203,10 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
       newOrderStatus = 'SHIPPED';
     } else if (status === 'DELIVERED') {
       newOrderStatus = 'DELIVERED';
+    } else if (status === 'FAILED') {
+      newOrderStatus = 'FAILED';
+    } else if (status === 'RETURNED') {
+      newOrderStatus = 'RETURNED';
     }
 
     if (newOrderStatus && record.order && record.order.status !== newOrderStatus) {

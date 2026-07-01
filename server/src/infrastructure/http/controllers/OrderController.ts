@@ -55,7 +55,7 @@ export class OrderController {
         return;
       }
 
-      const allowedStatus = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+      const allowedStatus = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'FAILED', 'RETURNED'];
       if (status && !allowedStatus.includes(status)) {
         res.status(400).json({
           success: false,

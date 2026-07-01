@@ -24,6 +24,8 @@ export const OrdersPage: React.FC = () => {
     { label: 'Enviados', key: 'SHIPPED' },
     { label: 'Entregados', key: 'DELIVERED' },
     { label: 'Cancelados', key: 'CANCELLED' },
+    { label: 'Fallidos', key: 'FAILED' },
+    { label: 'Devueltos', key: 'RETURNED' },
   ];
 
   return (
