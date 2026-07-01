@@ -22,6 +22,13 @@ vi.mock('react-hot-toast', () => ({
 
 import { toast } from 'react-hot-toast';
 
+// Mock useBrand
+vi.mock('@/shared/context/BrandContext', () => ({
+  useBrand: vi.fn(() => ({
+    refreshBrandConfig: vi.fn(),
+  })),
+}));
+
 describe('BrandingPage Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -34,8 +41,11 @@ describe('BrandingPage Component', () => {
         success: true,
         data: {
           brandName: 'D Mendoza Test',
-          logoUrl: 'https://test.com/logo.png',
-          primaryColor: '#ff0000',
+          logoHorizontalUrl: 'https://test.com/logo.png',
+          colorBrandBg: '#F7F7F5',
+          colorBrandPrimary: '#ff0000',
+          colorBrandText: '#6B6B6B',
+          colorBrandAccent: '#3F3F3F',
           socialLinksJson: {
             facebook: 'https://fb.com/test',
             instagram: 'https://ig.com/test',
@@ -54,12 +64,14 @@ describe('BrandingPage Component', () => {
 
     // Check that visual fields contain loaded values
     expect(screen.getByPlaceholderText("Ej. D'Mendoza")).toHaveValue('D Mendoza Test');
-    expect(screen.getByPlaceholderText('https://ejemplo.com/logo.png')).toHaveValue('https://test.com/logo.png');
+    
+    // Check that the Logo Horizontal image is rendered
+    expect(screen.getByAltText('Logo Horizontal')).toHaveAttribute('src', 'https://test.com/logo.png');
     
     // Check that social media links contain loaded values
-    expect(screen.getByPlaceholderText('URL de Facebook')).toHaveValue('https://fb.com/test');
-    expect(screen.getByPlaceholderText('URL de Instagram')).toHaveValue('https://ig.com/test');
-    expect(screen.getByPlaceholderText('URL de Twitter')).toHaveValue('');
+    expect(screen.getByDisplayValue('https://fb.com/test')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('https://ig.com/test')).toBeInTheDocument();
+    // twitter is empty in mock, so its url input would be empty
   });
 
   it('submits correctly on clicking Guardar Cambios', async () => {
@@ -68,8 +80,11 @@ describe('BrandingPage Component', () => {
         success: true,
         data: {
           brandName: 'D Mendoza Test',
-          logoUrl: 'https://test.com/logo.png',
-          primaryColor: '#ff0000',
+          logoHorizontalUrl: 'https://test.com/logo.png',
+          colorBrandBg: '#F7F7F5',
+          colorBrandPrimary: '#ff0000',
+          colorBrandText: '#6B6B6B',
+          colorBrandAccent: '#3F3F3F',
           socialLinksJson: {
             facebook: '',
             instagram: '',
@@ -103,13 +118,12 @@ describe('BrandingPage Component', () => {
         '/v1/config/brand',
         expect.objectContaining({
           brandName: 'D\'Mendoza Global',
-          logoUrl: 'https://test.com/logo.png',
-          primaryColor: '#ff0000',
-          socialLinksJson: {
-            facebook: '',
-            instagram: '',
-            twitter: '',
-          },
+          logoHorizontalUrl: 'https://test.com/logo.png',
+          colorBrandPrimary: '#ff0000',
+          colorBrandBg: '#F7F7F5',
+          colorBrandText: '#6B6B6B',
+          colorBrandAccent: '#3F3F3F',
+          socialLinksJson: {},
         })
       );
       

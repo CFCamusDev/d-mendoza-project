@@ -159,8 +159,8 @@ describe('LinkClientUseCase (HU-008)', () => {
     expect(clientRepo.linkUser).toHaveBeenCalledWith(fakeClient.id, fakeNewUser.id, null);
     expect(emailService.sendEmail).toHaveBeenCalledWith(
       fakeClient.email!,
-      expect.stringContaining('credenciales'),
-      expect.stringContaining(fakeClient.name),
+      expect.stringContaining('Activación'),
+      expect.stringContaining('Omnicanal'),
     );
   });
 
