@@ -40,7 +40,7 @@ import {
 
 interface AccordionMenuProps {
   menuKey: string;
-  title: string;
+  title: React.ReactNode;
   isExpanded: boolean;
   isCollapsed: boolean;
   onToggle: (key: string) => void;
