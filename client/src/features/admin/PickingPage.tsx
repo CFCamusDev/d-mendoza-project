@@ -4,7 +4,6 @@ import { PickingTable } from './components/picking/PickingTable';
 import { DeliveriesTable } from './components/picking/DeliveriesTable';
 import { usePicking } from './hooks/usePicking';
 import { useDeliveryAssignment } from './hooks/useDeliveryAssignment';
-import toast from 'react-hot-toast';
 import { PackageSearch, FileText, Loader2 } from 'lucide-react';
 import type { Delivery } from './types/logistics.types';
 
