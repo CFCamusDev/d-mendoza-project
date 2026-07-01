@@ -40,9 +40,20 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
             },
           },
         },
+        order: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
-    return record ? this.toDomain(record) : null;
+    if (!record) return null;
+    const domainObj = this.toDomain(record);
+    if (record.order) {
+      (domainObj as any).orderUser = record.order.user;
+      (domainObj as any).orderAddress = record.order.addressSnapshot;
+    }
+    return domainObj;
   }
 
   async createDeliveryWithItems(
@@ -92,9 +103,19 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
             },
           },
         },
+        order: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
-    return this.toDomain(record);
+    const domainObj = this.toDomain(record);
+    if (record.order) {
+      (domainObj as any).orderUser = record.order.user;
+      (domainObj as any).orderAddress = record.order.addressSnapshot;
+    }
+    return domainObj;
   }
 
   async findPaidOrdersWithoutDelivery(orderIds?: number[]): Promise<any[]> {
@@ -138,9 +159,21 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
             },
           },
         },
+        order: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
-    return records.map((record) => this.toDomain(record));
+    return records.map((record) => {
+      const domainObj = this.toDomain(record);
+      if (record.order) {
+        (domainObj as any).orderUser = record.order.user;
+        (domainObj as any).orderAddress = record.order.addressSnapshot;
+      }
+      return domainObj;
+    });
   }
 
   async updateStatus(id: number, status: string): Promise<Delivery> {
@@ -164,13 +197,10 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
         },
       },
     });
-    // We attach the user to the delivery domain object so the Use Case can access the email.
-    // The Delivery entity might not strictly have user, but we can pass it along or cast it.
-    // Wait, let's just return what `toDomain` expects. We might need to extend `toDomain` or just return it as any if we need the user.
-    // Let's modify toDomain to include user if it's there.
     const domainObj = this.toDomain(record);
-    if ((record as any).order?.user) {
-      (domainObj as any).orderUser = (record as any).order.user;
+    if (record.order) {
+      (domainObj as any).orderUser = record.order.user;
+      (domainObj as any).orderAddress = record.order.addressSnapshot;
     }
     return domainObj;
   }

@@ -16,6 +16,12 @@ export interface Delivery {
   createdAt: string;
   updatedAt: string;
   pickingItems: PickingItem[];
+  orderUser?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  orderAddress?: any;
 }
 
 export interface PickingResponse {
