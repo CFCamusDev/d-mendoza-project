@@ -3,6 +3,7 @@ import { PrismaDeliveryRepository } from '@infrastructure/database/repositories/
 import { PrismaUserRepository } from '@infrastructure/database/repositories/PrismaUserRepository';
 import { PrismaOrderRepository } from '@infrastructure/database/repositories/PrismaOrderRepository';
 import { PrismaDeliveryZoneRepository } from '@infrastructure/database/repositories/PrismaDeliveryZoneRepository';
+import prisma from '@infrastructure/database/prisma';
 import { PdfKitShippingLabelService } from '@infrastructure/services/PdfKitShippingLabelService';
 import { GeneratePickingListUseCase } from '@application/use-cases/logistics/GeneratePickingListUseCase';
 import { AssignDeliveryManUseCase } from '@application/use-cases/logistics/AssignDeliveryManUseCase';
@@ -37,7 +38,7 @@ export class LogisticsController {
     const deliveryRepo = new PrismaDeliveryRepository();
     const userRepo = new PrismaUserRepository();
     const orderRepo = new PrismaOrderRepository();
-    const deliveryZoneRepo = new PrismaDeliveryZoneRepository();
+    const deliveryZoneRepo = new PrismaDeliveryZoneRepository(prisma);
     const shippingLabelService = new PdfKitShippingLabelService();
     const emailService = new ResendEmailService();
 
