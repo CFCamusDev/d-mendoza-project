@@ -25,6 +25,7 @@ const checkSupplyOrAdmin = (req: any, res: any, next: any) => {
 
 router.get('/logistics/orders/pending', requireAuth, checkSupplyOrAdmin, controller.getPendingOrders);
 router.post('/logistics/picking', requireAuth, checkSupplyOrAdmin, controller.picking);
+router.get('/logistics/deliveries', requireAuth, checkSupplyOrAdmin, controller.getDeliveries);
 router.post('/logistics/deliveries/:id/assign', requireAuth, checkSupplyOrAdmin, controller.assign);
 router.get('/logistics/deliveries/:id/label', requireAuth, checkSupplyOrAdmin, controller.getLabel);
 

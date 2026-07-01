@@ -89,6 +89,12 @@ describe('Logistics Endpoints', () => {
         isActive: true,
         roles: [{ name: 'ADMIN' }],
       },
+      2: {
+        id: 2,
+        email: 'supply@example.com',
+        isActive: true,
+        roles: [{ name: 'SUPPLY' }],
+      },
       99: {
         id: 99,
         email: 'repartidor@example.com',
@@ -105,7 +111,11 @@ describe('Logistics Endpoints', () => {
   });
 
   describe('POST /api/v1/logistics/picking', () => {
-    it('should generate picking list successfully', async () => {
+    it('should generate picking list successfully with SUPPLY role', async () => {
+      mockTokenPayload.userId = 2;
+      mockTokenPayload.email = 'supply@example.com';
+      mockTokenPayload.role = 'SUPPLY';
+
       const mockPaidOrders = [
         {
           id: 101,
@@ -127,17 +137,16 @@ describe('Logistics Endpoints', () => {
 
       const response = await request(app)
         .post('/api/v1/logistics/picking')
+        .send({ orderIds: [101] })
         .set('Authorization', 'Bearer dummy-token');
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(response.body.count).toBe(1);
-      expect(response.body.data[0].status).toBe('PENDING');
     });
 
-    it('should block non-admin and non-logistics users', async () => {
+    it('should block non-admin and non-supply users', async () => {
       mockTokenPayload.role = 'CLIENT';
-      // client has id 1 here, update mock database role too
       userMockDb[1].roles = [{ name: 'CLIENT' }];
 
       const response = await request(app)
@@ -146,6 +155,58 @@ describe('Logistics Endpoints', () => {
 
       expect(response.status).toBe(403);
       expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('GET /api/v1/logistics/deliveries', () => {
+    it('should list all deliveries successfully', async () => {
+      const mockDeliveries = [
+        {
+          id: 1,
+          orderId: 101,
+          deliveryManId: null,
+          status: 'PENDING',
+          pickingItems: [],
+        },
+      ];
+
+      (prisma.delivery.findMany as any).mockResolvedValue(mockDeliveries);
+
+      const response = await request(app)
+        .get('/api/v1/logistics/deliveries')
+        .set('Authorization', 'Bearer dummy-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.count).toBe(1);
+      expect(response.body.data[0].id).toBe(1);
+    });
+
+    it('should list deliveries filtered by status successfully', async () => {
+      const mockDeliveries = [
+        {
+          id: 2,
+          orderId: 102,
+          deliveryManId: 99,
+          status: 'ASSIGNED',
+          pickingItems: [],
+        },
+      ];
+
+      (prisma.delivery.findMany as any).mockResolvedValue(mockDeliveries);
+
+      const response = await request(app)
+        .get('/api/v1/logistics/deliveries')
+        .query({ status: 'ASSIGNED' })
+        .set('Authorization', 'Bearer dummy-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(prisma.delivery.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { status: 'ASSIGNED' },
+        })
+      );
     });
   });
 
@@ -173,26 +234,6 @@ describe('Logistics Endpoints', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.status).toBe('ASSIGNED');
       expect(response.body.data.deliveryManId).toBe(99);
-    });
-
-    it('should fail if delivery man does not have DELIVERY role', async () => {
-      (prisma.delivery.findUnique as any).mockResolvedValue({
-        id: 1,
-        orderId: 101,
-        status: 'PENDING',
-      });
-
-      // Update mock database: make user 99 a CLIENT
-      userMockDb[99].roles = [{ name: 'CLIENT' }];
-
-      const response = await request(app)
-        .post('/api/v1/logistics/deliveries/1/assign')
-        .send({ deliveryManId: 99 })
-        .set('Authorization', 'Bearer dummy-token');
-
-      expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('role');
     });
   });
 

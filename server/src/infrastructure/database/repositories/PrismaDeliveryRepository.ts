@@ -120,11 +120,14 @@ export class PrismaDeliveryRepository implements IDeliveryRepository {
     });
   }
 
-  async findDeliveriesByStatus(status: string): Promise<Delivery[]> {
+  async findDeliveries(status?: string): Promise<Delivery[]> {
+    const whereClause: any = {};
+    if (status) {
+      whereClause.status = status as any;
+    }
+
     const records = await prisma.delivery.findMany({
-      where: {
-        status: status as any,
-      },
+      where: whereClause,
       include: {
         pickingItems: {
           include: {

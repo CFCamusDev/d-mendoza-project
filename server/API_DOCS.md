@@ -62,7 +62,9 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
 - [Conciliación de Transacciones — HU-073](#conciliación-de-transacciones--hu-073)
   - [POST /api/v1/admin/reconcile/stripe](#post-apiv1adminreconcilestripe)
 - [Logística y Despachos — HU-058](#logística-y-despachos--hu-058)
+  - [GET /api/v1/logistics/orders/pending](#get-apiv1logisticsorderspending)
   - [POST /api/v1/logistics/picking](#post-apiv1logisticspicking)
+  - [GET /api/v1/logistics/deliveries](#get-apiv1logisticsdeliveries)
   - [POST /api/v1/logistics/deliveries/:id/assign](#post-apiv1logisticsdeliveriesidassign)
   - [GET /api/v1/logistics/deliveries/:id/label](#get-apiv1logisticsdeliveriesidlabel)
 
@@ -4205,6 +4207,44 @@ Se emite cuando el usuario no tiene la sesión activa o carece del permiso `role
 
 ## Logística y Despachos — HU-058
 
+### GET /api/v1/logistics/orders/pending
+
+Lista todas las órdenes en estado `PAID` que no tienen ningún despacho (`Delivery`) asociado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/logistics/orders/pending` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
+
+#### 2. Parámetros de Solicitud
+
+No requiere parámetros.
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "count": 1,
+  "data": [
+    {
+      "id": 101,
+      "orderId": 101,
+      "customerName": "Juan Pérez",
+      "itemsCount": 3,
+      "totalAmount": 150.00,
+      "status": "PAID",
+      "createdAt": "2026-07-01T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
 ### POST /api/v1/logistics/picking
 
 Genera una lista de picking agrupando todas las órdenes (o una lista específica) que tienen estado `PAID` y que no cuentan con un despacho (`Delivery`) asociado.
@@ -4333,6 +4373,56 @@ Genera y descarga la etiqueta de despacho en formato PDF utilizando PDFKit.
 Retorna un archivo binario PDF con cabecera `Content-Type: application/pdf` y `Content-Disposition: attachment; filename="shipping-label-:id.pdf"`.
 
 ```
+
+---
+
+### GET /api/v1/logistics/deliveries
+
+Consulta todos los despachos generados en la base de datos, con la opción de filtrar por estado.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/logistics/deliveries` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
+
+#### 2. Parámetros de Solicitud
+
+- **Query Params (Opcionales)**:
+  - `status` (String, Opcional): Filtrar por estado de despacho (PENDING, ASSIGNED, IN_TRANSIT, DELIVERED, CANCELLED).
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "count": 1,
+  "data": [
+    {
+      "id": 1,
+      "orderId": 101,
+      "deliveryManId": null,
+      "status": "PENDING",
+      "createdAt": "2026-07-01T10:00:00.000Z",
+      "updatedAt": "2026-07-01T10:00:00.000Z",
+      "pickingItems": [
+        {
+          "id": 1,
+          "deliveryId": 1,
+          "variantId": 5,
+          "qty": 2,
+          "pickedAt": null,
+          "variantSku": "SKU-PROD-M-RED",
+          "productName": "Camiseta Básica"
+        }
+      ]
+    }
+  ]
+}
+```
+
 
 
 
