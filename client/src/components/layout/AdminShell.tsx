@@ -32,7 +32,8 @@ import {
   Landmark,
   ArrowLeftRight,
   FileText,
-  LayoutDashboard
+  LayoutDashboard,
+  Truck
 } from 'lucide-react';
 
 
@@ -93,7 +94,8 @@ export const AdminShell: React.FC = () => {
     inventario: false,
     crm: false,
     finanzas: false,
-    empresa: false
+    empresa: false,
+    logistica: false
   });
 
   // Header Dropdowns
@@ -125,6 +127,8 @@ export const AdminShell: React.FC = () => {
       activeKey = 'finanzas';
     } else if (path.startsWith('/admin/branches') || path.startsWith('/admin/employees') || path.startsWith('/admin/branding')) {
       activeKey = 'empresa';
+    } else if (path.startsWith('/admin/logistics')) {
+      activeKey = 'logistica';
     }
     
     if (activeKey) {
@@ -135,6 +139,7 @@ export const AdminShell: React.FC = () => {
         crm: false,
         finanzas: false,
         empresa: false,
+        logistica: false,
         [activeKey]: true
       });
     }
@@ -175,6 +180,7 @@ export const AdminShell: React.FC = () => {
         crm: false,
         finanzas: false,
         empresa: false,
+        logistica: false,
         [menuKey]: !isCurrentlyOpen
       };
     });
@@ -584,6 +590,28 @@ export const AdminShell: React.FC = () => {
             >
               <Palette className="w-4 h-4 shrink-0" />
               {!isCollapsed && <span>Identidad Visual</span>}
+            </Link>
+          </AccordionMenu>
+          )}
+
+          {/* Grupo 8: Logística */}
+          {(user?.role === 'ADMIN' || user?.role === 'DELIVERY') && (
+          <AccordionMenu 
+            menuKey="logistica" 
+            title="Logística" 
+            isExpanded={expandedMenus.logistica} 
+            isCollapsed={isCollapsed} 
+            onToggle={toggleMenu}
+          >
+            <Link
+              to="/admin/logistics/picking"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/logistics/picking') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Gestión de Picking"
+            >
+              <Truck className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Gestión de Picking</span>}
             </Link>
           </AccordionMenu>
           )}
