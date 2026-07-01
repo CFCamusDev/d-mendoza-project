@@ -47,7 +47,7 @@ jest.mock('@infrastructure/database/prisma', () => {
     user: mockUser,
     $transaction: jest.fn().mockImplementation(async (args: any): Promise<any> => {
       if (typeof args === 'function') {
-        return args();
+        return args(mockPrisma);
       }
       return args;
     }),
@@ -341,6 +341,62 @@ describe('Logistics Endpoints', () => {
       expect(response.status).toBe(409);
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('No se permite la transición');
+    });
+  });
+
+  describe('PATCH /api/v1/logistics/deliveries/:id/return', () => {
+    it('should process delivery return and update stock on valid transition', async () => {
+      (prisma.delivery.findUnique as any).mockResolvedValue({
+        id: 1,
+        orderId: 101,
+        status: 'FAILED',
+        order: {
+          id: 101,
+          items: [{ variantId: 5, qty: 2 }]
+        }
+      });
+      (prisma.delivery.update as any).mockResolvedValue({
+        id: 1,
+        orderId: 101,
+        status: 'RETURNED'
+      });
+      
+      const mockBranchStock = {
+        findUnique: jest.fn<any>().mockResolvedValue({ id: 10, quantity: 5 }),
+        update: jest.fn<any>().mockResolvedValue(true),
+        create: jest.fn<any>()
+      };
+      
+      const mockBranch = {
+        findFirst: jest.fn<any>().mockResolvedValue({ id: 1 })
+      };
+      
+      const mockKardex = {
+        findFirst: jest.fn<any>().mockResolvedValue({ unitCost: 10, balanceCost: 50 }),
+        create: jest.fn<any>().mockResolvedValue(true)
+      };
+
+      const mockOrderStatusLog = {
+        create: jest.fn<any>().mockResolvedValue(true)
+      };
+
+      (prisma as any).branchStock = mockBranchStock;
+      (prisma as any).branch = mockBranch;
+      (prisma as any).kardexEntry = mockKardex;
+      (prisma as any).orderStatusLog = mockOrderStatusLog;
+
+      const response = await request(app)
+        .patch('/api/v1/logistics/deliveries/1/return')
+        .set('Authorization', 'Bearer dummy-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(mockBranchStock.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: { quantity: 7 }
+      }));
+      expect(mockKardex.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ type: 'ENTRADA', quantity: 2, unitCost: 10 })
+      }));
     });
   });
 });

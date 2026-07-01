@@ -37,7 +37,7 @@ export class ExcelReportService implements IExcelReportService {
       }
 
       workbook.csv.write(passThrough)
-        .catch((err) => passThrough.destroy(err));
+        .catch((err: any) => passThrough.destroy(err));
       
       return passThrough;
     } else {
@@ -82,7 +82,7 @@ export class ExcelReportService implements IExcelReportService {
       }
 
       workbook.commit()
-        .catch((err) => passThrough.destroy(err));
+        .catch((err: any) => passThrough.destroy(err));
 
       return passThrough;
     }
@@ -116,7 +116,7 @@ export class ExcelReportService implements IExcelReportService {
       }
 
       workbook.csv.write(passThrough)
-        .catch((err) => passThrough.destroy(err));
+        .catch((err: any) => passThrough.destroy(err));
 
       return passThrough;
     } else {
@@ -154,7 +154,7 @@ export class ExcelReportService implements IExcelReportService {
       }
 
       workbook.commit()
-        .catch((err) => passThrough.destroy(err));
+        .catch((err: any) => passThrough.destroy(err));
 
       return passThrough;
     }
@@ -198,7 +198,7 @@ export class ExcelReportService implements IExcelReportService {
       }
 
       workbook.csv.write(passThrough)
-        .catch((err) => passThrough.destroy(err));
+        .catch((err: any) => passThrough.destroy(err));
 
       return passThrough;
     } else {
@@ -246,7 +246,7 @@ export class ExcelReportService implements IExcelReportService {
       }
 
       workbook.commit()
-        .catch((err) => passThrough.destroy(err));
+        .catch((err: any) => passThrough.destroy(err));
 
       return passThrough;
     }
