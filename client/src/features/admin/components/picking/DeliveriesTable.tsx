@@ -5,12 +5,14 @@ import { DeliveryDropdown } from './DeliveryDropdown';
 interface DeliveriesTableProps {
   deliveries: Delivery[];
   onAssignDeliveryMan: (deliveryId: number, deliveryManId: number) => void;
+  onDownloadLabel: (deliveryId: number) => void;
   assigningId?: number | null;
 }
 
 export const DeliveriesTable: React.FC<DeliveriesTableProps> = ({
   deliveries,
   onAssignDeliveryMan,
+  onDownloadLabel,
   assigningId
 }) => {
   return (
@@ -37,12 +39,15 @@ export const DeliveriesTable: React.FC<DeliveriesTableProps> = ({
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Fecha Generación
               </th>
+              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Acciones
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {deliveries.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
                   No hay despachos pendientes de asignación.
                 </td>
               </tr>
@@ -72,6 +77,14 @@ export const DeliveriesTable: React.FC<DeliveriesTableProps> = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(delivery.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => onDownloadLabel(delivery.id)}
+                      className="text-indigo-600 hover:text-indigo-900 ml-4"
+                    >
+                      Descargar Etiqueta
+                    </button>
                   </td>
                 </tr>
               ))

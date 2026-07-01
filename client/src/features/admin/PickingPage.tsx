@@ -1,26 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { PickingTable } from './components/picking/PickingTable';
 import { DeliveriesTable } from './components/picking/DeliveriesTable';
-import { OrderToPick, Delivery } from './types/logistics.types';
+import { usePicking } from './hooks/usePicking';
+import { useDeliveryAssignment } from './hooks/useDeliveryAssignment';
 import toast from 'react-hot-toast';
-import { PackageSearch, FileText } from 'lucide-react';
-
-// Mock data temporal para la Fase 1
-const mockOrders: OrderToPick[] = [
-  { id: 1, orderId: 1001, customerName: 'Juan Perez', itemsCount: 3, totalAmount: 150.0, status: 'PAID', createdAt: new Date().toISOString() },
-  { id: 2, orderId: 1002, customerName: 'Maria Lopez', itemsCount: 1, totalAmount: 45.5, status: 'PAID', createdAt: new Date().toISOString() },
-];
-
-const mockDeliveries: Delivery[] = [
-  { id: 101, orderId: 1003, deliveryManId: null, status: 'PENDING', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), pickingItems: [] },
-  { id: 102, orderId: 1004, deliveryManId: 99, status: 'ASSIGNED', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), pickingItems: [] },
-];
+import { PackageSearch, FileText, Loader2 } from 'lucide-react';
+import { Delivery } from './types/logistics.types';
 
 const PickingPage: React.FC = () => {
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
-  const [deliveries, setDeliveries] = useState<Delivery[]>(mockDeliveries);
-  const [assigningId, setAssigningId] = useState<number | null>(null);
+  
+  const { 
+    orders, 
+    deliveries, 
+    setDeliveries, 
+    isLoading, 
+    isGenerating, 
+    error, 
+    fetchPendingOrders, 
+    generatePickingList 
+  } = usePicking();
+
+  // Load pending orders on mount
+  useEffect(() => {
+    fetchPendingOrders();
+  }, [fetchPendingOrders]);
+
+  const updateDeliveryState = (deliveryId: number, deliveryManId: number, status: Delivery['status']) => {
+    setDeliveries((prev) => 
+      prev.map(d => d.id === deliveryId ? { ...d, deliveryManId, status } : d)
+    );
+  };
+
+  const { assignDeliveryMan, downloadLabel, assigningId } = useDeliveryAssignment(updateDeliveryState);
 
   const handleSelectOrder = (orderId: number, isSelected: boolean) => {
     setSelectedOrders((prev) =>
@@ -30,31 +43,22 @@ const PickingPage: React.FC = () => {
 
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
-      setSelectedOrders(mockOrders.map((o) => o.id));
+      setSelectedOrders(orders.map((o) => o.id));
     } else {
       setSelectedOrders([]);
     }
   };
 
-  const handleGeneratePicking = () => {
+  const handleGeneratePicking = async () => {
+    // Si la API generará todo, la validación de selectedOrders es opcional
+    // Pero según el requerimiento de la interfaz, el usuario debe seleccionar
     if (selectedOrders.length === 0) {
       toast.error('Debe seleccionar al menos un pedido para generar el picking list.');
       return;
     }
-    // Lógica temporal para Fase 1
-    toast.success(`Generando picking list para ${selectedOrders.length} pedido(s)...`);
-  };
-
-  const handleAssignDeliveryMan = (deliveryId: number, deliveryManId: number) => {
-    setAssigningId(deliveryId);
-    // Simular llamada a API
-    setTimeout(() => {
-      setDeliveries((prev) => 
-        prev.map(d => d.id === deliveryId ? { ...d, deliveryManId, status: 'ASSIGNED' } : d)
-      );
-      setAssigningId(null);
-      toast.success('Repartidor asignado exitosamente.');
-    }, 600);
+    
+    await generatePickingList();
+    setSelectedOrders([]);
   };
 
   return (
@@ -64,6 +68,12 @@ const PickingPage: React.FC = () => {
       </Helmet>
       
       <div className="space-y-6">
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm font-semibold shadow-sm">
+            {error}
+          </div>
+        )}
+
         {/* Header Info */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -78,30 +88,39 @@ const PickingPage: React.FC = () => {
 
           <button
             onClick={handleGeneratePicking}
-            disabled={selectedOrders.length === 0}
+            disabled={selectedOrders.length === 0 || isGenerating}
             className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm ${
-              selectedOrders.length === 0
+              selectedOrders.length === 0 || isGenerating
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
                 : 'bg-black text-white hover:bg-gray-800 border border-transparent'
             }`}
           >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Generar Picking List</span>
+            {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+            <span>{isGenerating ? 'Generando...' : 'Generar Picking List'}</span>
           </button>
         </div>
 
-        <PickingTable
-          orders={mockOrders}
-          selectedOrders={selectedOrders}
-          onSelectOrder={handleSelectOrder}
-          onSelectAll={handleSelectAll}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <Loader2 className="w-10 h-10 animate-spin text-brand-accent" />
+          </div>
+        ) : (
+          <PickingTable
+            orders={orders}
+            selectedOrders={selectedOrders}
+            onSelectOrder={handleSelectOrder}
+            onSelectAll={handleSelectAll}
+          />
+        )}
 
-        <DeliveriesTable 
-          deliveries={deliveries}
-          onAssignDeliveryMan={handleAssignDeliveryMan}
-          assigningId={assigningId}
-        />
+        {deliveries.length > 0 && (
+          <DeliveriesTable 
+            deliveries={deliveries}
+            onAssignDeliveryMan={assignDeliveryMan}
+            onDownloadLabel={downloadLabel}
+            assigningId={assigningId}
+          />
+        )}
       </div>
     </>
   );
