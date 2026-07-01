@@ -1,5 +1,5 @@
 import axiosInstance from '@/shared/api/axiosInstance';
-import type { Delivery, PickingResponse, AssignDeliveryManResponse, OrderToPick, DeliveryMan } from '../types/logistics.types';
+import type { Delivery, FailedAttempt, PickingResponse, AssignDeliveryManResponse, OrderToPick, DeliveryMan } from '../types/logistics.types';
 
 export const logisticsService = {
   /**
@@ -75,5 +75,20 @@ export const logisticsService = {
       status
     });
     return data.data;
-  }
+  },
+
+  /**
+   * Registra un intento de entrega fallido y cambia el status a FAILED
+   */
+  registerFailedAttempt: async (
+    deliveryId: number,
+    reason: string,
+    rescheduledFor?: string,
+  ): Promise<FailedAttempt> => {
+    const { data } = await axiosInstance.post<{ success: boolean; data: FailedAttempt }>(
+      `/v1/logistics/deliveries/${deliveryId}/failed-attempt`,
+      { reason, rescheduledFor: rescheduledFor || undefined },
+    );
+    return data.data;
+  },
 };

@@ -1,3 +1,11 @@
+export interface FailedAttempt {
+  id: number;
+  deliveryId: number;
+  reason: string;
+  attemptedAt: string;
+  rescheduledFor: string | null;
+}
+
 export interface PickingItem {
   id: number;
   deliveryId: number;
@@ -16,6 +24,7 @@ export interface Delivery {
   createdAt: string;
   updatedAt: string;
   pickingItems: PickingItem[];
+  failedAttempts?: FailedAttempt[];
   orderUser?: {
     id: number;
     name: string;
