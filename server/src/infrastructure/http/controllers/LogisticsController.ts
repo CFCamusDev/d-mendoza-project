@@ -8,6 +8,7 @@ import { AssignDeliveryManUseCase } from '@application/use-cases/logistics/Assig
 import { GenerateShippingLabelUseCase } from '@application/use-cases/logistics/GenerateShippingLabelUseCase';
 import { GetPendingOrdersUseCase } from '@application/use-cases/logistics/GetPendingOrdersUseCase';
 import { GetDeliveriesUseCase } from '@application/use-cases/logistics/GetDeliveriesUseCase';
+import { GetDeliveryMenUseCase } from '@application/use-cases/logistics/GetDeliveryMenUseCase';
 
 export class LogisticsController {
   private generatePickingListUseCase: GeneratePickingListUseCase;
@@ -15,6 +16,7 @@ export class LogisticsController {
   private generateShippingLabelUseCase: GenerateShippingLabelUseCase;
   private getPendingOrdersUseCase: GetPendingOrdersUseCase;
   private getDeliveriesUseCase: GetDeliveriesUseCase;
+  private getDeliveryMenUseCase: GetDeliveryMenUseCase;
 
   constructor() {
     const deliveryRepo = new PrismaDeliveryRepository();
@@ -31,6 +33,7 @@ export class LogisticsController {
     );
     this.getPendingOrdersUseCase = new GetPendingOrdersUseCase(deliveryRepo);
     this.getDeliveriesUseCase = new GetDeliveriesUseCase(deliveryRepo);
+    this.getDeliveryMenUseCase = new GetDeliveryMenUseCase(userRepo);
   }
 
   picking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -59,6 +62,15 @@ export class LogisticsController {
       const { status } = req.query;
       const deliveries = await this.getDeliveriesUseCase.execute(status as string | undefined);
       res.status(200).json({ success: true, count: deliveries.length, data: deliveries });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getDeliveryMen = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const deliveryMen = await this.getDeliveryMenUseCase.execute();
+      res.status(200).json({ success: true, count: deliveryMen.length, data: deliveryMen });
     } catch (error) {
       next(error);
     }

@@ -22,5 +22,6 @@ export interface IUserRepository {
     userId: number,
     data: Partial<Pick<User, 'name' | 'lastName' | 'phone' | 'avatarUrl'>>
   ): Promise<User>;
+  findUsersByRoleName(roleName: string): Promise<User[]>;
 }
 

@@ -106,6 +106,7 @@ const createMockRepository = (overrides: Partial<IUserRepository> = {}): IUserRe
     createdAt: new Date(),
     updatedAt: new Date(),
   })),
+  findUsersByRoleName: jest.fn<IUserRepository['findUsersByRoleName']>().mockResolvedValue([]),
   ...overrides,
 });
 

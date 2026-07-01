@@ -65,6 +65,7 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [GET /api/v1/logistics/orders/pending](#get-apiv1logisticsorderspending)
   - [POST /api/v1/logistics/picking](#post-apiv1logisticspicking)
   - [GET /api/v1/logistics/deliveries](#get-apiv1logisticsdeliveries)
+  - [GET /api/v1/logistics/delivery-men](#get-apiv1logisticsdelivery-men)
   - [POST /api/v1/logistics/deliveries/:id/assign](#post-apiv1logisticsdeliveriesidassign)
   - [GET /api/v1/logistics/deliveries/:id/label](#get-apiv1logisticsdeliveriesidlabel)
 
@@ -4423,7 +4424,41 @@ Consulta todos los despachos generados en la base de datos, con la opción de fi
 }
 ```
 
+---
 
+### GET /api/v1/logistics/delivery-men
 
+Consulta y retorna todos los usuarios del sistema que cuentan con el rol `DELIVERY`. Utilizado para popular el dropdown de asignación de repartidores en el frontend.
 
+#### 1. Especificación del Endpoint
 
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/logistics/delivery-men` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
+
+#### 2. Parámetros de Solicitud
+
+No requiere parámetros.
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "count": 2,
+  "data": [
+    {
+      "id": 99,
+      "name": "Juan Repartidor",
+      "email": "juan.repartidor@example.com"
+    },
+    {
+      "id": 100,
+      "name": "Maria Envíos",
+      "email": "maria.envios@example.com"
+    }
+  ]
+}
+```

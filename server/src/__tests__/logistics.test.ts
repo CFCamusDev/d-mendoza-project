@@ -37,6 +37,7 @@ jest.mock('@infrastructure/database/prisma', () => {
 
   const mockUser = {
     findUnique: jest.fn(),
+    findMany: jest.fn(),
   };
 
   const mockPrisma: any = {
@@ -155,6 +156,29 @@ describe('Logistics Endpoints', () => {
 
       expect(response.status).toBe(403);
       expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('GET /api/v1/logistics/delivery-men', () => {
+    it('should return users with DELIVERY role', async () => {
+      const mockUsers = [
+        {
+          id: 99,
+          email: 'repartidor@example.com',
+          name: 'Repartidor',
+          lastName: '1',
+          roles: [{ name: 'DELIVERY' }],
+        },
+      ];
+      (prisma.user.findMany as any).mockResolvedValue(mockUsers);
+
+      const response = await request(app)
+        .get('/api/v1/logistics/delivery-men')
+        .set('Authorization', 'Bearer dummy-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data[0].id).toBe(99);
     });
   });
 
