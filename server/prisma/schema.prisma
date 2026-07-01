@@ -39,6 +39,7 @@ model User {
   blogPosts       BlogPost[]
   coupons         Coupon[]
   orders          Order[]
+  deliveries      Delivery[] @relation("DeliveryMan")
 }
 
 model Client {
@@ -282,6 +283,7 @@ model ProductVariant {
   stockTransfers  StockTransfer[]
   cartItems       CartItem[]       // HU-041
   orderItems      OrderItem[]
+  pickingItems    PickingItem[]
 
   @@index([productId])
 }
@@ -698,6 +700,7 @@ model Order {
   statusLogs      OrderStatusLog[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  delivery        Delivery?
 
   @@index([userId])
 }
@@ -724,4 +727,39 @@ model OrderStatusLog {
   changedBy String
 
   @@index([orderId])
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+model Delivery {
+  id            Int            @id @default(autoincrement())
+  orderId       Int            @unique
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  deliveryManId Int?
+  deliveryMan   User?          @relation("DeliveryMan", fields: [deliveryManId], references: [id])
+  status        DeliveryStatus @default(PENDING)
+  pickingItems  PickingItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([deliveryManId])
+}
+
+model PickingItem {
+  id         Int            @id @default(autoincrement())
+  deliveryId Int
+  delivery   Delivery       @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  variantId  Int
+  variant    ProductVariant @relation(fields: [variantId], references: [id])
+  qty        Int
+  pickedAt   DateTime?
+
+  @@index([deliveryId])
+  @@index([variantId])
 }
