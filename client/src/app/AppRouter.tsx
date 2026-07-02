@@ -24,6 +24,7 @@ import ProductsAdminPage from '../features/admin/ProductsAdminPage';
 import DashboardPage from '../features/admin/DashboardPage';
 import CreditNotesPage from '../features/admin/credit-notes/CreditNotesPage';
 import ReconcilePage from '../features/admin/ReconcilePage';
+import CreditControlPage from '../features/admin/CreditControlPage';
 import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
 import { ProfileLayout } from '../features/ecommerce/profile/components/ProfileLayout';
@@ -206,6 +207,14 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute allowedPermissions={['users:read']}>
               <ClientsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/credits"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <CreditControlPage />
             </ProtectedRoute>
           }
         />

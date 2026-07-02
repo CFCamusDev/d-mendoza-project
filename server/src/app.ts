@@ -39,6 +39,7 @@ import adminDashboardRoutes from '@infrastructure/http/routes/admin-dashboard.ro
 import adminReconciliationRoutes from '@infrastructure/http/routes/admin-reconciliation.routes';
 import genderRoutes from '@infrastructure/http/routes/gender.routes';
 import adminExpenseRoutes from '@infrastructure/http/routes/admin-expense.routes';
+import creditRoutes from '@infrastructure/http/routes/credit.routes';
 
 
 import ecommerceCartRoutes from '@infrastructure/http/routes/ecommerce-cart.routes';
@@ -112,6 +113,7 @@ app.use('/api/v1', adminDashboardRoutes);
 app.use('/api/v1', adminReconciliationRoutes);
 app.use('/api/v1', genderRoutes);
 app.use('/api/v1', adminExpenseRoutes);
+app.use('/api/v1', creditRoutes);
 
 app.use('/api/v1', deliveryZoneRoutes);
 app.use('/api/v1/checkout', checkoutRoutes);

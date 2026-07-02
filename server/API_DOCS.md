@@ -78,6 +78,11 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [PATCH /api/v1/admin/returns/:id/approve](#patch-apiv1adminreturnsidapprove)
   - [PATCH /api/v1/admin/returns/:id/reject](#patch-apiv1adminreturnsidreject)
   - [POST /api/v1/admin/returns/:id/credit-note](#post-apiv1adminreturnsidcredit-note)
+- [Control de Cuentas por Cobrar y Créditos — HU-072](#control-de-cuentas-por-cobrar-y-créditos--hu-072)
+  - [POST /api/v1/credits](#post-apiv1credits)
+  - [POST /api/v1/credits/:id/payments](#post-apiv1creditsidpayments)
+  - [GET /api/v1/credits](#get-apiv1credits)
+
 
 ---
 
@@ -5027,4 +5032,118 @@ Permite a un administrador emitir una nota de crédito o vale de crédito por un
 
 - **HTTP 400 Bad Request**: Si la devolución no existe, ya cuenta con una nota de crédito emitida, o el monto calculado es menor o igual a cero.
 - **HTTP 403 Forbidden**: Si el usuario no tiene el rol de administrador.
+
+
+---
+
+## Control de Cuentas por Cobrar y Créditos — HU-072
+
+### POST /api/v1/credits
+
+Registra un nuevo crédito otorgado a un cliente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/credits` | Ninguna | Cualquiera |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "clientId": 1,
+  "totalAmount": 500.00,
+  "installments": 3,
+  "dueDate": "2026-08-01T00:00:00.000Z"
+}
+```
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 201 Created)
+
+```json
+{
+  "id": "credit-uuid-1",
+  "clientId": 1,
+  "totalAmount": 500.00,
+  "installments": 3,
+  "dueDate": "2026-08-01T00:00:00.000Z",
+  "createdAt": "2026-07-02T12:00:00.000Z",
+  "updatedAt": "2026-07-02T12:00:00.000Z",
+  "payments": []
+}
+```
+
+---
+
+### POST /api/v1/credits/:id/payments
+
+Registra un abono o pago parcial a un crédito existente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/credits/:id/payments` | Ninguna | Cualquiera |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "amount": 150.00
+}
+```
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 201 Created)
+
+```json
+{
+  "id": "payment-uuid-1",
+  "creditId": "credit-uuid-1",
+  "amount": 150.00,
+  "paidAt": "2026-07-02T12:05:00.000Z"
+}
+```
+
+---
+
+### GET /api/v1/credits
+
+Consulta el saldo pendiente consolidado y el detalle de créditos de un cliente específico.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/credits?clientId=1` | Ninguna | Cualquiera |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `clientId` | `number` | Sí | ID del cliente a consultar. |
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "clientId": 1,
+  "totalPendingBalance": 350.00,
+  "credits": [
+    {
+      "id": "credit-uuid-1",
+      "totalAmount": 500.00,
+      "pendingBalance": 350.00,
+      "dueDate": "2026-08-01T00:00:00.000Z",
+      "installments": 3
+    }
+  ]
+}
+```
 
