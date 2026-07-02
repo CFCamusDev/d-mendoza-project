@@ -574,6 +574,16 @@ export const AdminShell: React.FC = () => {
               <Landmark className="w-4 h-4 shrink-0" />
               {!isCollapsed && <span>Gestión de Cajas</span>}
             </Link>
+            <Link
+              to="/admin/credit-notes"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/credit-notes') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Notas de Crédito"
+            >
+              <FileText className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Notas de Crédito</span>}
+            </Link>
           </AccordionMenu>
           )}
 
