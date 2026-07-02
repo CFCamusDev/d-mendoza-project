@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { ProfitabilityFilters } from './components/ProfitabilityFilters';
 import { ProfitabilityTable } from './components/ProfitabilityTable';
-import type { GroupByOption, ProfitabilityReportResponse } from '../../types/profitability';
+import type { GroupByOption } from '../../types/profitability';
+import { useProfitabilityReport } from './hooks/useProfitabilityReport';
 import { BarChart3, Download, Loader2 } from 'lucide-react';
 
 export const ProfitabilityReportPage: React.FC = () => {
@@ -13,29 +14,11 @@ export const ProfitabilityReportPage: React.FC = () => {
   const [toDate, setToDate] = useState<string>('');
   const [groupBy, setGroupBy] = useState<GroupByOption>('brand');
   
-  // Estado local mock (Fase 1/2)
-  const [loading, setLoading] = useState(false);
-  const [reportData, setReportData] = useState<ProfitabilityReportResponse['data'] | null>(null);
+  // Custom Hook
+  const { loading, reportData, fetchReport } = useProfitabilityReport();
 
   const handleApplyFilters = () => {
-    setLoading(true);
-    // Simulación de carga para Fase 2
-    setTimeout(() => {
-      setReportData({
-        items: [
-          { name: 'NIKE', totalQuantity: 15, totalRevenue: 1500, totalCost: 1000, grossProfit: 500, profitMarginPercentage: 33.33 },
-          { name: 'ADIDAS', totalQuantity: 10, totalRevenue: 800, totalCost: 900, grossProfit: -100, profitMarginPercentage: -12.5 },
-        ],
-        totals: {
-          totalQuantity: 25,
-          totalRevenue: 2300,
-          totalCost: 1900,
-          grossProfit: 400,
-          profitMarginPercentage: 17.39
-        }
-      });
-      setLoading(false);
-    }, 1000);
+    fetchReport(groupBy, fromDate, toDate);
   };
 
   const handleExportCsv = () => {
