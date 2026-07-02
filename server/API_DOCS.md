@@ -4296,6 +4296,176 @@ Se emite cuando el usuario autenticado no cuenta con el permiso `sales:read`.
 
 ---
 
+## Registro de Gastos Operativos por Sucursal — HU-071
+
+Este módulo permite realizar operaciones CRUD sobre los gastos operativos (fijos y variables) asociados a cada sucursal del sistema.
+
+### POST /api/v1/admin/expenses
+
+Registra un nuevo gasto operativo en el sistema asociado a una sucursal y al usuario creador (auditoría).
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/admin/expenses` | JWT `Bearer Token` | `sales:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "branchId": 1,
+  "type": "FIXED",
+  "description": "Pago de alquiler mensual de local principal",
+  "amount": 2500.00,
+  "date": "2026-07-02T10:00:00.000Z"
+}
+```
+
+#### 3. Respuestas del Servidor
+
+##### Registro Exitoso (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "branchId": 1,
+    "type": "FIXED",
+    "description": "Pago de alquiler mensual de local principal",
+    "amount": 2500.00,
+    "date": "2026-07-02T10:00:00.000Z",
+    "userId": 1,
+    "createdAt": "2026-07-02T11:20:00.000Z",
+    "updatedAt": "2026-07-02T11:20:00.000Z"
+  }
+}
+```
+
+##### Error de Validación (HTTP 400 Bad Request)
+
+Se emite cuando el monto es negativo, el tipo no es FIXED o VARIABLE, o faltan campos obligatorios.
+
+```json
+{
+  "success": false,
+  "error": "El monto del gasto operativo no puede ser negativo"
+}
+```
+
+---
+
+### GET /api/v1/admin/expenses
+
+Obtiene el listado de gastos operativos registrados en el sistema, permitiendo filtrar por sucursal y rango de fechas.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/admin/expenses` | JWT `Bearer Token` | `sales:read` |
+
+#### 2. Parámetros Query (Query Parameters)
+
+| Parámetro | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `branchId` | Número | No | Filtra los gastos por el ID de la sucursal. |
+| `from` | String (Fecha) | No | Filtra gastos cuya fecha sea mayor o igual a la indicada. |
+| `to` | String (Fecha) | No | Filtra gastos cuya fecha sea menor o igual a la indicada. |
+
+#### 3. Respuestas del Servidor
+
+##### Consulta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "branchId": 1,
+      "type": "FIXED",
+      "description": "Pago de alquiler mensual de local principal",
+      "amount": 2500.00,
+      "date": "2026-07-02T10:00:00.000Z",
+      "userId": 1,
+      "createdAt": "2026-07-02T11:20:00.000Z",
+      "updatedAt": "2026-07-02T11:20:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### PUT /api/v1/admin/expenses/:id
+
+Actualiza parcialmente o totalmente un gasto operativo existente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `PUT` | `/api/v1/admin/expenses/:id` | JWT `Bearer Token` | `sales:write` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+Se aceptan modificaciones opcionales de `branchId`, `type`, `description`, `amount` y `date`.
+
+```json
+{
+  "amount": 2600.00,
+  "description": "Pago de alquiler mensual reajustado"
+}
+```
+
+#### 3. Respuestas del Servidor
+
+##### Actualización Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "branchId": 1,
+    "type": "FIXED",
+    "description": "Pago de alquiler mensual reajustado",
+    "amount": 2600.00,
+    "date": "2026-07-02T10:00:00.000Z",
+    "userId": 1,
+    "createdAt": "2026-07-02T11:20:00.000Z",
+    "updatedAt": "2026-07-02T11:25:00.000Z"
+  }
+}
+```
+
+---
+
+### DELETE /api/v1/admin/expenses/:id
+
+Elimina un registro de gasto operativo del sistema.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `DELETE` | `/api/v1/admin/expenses/:id` | JWT `Bearer Token` | `sales:write` |
+
+#### 3. Respuestas del Servidor
+
+##### Eliminación Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Gasto operativo eliminado exitosamente"
+}
+```
+
+---
+
 ## Conciliación de Transacciones — HU-073
 
 ### POST /api/v1/admin/reconcile/stripe
