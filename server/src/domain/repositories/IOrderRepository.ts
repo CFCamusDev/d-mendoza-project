@@ -47,5 +47,10 @@ export interface IOrderRepository {
     orderCreatedAt: Date;
     unitCost: number;
   }>>;
+  getFinancialSales(from?: Date, to?: Date): Promise<Array<{
+    amount: number;
+    createdAt: Date;
+  }>>;
 }
+
 
