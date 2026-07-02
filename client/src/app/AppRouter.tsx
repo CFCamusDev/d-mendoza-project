@@ -69,6 +69,7 @@ import ExpensesPage from '../features/admin/expenses/ExpensesPage';
 import DiscountAuditPage from '../features/admin/DiscountAuditPage';
 import SellerRankingPage from '../features/admin/SellerRankingPage';
 import InventoryValuationPage from '../features/admin/InventoryValuationPage';
+import { CouponsAdminPage } from '../features/admin/coupons/CouponsAdminPage';
 export const AppRouter = () => {
   return (
     <Routes>
@@ -187,6 +188,14 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <DeliveryZonesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/coupons"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <CouponsAdminPage />
             </ProtectedRoute>
           }
         />

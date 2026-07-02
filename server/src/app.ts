@@ -46,6 +46,9 @@ import ecommerceCartRoutes from '@infrastructure/http/routes/ecommerce-cart.rout
 import deliveryZoneRoutes from '@infrastructure/http/routes/delivery-zone.routes';
 import checkoutRoutes from '@infrastructure/http/routes/checkout.routes';
 import couponRoutes from '@infrastructure/http/routes/coupon.routes';
+import adminCouponsRoutes from '@infrastructure/http/routes/admin-coupons.routes';
+import loyaltyRoutes from '@infrastructure/http/routes/loyalty.routes';
+import adminAlertsRoutes from '@infrastructure/http/routes/admin-alerts.routes';
 import orderRoutes from '@infrastructure/http/routes/order.routes';
 import logisticsRoutes from '@infrastructure/http/routes/logistics.routes';
 import returnsRoutes from '@infrastructure/http/routes/returns.routes';
@@ -118,13 +121,14 @@ app.use('/api/v1', creditRoutes);
 app.use('/api/v1', deliveryZoneRoutes);
 app.use('/api/v1/checkout', checkoutRoutes);
 app.use('/api/v1/coupons', couponRoutes);
-import adminAlertsRoutes from '@infrastructure/http/routes/admin-alerts.routes';
+app.use('/api/v1/admin/coupons', adminCouponsRoutes);
 
 // ...
 app.use('/api/v1', orderRoutes);
 app.use('/api/v1', logisticsRoutes);
 app.use('/api/v1', returnsRoutes);
 app.use('/api/v1', adminAlertsRoutes);
+app.use('/api/v1/loyalty', loyaltyRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });
