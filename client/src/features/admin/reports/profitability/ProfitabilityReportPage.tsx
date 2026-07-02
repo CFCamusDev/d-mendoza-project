@@ -4,6 +4,7 @@ import { ProfitabilityFilters } from './components/ProfitabilityFilters';
 import { ProfitabilityTable } from './components/ProfitabilityTable';
 import type { GroupByOption } from '../../types/profitability';
 import { useProfitabilityReport } from './hooks/useProfitabilityReport';
+import { useExportCsv } from './hooks/useExportCsv';
 import { BarChart3, Download, Loader2 } from 'lucide-react';
 
 export const ProfitabilityReportPage: React.FC = () => {
@@ -16,14 +17,14 @@ export const ProfitabilityReportPage: React.FC = () => {
   
   // Custom Hook
   const { loading, reportData, fetchReport } = useProfitabilityReport();
+  const { exportToCsv } = useExportCsv();
 
   const handleApplyFilters = () => {
     fetchReport(groupBy, fromDate, toDate);
   };
 
   const handleExportCsv = () => {
-    // Placeholder para Fase 4
-    console.log('Exporting CSV...');
+    exportToCsv(reportData, groupBy);
   };
 
   return (
