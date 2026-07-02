@@ -214,7 +214,7 @@ export const AdminShell: React.FC = () => {
   };
 
   const isActiveRoute = (path: string) => {
-    if (path === '/admin/inventory/stock') {
+    if (path === '/admin/inventory/stock' || path === '/admin/logistics/deliveries') {
       return location.pathname === path;
     }
     return location.pathname.startsWith(path);
@@ -711,7 +711,7 @@ export const AdminShell: React.FC = () => {
               <ClipboardCheck className="w-4 h-4 shrink-0" />
               {!isCollapsed && <span>Generar Picking</span>}
             </Link>
-            <Link
+             <Link
               to="/admin/logistics/deliveries"
               className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
                 isActiveRoute('/admin/logistics/deliveries') ? activeClass : inactiveClass
@@ -720,6 +720,16 @@ export const AdminShell: React.FC = () => {
             >
               <Truck className="w-4 h-4 shrink-0" />
               {!isCollapsed && <span>Control de Despachos</span>}
+            </Link>
+            <Link
+              to="/admin/logistics/deliveries-by-zone"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/logistics/deliveries-by-zone') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Despachos por Zona"
+            >
+              <MapPin className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Despachos por Zona</span>}
             </Link>
             <Link
               to="/admin/reports/dispatch-efficiency"
