@@ -817,6 +817,7 @@ model ReturnRequest {
   status     ReturnStatus        @default(PENDING)
   refundType RefundType
   items      ReturnRequestItem[]
+  creditNote CreditNote?
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
 
@@ -834,4 +835,18 @@ model ReturnRequestItem {
 
   @@index([returnRequestId])
   @@index([orderItemId])
+}
+
+model CreditNote {
+  id              Int           @id @default(autoincrement())
+  returnRequestId Int           @unique
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  amount          Float
+  type            RefundType
+  code            String        @unique
+  usedAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([returnRequestId])
 }
