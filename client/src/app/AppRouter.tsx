@@ -63,6 +63,7 @@ import DeliveriesByZonePage from '../features/admin/DeliveriesByZonePage';
 import DispatchReportPage from '../features/admin/DispatchReportPage';
 import ProfitabilityReportPage from '../features/admin/reports/profitability/ProfitabilityReportPage';
 import { FinancialDashboardPage } from '../features/admin/reports/financial-dashboard/FinancialDashboardPage';
+import ExpensesPage from '../features/admin/expenses/ExpensesPage';
 export const AppRouter = () => {
   return (
     <Routes>
@@ -289,6 +290,7 @@ export const AppRouter = () => {
 
         {/* HU-070 Financial Dashboard */}
         <Route path="/admin/reports/financial-dashboard" element={<ProtectedRoute allowedRoles={['ADMIN']}><FinancialDashboardPage /></ProtectedRoute>} />
+        <Route path="/admin/expenses" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER']}><ExpensesPage /></ProtectedRoute>} />
 
         {/* HU-058 Logistics & Picking */}
         <Route path="/admin/logistics/picking" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><PickingPage /></ProtectedRoute>} />
