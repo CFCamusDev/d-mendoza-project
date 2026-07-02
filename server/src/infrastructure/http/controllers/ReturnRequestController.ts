@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import prisma from '@infrastructure/database/prisma';
 import { CreateReturnRequestUseCase } from '@application/use-cases/returns/CreateReturnRequestUseCase';
 import { ApproveReturnRequestUseCase } from '@application/use-cases/returns/ApproveReturnRequestUseCase';
 import { RejectReturnRequestUseCase } from '@application/use-cases/returns/RejectReturnRequestUseCase';
@@ -14,18 +15,21 @@ export class ReturnRequestController {
   private approveReturnRequestUseCase: ApproveReturnRequestUseCase;
   private rejectReturnRequestUseCase: RejectReturnRequestUseCase;
   private issueCreditNoteUseCase: IssueCreditNoteUseCase;
+  private creditNoteRepo: PrismaCreditNoteRepository;
+  private pdfGenerator: PdfGeneratorAdapter;
+  private emailSender: ResendEmailSenderAdapter;
 
   constructor() {
     const returnRequestRepo = new PrismaReturnRequestRepository();
     const orderRepo = new PrismaOrderRepository();
-    const creditNoteRepo = new PrismaCreditNoteRepository();
-    const pdfGenerator = new PdfGeneratorAdapter();
-    const emailSender = new ResendEmailSenderAdapter();
+    this.creditNoteRepo = new PrismaCreditNoteRepository();
+    this.pdfGenerator = new PdfGeneratorAdapter();
+    this.emailSender = new ResendEmailSenderAdapter();
 
     this.createReturnRequestUseCase = new CreateReturnRequestUseCase(returnRequestRepo, orderRepo);
     this.approveReturnRequestUseCase = new ApproveReturnRequestUseCase(returnRequestRepo);
     this.rejectReturnRequestUseCase = new RejectReturnRequestUseCase(returnRequestRepo);
-    this.issueCreditNoteUseCase = new IssueCreditNoteUseCase(creditNoteRepo, pdfGenerator, emailSender);
+    this.issueCreditNoteUseCase = new IssueCreditNoteUseCase(this.creditNoteRepo, this.pdfGenerator, this.emailSender);
   }
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -127,6 +131,102 @@ export class ReturnRequestController {
         res.status(400).json({ success: false, error: error.message });
         return;
       }
+      next(error);
+    }
+  };
+
+  listCreditNotes = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const creditNotes = await this.creditNoteRepo.findAll();
+      res.status(200).json({ success: true, data: creditNotes });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  resendCreditNote = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        res.status(400).json({ success: false, error: 'Invalid ID parameter' });
+        return;
+      }
+
+      const creditNote = await prisma.creditNote.findUnique({
+        where: { id },
+        include: {
+          returnRequest: {
+            include: {
+              items: {
+                include: {
+                  orderItem: {
+                    include: {
+                      variant: {
+                        include: {
+                          product: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              user: true,
+            },
+          },
+        },
+      });
+
+      if (!creditNote) {
+        res.status(404).json({ success: false, error: 'Credit note not found' });
+        return;
+      }
+
+      const returnRequest = creditNote.returnRequest;
+      if (!returnRequest) {
+        res.status(400).json({ success: false, error: 'Associated return request not found' });
+        return;
+      }
+
+      const pdfBuffer = await this.pdfGenerator.generateCreditNotePdf({
+        creditNoteCode: creditNote.code,
+        amount: creditNote.amount,
+        type: creditNote.type as any,
+        clientName: returnRequest.user.name || '',
+        clientEmail: returnRequest.user.email,
+        items: returnRequest.items.map((item) => ({
+          name: item.orderItem.variant.product.name,
+          qty: item.qty,
+          unitPrice: Number(item.orderItem.unitPrice),
+        })),
+        createdAt: creditNote.createdAt,
+      });
+
+      const emailHtml = `
+        <div style="font-family: sans-serif; padding: 20px; color: #333;">
+          <h2>Nota de Crédito Reenviada</h2>
+          <p>Estimado/a ${returnRequest.user.name},</p>
+          <p>Le reenviamos el documento PDF de su nota de crédito por su devolución.</p>
+          <ul>
+            <li><strong>Código:</strong> ${creditNote.code}</li>
+            <li><strong>Monto:</strong> $${creditNote.amount.toFixed(2)}</li>
+            <li><strong>Tipo:</strong> ${creditNote.type === 'STORE_CREDIT' ? 'Saldo a favor en tienda' : 'Nota de crédito'}</li>
+          </ul>
+          <p>Adjunto a este correo encontrará el documento PDF correspondiente.</p>
+          <br/>
+          <p>Atentamente,<br/>El equipo de DMendoza</p>
+        </div>
+      `;
+
+      await this.emailSender.sendEmailWithAttachment({
+        to: returnRequest.user.email,
+        subject: `Dmendoza - Reenvío Nota de Crédito ${creditNote.code}`,
+        html: emailHtml,
+        attachmentName: `Nota_de_Credito_${creditNote.code}.pdf`,
+        attachmentBuffer: pdfBuffer,
+      });
+
+      res.status(200).json({ success: true, message: `Credit note PDF resent successfully to ${returnRequest.user.email}` });
+    } catch (error) {
       next(error);
     }
   };

@@ -1,7 +1,8 @@
 import prisma from '@infrastructure/database/prisma';
-import { ICreditNoteRepository } from '@domain/repositories/ICreditNoteRepository';
+import { ICreditNoteRepository, CreditNoteWithClient } from '@domain/repositories/ICreditNoteRepository';
 import { CreditNote } from '@domain/entities/CreditNote';
 import { RefundType } from '@domain/entities/ReturnRequest';
+
 
 export class PrismaCreditNoteRepository implements ICreditNoteRepository {
   private toDomain(record: any): CreditNote {
@@ -52,5 +53,31 @@ export class PrismaCreditNoteRepository implements ICreditNoteRepository {
     });
     if (!record) return null;
     return this.toDomain(record);
+  }
+
+  async findAll(): Promise<CreditNoteWithClient[]> {
+    const records = await prisma.creditNote.findMany({
+      include: {
+        returnRequest: {
+          include: {
+            user: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return records.map((record) => {
+      const domain = this.toDomain(record) as CreditNoteWithClient;
+      if (record.returnRequest?.user) {
+        domain.client = {
+          name: record.returnRequest.user.name,
+          email: record.returnRequest.user.email,
+        };
+      }
+      return domain;
+    });
   }
 }

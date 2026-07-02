@@ -13,6 +13,7 @@ jest.mock('@infrastructure/database/prisma', () => {
   const mockCreditNote = {
     create: jest.fn(),
     findUnique: jest.fn(),
+    findMany: jest.fn(),
   };
 
   const mockBranch = {
@@ -205,6 +206,91 @@ describe('Credit Note Endpoints', () => {
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('already been issued');
+    });
+  });
+
+  describe('GET /api/v1/admin/credit-notes', () => {
+    it('should list all credit notes for admin', async () => {
+      const mockNotes = [
+        {
+          id: 1,
+          code: 'NC-1',
+          amount: 50.0,
+          type: 'CREDIT_NOTE',
+          createdAt: new Date(),
+          returnRequest: {
+            user: {
+              name: 'John Doe',
+              email: 'john@example.com',
+            },
+          },
+        },
+      ];
+
+      (prisma.creditNote.findMany as any).mockResolvedValueOnce(mockNotes);
+
+      const response = await request(app)
+        .get('/api/v1/admin/credit-notes')
+        .set('Authorization', 'Bearer admin-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.data[0].code).toBe('NC-1');
+      expect(response.body.data[0].client.name).toBe('John Doe');
+    });
+  });
+
+  describe('POST /api/v1/admin/credit-notes/:id/resend', () => {
+    it('should resend credit note successfully', async () => {
+      const mockCreditNote = {
+        id: 1,
+        code: 'NC-1',
+        amount: 50.0,
+        type: 'CREDIT_NOTE',
+        createdAt: new Date(),
+        returnRequest: {
+          items: [
+            {
+              qty: 1,
+              orderItem: {
+                unitPrice: 50.0,
+                variant: {
+                  product: {
+                    name: 'T-Shirt',
+                  },
+                },
+              },
+            },
+          ],
+          user: {
+            name: 'John Doe',
+            email: 'john@example.com',
+          },
+        },
+      };
+
+      (prisma.creditNote.findUnique as any).mockResolvedValueOnce(mockCreditNote);
+
+      const response = await request(app)
+        .post('/api/v1/admin/credit-notes/1/resend')
+        .set('Authorization', 'Bearer admin-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('resent successfully');
+    });
+
+    it('should return 404 if credit note not found', async () => {
+      (prisma.creditNote.findUnique as any).mockResolvedValueOnce(null);
+
+      const response = await request(app)
+        .post('/api/v1/admin/credit-notes/999/resend')
+        .set('Authorization', 'Bearer admin-token');
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('not found');
     });
   });
 });
