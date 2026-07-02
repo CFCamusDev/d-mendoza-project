@@ -90,7 +90,7 @@ describe('ProfitabilityReportPage', () => {
     
     // Mock URL.createObjectURL and document body appendChild for downloading
     const mockCreateObjectURL = vi.fn();
-    global.URL.createObjectURL = mockCreateObjectURL;
+    window.URL.createObjectURL = mockCreateObjectURL;
     
     const mockClick = vi.fn();
     const originalCreateElement = document.createElement;
