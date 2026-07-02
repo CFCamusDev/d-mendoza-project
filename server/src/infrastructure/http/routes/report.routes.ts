@@ -4,6 +4,8 @@ import { ReportController } from '@infrastructure/http/controllers/ReportControl
 import { DispatchReportController } from '@infrastructure/http/controllers/DispatchReportController';
 import { GetProfitabilityReportController } from '@infrastructure/http/controllers/GetProfitabilityReportController';
 import { GetFinancialDashboardController } from '@infrastructure/http/controllers/GetFinancialDashboardController';
+import { DiscountAuditController } from '@infrastructure/http/controllers/DiscountAuditController';
+import { SellerRankingController } from '@infrastructure/http/controllers/SellerRankingController';
 import { InventoryValuationController } from '@infrastructure/http/controllers/InventoryValuationController';
 import { requirePermission } from '@infrastructure/http/middlewares/auth.middleware';
 
@@ -13,6 +15,8 @@ const reportController = new ReportController();
 const dispatchReportController = new DispatchReportController();
 const profitabilityController = new GetProfitabilityReportController();
 const financialDashboardController = new GetFinancialDashboardController();
+const discountAuditController = new DiscountAuditController();
+const sellerRankingController = new SellerRankingController();
 const inventoryValuationController = new InventoryValuationController();
 
 router.get('/reports/inventory-rotation', requirePermission('products:read'), ctrl.inventoryRotation.bind(ctrl));
@@ -52,6 +56,20 @@ router.get(
   '/admin/reports/low-rotation',
   requirePermission('products:read'), // Assuming 'products:read' or 'sales:read', let's use 'products:read'
   reportController.getLowRotationProducts.bind(reportController)
+);
+
+// T-248: Reporte de auditoría de descuentos aplicados en el POS (HU-075)
+router.get(
+  '/admin/reports/discounts',
+  requirePermission('sales:read'),
+  discountAuditController.getDiscountAudit,
+);
+
+// T-250: Ranking de vendedores por desempeño (HU-076)
+router.get(
+  '/admin/reports/seller-ranking',
+  requirePermission('sales:read'),
+  sellerRankingController.getRanking,
 );
 
 // T-252: Valorización del inventario en tiempo real (HU-077)
