@@ -6,12 +6,14 @@ import { PrismaOrderRepository } from '@infrastructure/database/repositories/Pri
 import { PrismaUserRepository } from '@infrastructure/database/repositories/PrismaUserRepository';
 import { PDFKitReceiptPdfService } from '@infrastructure/services/PDFKitReceiptPdfService';
 import { ResendEmailService } from '@infrastructure/services/ResendEmailService';
+import { TwilioWhatsAppService } from '@infrastructure/services/TwilioWhatsAppService';
 
 export class OrderController {
   private prismaOrderRepository: PrismaOrderRepository;
   private prismaUserRepository: PrismaUserRepository;
   private resendEmailService: ResendEmailService;
   private pdfKitReceiptPdfService: PDFKitReceiptPdfService;
+  private twilioWhatsAppService: TwilioWhatsAppService;
   private listUserOrdersUseCase: ListUserOrdersUseCase;
   private getOrderReceiptPdfUseCase: GetOrderReceiptPdfUseCase;
   private updateOrderStatusUseCase: UpdateOrderStatusUseCase;
@@ -21,6 +23,7 @@ export class OrderController {
     this.prismaUserRepository = new PrismaUserRepository();
     this.resendEmailService = new ResendEmailService();
     this.pdfKitReceiptPdfService = new PDFKitReceiptPdfService();
+    this.twilioWhatsAppService = new TwilioWhatsAppService();
     this.listUserOrdersUseCase = new ListUserOrdersUseCase(this.prismaOrderRepository);
     this.getOrderReceiptPdfUseCase = new GetOrderReceiptPdfUseCase(
       this.prismaOrderRepository,
@@ -29,7 +32,8 @@ export class OrderController {
     this.updateOrderStatusUseCase = new UpdateOrderStatusUseCase(
       this.prismaOrderRepository,
       this.prismaUserRepository,
-      this.resendEmailService
+      this.resendEmailService,
+      this.twilioWhatsAppService
     );
   }
 
