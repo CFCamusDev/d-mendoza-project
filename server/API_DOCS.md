@@ -5184,7 +5184,8 @@ Consulta productos sin movimientos de salida en el Kardex durante el periodo con
         "Color": "Blanco"
       },
       "daysWithoutMovement": 105,
-      "lastMovementDate": "2025-10-15T00:00:00.000Z"
+      "lastMovementDate": "2025-10-15T00:00:00.000Z",
+      "currentStock": 25
     }
   ]
 }

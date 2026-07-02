@@ -7,4 +7,5 @@ export interface LowRotationProduct {
   attributes: Record<string, any>;
   daysWithoutMovement: number;
   lastMovementDate: Date | null;
+  currentStock: number;
 }

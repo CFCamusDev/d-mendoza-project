@@ -33,6 +33,7 @@ export class PrismaReportRepository implements IReportRepository {
           },
           take: 1,
         },
+        branchStock: true,
       },
     });
 
@@ -44,6 +45,8 @@ export class PrismaReportRepository implements IReportRepository {
       
       const diffTime = Math.abs(now.getTime() - referenceDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      const currentStock = v.branchStock.reduce((acc, stock) => acc + (stock.quantity || 0), 0);
 
       return {
         variantId: String(v.id),
@@ -52,6 +55,7 @@ export class PrismaReportRepository implements IReportRepository {
         attributes: v.attributesJson as Record<string, any> || {},
         daysWithoutMovement: diffDays,
         lastMovementDate: lastMovementDate,
+        currentStock,
       };
     });
   }
