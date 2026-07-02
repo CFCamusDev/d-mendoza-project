@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { orderService } from '../services/order.service';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import type { Order, RefundType } from '../types';
 import { ReturnItemSelector } from './components/ReturnItemSelector';
 import { ReturnReasonForm } from './components/ReturnReasonForm';
+import { useReturnRequest } from '../hooks/useReturnRequest';
 
 export const ReturnRequestPage: React.FC = () => {
   useDocumentTitle('Solicitud de Devolución - D\'Mendoza');
@@ -22,8 +23,8 @@ export const ReturnRequestPage: React.FC = () => {
   const [reason, setReason] = useState('');
   const [refundType, setRefundType] = useState<RefundType>('CREDIT_NOTE');
 
-  // Submit states (Fase 3 placeholder for actual API call)
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { createReturn, isSubmitting } = useReturnRequest();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -85,12 +86,25 @@ export const ReturnRequestPage: React.FC = () => {
     e.preventDefault();
     if (!isValid) return;
 
-    setIsSubmitting(true);
-    // Simulation for Fase 2 validation testing
-    setTimeout(() => {
-      setIsSubmitting(false);
-      alert('Solicitud enviada (Simulación Fase 2)');
-    }, 1000);
+    try {
+      const items = Object.entries(selectedItems).map(([id, qty]) => ({
+        orderItemId: Number(id),
+        qty,
+      }));
+
+      await createReturn({
+        orderId: Number(orderId),
+        reason,
+        refundType,
+        items,
+      });
+
+      // Redirect back to orders on success
+      navigate('/profile/orders');
+    } catch (err) {
+      // Error is already handled/toasted by the hook
+      console.error('Error creating return request', err);
+    }
   };
 
   const isValid =
