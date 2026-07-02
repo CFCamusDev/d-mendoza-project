@@ -40,7 +40,7 @@ export const ExpensesPage = () => {
     const fetchBranches = async () => {
       try {
         const { data } = await axiosInstance.get('/v1/branches');
-        setBranches(data);
+        setBranches(data.data || []);
       } catch (err) {
         console.error('Error fetching branches:', err);
       }
