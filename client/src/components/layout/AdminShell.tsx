@@ -126,7 +126,7 @@ export const AdminShell: React.FC = () => {
       activeKey = 'ventas';
     } else if (path.startsWith('/admin/products') || path.startsWith('/admin/categories') || path.startsWith('/admin/brands') || path.startsWith('/admin/genders') || path.startsWith('/admin/attributes')) {
       activeKey = 'catalogo';
-    } else if (path.startsWith('/admin/inventory') || path.startsWith('/admin/reports/inventory-rotation')) {
+    } else if (path.startsWith('/admin/inventory') || path.startsWith('/admin/reports/inventory-rotation') || path.startsWith('/admin/reports/low-rotation')) {
       activeKey = 'inventario';
     } else if (path.startsWith('/admin/clients')) {
       activeKey = 'crm';
@@ -491,16 +491,28 @@ export const AdminShell: React.FC = () => {
               )}
             </Link>
             {(user?.role === 'ADMIN' || user?.role === 'SUPPLY') && (
-              <Link
-                to="/admin/reports/inventory-rotation"
-                className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
-                  isActiveRoute('/admin/reports/inventory-rotation') ? activeClass : inactiveClass
-                } ${isCollapsed ? 'justify-center' : ''}`}
-                title="Rotación de Stock"
-              >
-                <BarChart3 className="w-4 h-4 shrink-0" />
-                {!isCollapsed && <span>Rotación de Stock</span>}
-              </Link>
+              <>
+                <Link
+                  to="/admin/reports/inventory-rotation"
+                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                    isActiveRoute('/admin/reports/inventory-rotation') ? activeClass : inactiveClass
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title="Rotación de Stock"
+                >
+                  <BarChart3 className="w-4 h-4 shrink-0" />
+                  {!isCollapsed && <span>Rotación de Stock</span>}
+                </Link>
+                <Link
+                  to="/admin/reports/low-rotation"
+                  className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                    isActiveRoute('/admin/reports/low-rotation') ? activeClass : inactiveClass
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title="Baja Rotación"
+                >
+                  <BarChart3 className="w-4 h-4 shrink-0" />
+                  {!isCollapsed && <span>Baja Rotación</span>}
+                </Link>
+              </>
             )}
           </AccordionMenu>
           )}

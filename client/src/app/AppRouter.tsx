@@ -41,6 +41,7 @@ import ProductFormPage from '../features/admin/ProductFormPage';
 import AdjustmentPage from '../features/admin/AdjustmentPage';
 import TransferPage from '../features/admin/TransferPage';
 import RotationReportPage from '../features/admin/RotationReportPage';
+import LowRotationPage from '../features/admin/LowRotationPage';
 import SuppliersPage from '../features/admin/suppliers/SuppliersPage';
 import StockEntriesPage from '../features/admin/entries/StockEntriesPage';
 import StockPage from '../features/admin/stock/StockPage';
@@ -293,6 +294,7 @@ export const AppRouter = () => {
 
         {/* HU-030 */}
         <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><RotationReportPage /></ProtectedRoute>} />
+        <Route path="/admin/reports/low-rotation" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><LowRotationPage /></ProtectedRoute>} />
 
         {/* HU-069 Profitability Report */}
         <Route path="/admin/reports/profitability" element={<ProtectedRoute allowedRoles={['ADMIN']}><ProfitabilityReportPage /></ProtectedRoute>} />
