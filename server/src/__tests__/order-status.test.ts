@@ -15,11 +15,11 @@ jest.mock('@infrastructure/services/ResendEmailService', () => {
   };
 });
 
-// 1.5 Mock TwilioWhatsAppService
+// 1.5 Mock FactilizaWhatsAppService
 var mockSendMessage = jest.fn<any>().mockResolvedValue(true);
-jest.mock('@infrastructure/services/TwilioWhatsAppService', () => {
+jest.mock('@infrastructure/services/FactilizaWhatsAppService', () => {
   return {
-    TwilioWhatsAppService: jest.fn().mockImplementation(() => {
+    FactilizaWhatsAppService: jest.fn().mockImplementation(() => {
       return {
         sendMessage: (phone: string, template: string, params: Record<string, string>) => mockSendMessage(phone, template, params),
       };
