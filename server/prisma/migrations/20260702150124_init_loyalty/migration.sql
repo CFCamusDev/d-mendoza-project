@@ -15,22 +15,6 @@
 -- ALTER TABLE `CreditNote` DROP COLUMN `isUsed`,
 --    MODIFY `amount` DOUBLE NOT NULL;
 
--- CreateTable
-CREATE TABLE `OperatingExpense` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `branchId` INTEGER NOT NULL,
-    `type` ENUM('FIXED', 'VARIABLE') NOT NULL,
-    `description` TEXT NOT NULL,
-    `amount` DECIMAL(10, 2) NOT NULL,
-    `date` DATETIME(3) NOT NULL,
-    `userId` INTEGER NOT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
-
-    INDEX `OperatingExpense_branchId_idx`(`branchId`),
-    INDEX `OperatingExpense_userId_idx`(`userId`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `ClientCredit` (
@@ -84,10 +68,10 @@ CREATE TABLE `LoyaltyAccount` (
 ALTER TABLE `CreditNote` ADD CONSTRAINT `CreditNote_returnRequestId_fkey` FOREIGN KEY (`returnRequestId`) REFERENCES `ReturnRequest`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `OperatingExpense` ADD CONSTRAINT `OperatingExpense_branchId_fkey` FOREIGN KEY (`branchId`) REFERENCES `Branch`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
 
 -- AddForeignKey
-ALTER TABLE `OperatingExpense` ADD CONSTRAINT `OperatingExpense_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
 
 -- AddForeignKey
 ALTER TABLE `ClientCredit` ADD CONSTRAINT `ClientCredit_clientId_fkey` FOREIGN KEY (`clientId`) REFERENCES `Client`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -97,3 +81,5 @@ ALTER TABLE `CreditPayment` ADD CONSTRAINT `CreditPayment_creditId_fkey` FOREIGN
 
 -- AddForeignKey
 ALTER TABLE `LoyaltyAccount` ADD CONSTRAINT `LoyaltyAccount_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+

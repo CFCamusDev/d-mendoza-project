@@ -592,13 +592,14 @@ model StockTransfer {
 // ─── HU-041: Carrito de Compras Persistente ───────────────────────────────────
 
 model Cart {
-  id        Int        @id @default(autoincrement())
-  userId    Int?
-  user      User?      @relation(fields: [userId], references: [id])
-  sessionId String?    @unique // Para carritos anónimos
-  items     CartItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id                 Int        @id @default(autoincrement())
+  userId             Int?
+  user               User?      @relation(fields: [userId], references: [id])
+  sessionId          String?    @unique // Para carritos anónimos
+  abandonedEmailSent Boolean    @default(false)
+  items              CartItem[]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
   @@index([userId])
   @@index([sessionId])

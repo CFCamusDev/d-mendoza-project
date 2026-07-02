@@ -6,6 +6,7 @@ import app from './app';
 import prisma from './infrastructure/database/prisma';
 import { StockAlertJob } from './infrastructure/jobs/StockAlertJob';
 import { PendingOrderAlertJob } from './infrastructure/jobs/PendingOrderAlertJob';
+import { AbandonedCartJob } from './infrastructure/jobs/AbandonedCartJob';
 
 const PORT = process.env.SERVER_PORT || 3000;
 
@@ -16,7 +17,8 @@ const startServer = async () => {
 
     StockAlertJob.start();
     PendingOrderAlertJob.start();
-    console.log('✅ Tareas programadas iniciadas correctamente.');
+    AbandonedCartJob.start();
+    console.log('📦 Tareas programadas iniciadas correctamente.');
 
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
