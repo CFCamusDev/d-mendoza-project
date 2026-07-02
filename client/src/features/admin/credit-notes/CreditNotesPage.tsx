@@ -1,55 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { CreditNotesTable } from './components/CreditNotesTable';
-import { Ticket, Search } from 'lucide-react';
-import type { CreditNote } from '../types/credit-note';
-
-const MOCK_CREDIT_NOTES: CreditNote[] = [
-  {
-    id: 1,
-    returnRequestId: 10,
-    amount: 75.90,
-    type: 'CREDIT_NOTE',
-    code: 'NC-2026-0001',
-    usedAt: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    client: {
-      name: 'Carlos Mendoza',
-      email: 'carlos.mendoza@gmail.com',
-    },
-  },
-  {
-    id: 2,
-    returnRequestId: 11,
-    amount: 120.00,
-    type: 'STORE_CREDIT',
-    code: 'NC-2026-0002',
-    usedAt: new Date().toISOString(),
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    client: {
-      name: 'Ana Belén',
-      email: 'ana.belen@hotmail.com',
-    },
-  },
-];
+import { Ticket, Search, Loader2 } from 'lucide-react';
+import { useCreditNotes } from '../hooks/useCreditNotes';
 
 export const CreditNotesPage: React.FC = () => {
   useDocumentTitle('Notas de Crédito - D\'Mendoza');
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [resendingId, setResendingId] = useState<number | null>(null);
+  const { creditNotes, loading, resendingId, fetchCreditNotes, resendPdf } = useCreditNotes();
 
-  const handleResendPdf = (id: number) => {
-    setResendingId(id);
-    setTimeout(() => {
-      setResendingId(null);
-      alert('PDF reenviado con éxito (Mock)');
-    }, 1000);
-  };
+  useEffect(() => {
+    fetchCreditNotes();
+  }, [fetchCreditNotes]);
 
-  const filteredNotes = MOCK_CREDIT_NOTES.filter(note => 
+  const filteredNotes = creditNotes.filter(note => 
     note.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (note.client?.name && note.client.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (note.client?.email && note.client.email.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -86,12 +51,18 @@ export const CreditNotesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Table wrapper */}
-        <CreditNotesTable 
-          creditNotes={filteredNotes} 
-          onResendPdf={handleResendPdf}
-          resendingId={resendingId}
-        />
+        {/* Loading state / Table wrapper */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-brand-accent" />
+          </div>
+        ) : (
+          <CreditNotesTable 
+            creditNotes={filteredNotes} 
+            onResendPdf={resendPdf}
+            resendingId={resendingId}
+          />
+        )}
       </div>
     </div>
   );
