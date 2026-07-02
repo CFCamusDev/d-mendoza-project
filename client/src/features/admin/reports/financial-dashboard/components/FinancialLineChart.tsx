@@ -61,7 +61,7 @@ export const FinancialLineChart: React.FC<FinancialLineChartProps> = ({ summary 
               tickFormatter={(v) => formatCurrency(v)}
             />
             <Tooltip
-              formatter={(value: number) => [formatCurrency(value), '']}
+              formatter={(value: any) => [formatCurrency(Number(value || 0)), '']}
               contentStyle={{
                 backgroundColor: '#FFF',
                 border: '1px solid #E5E7EB',
