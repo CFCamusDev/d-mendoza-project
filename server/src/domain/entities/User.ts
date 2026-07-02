@@ -19,6 +19,7 @@ export interface User {
   mustChangePassword?: boolean;
   verificationPin?: string | null;
   pinExpiresAt?: Date | null;
+  preferencesJson?: any;
   roles?: string[];
   branchId?: number; // Asociado al empleado si corresponde
   createdAt: Date;

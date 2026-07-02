@@ -27,3 +27,10 @@ router.get(
 );
 
 export default router;
+
+router.get(
+  '/pos-clients/:id/loyalty',
+  requireAuth,
+  controller.getLoyaltyBalance.bind(controller)
+);
+
