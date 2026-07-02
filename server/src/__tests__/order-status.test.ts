@@ -167,6 +167,10 @@ describe('Tests de Integración — HU-045: Seguimiento del Estado del Pedido y 
       expect(prisma.order.update).toHaveBeenCalledWith({
         where: { id: 10 },
         data: { status: 'SHIPPED' },
+        include: {
+          items: { include: { variant: { include: { product: true } } } },
+          statusLogs: true,
+        },
       });
 
       // Verification for WhatsApp
@@ -187,6 +191,10 @@ describe('Tests de Integración — HU-045: Seguimiento del Estado del Pedido y 
       expect(prisma.order.update).toHaveBeenCalledWith({
         where: { id: 10 },
         data: { status: 'PAID' },
+        include: {
+          items: { include: { variant: { include: { product: true } } } },
+          statusLogs: true,
+        },
       });
       // Verification for email
       expect(mockSendEmail).toHaveBeenCalledWith(

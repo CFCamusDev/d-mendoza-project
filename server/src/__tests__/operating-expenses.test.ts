@@ -55,7 +55,7 @@ describe('Tests de Integración — HU-071: Registro de Gastos Operativos por Su
         name: 'ADMIN',
         permissions: [
           { name: 'sales:read' },
-          { name: 'sales:write' },
+          { name: 'sales:write' }, { name: 'roles:manage' }, { name: 'expenses:manage' },
         ],
       },
     ],
