@@ -40,6 +40,7 @@ model User {
   coupons         Coupon[]
   orders          Order[]
   deliveries      Delivery[] @relation("DeliveryMan")
+  returnRequests  ReturnRequest[]
 }
 
 model Client {
@@ -704,6 +705,7 @@ model Order {
   updatedAt       DateTime    @updatedAt
   delivery        Delivery?
   pendingOrderAlert PendingOrderAlert?
+  returnRequests  ReturnRequest[]
 
   @@index([userId])
 }
@@ -716,6 +718,7 @@ model OrderItem {
   variant   ProductVariant @relation(fields: [variantId], references: [id])
   qty       Int
   unitPrice Decimal        @db.Decimal(10, 2)
+  returnItems ReturnRequestItem[]
 
   @@index([orderId])
   @@index([variantId])
@@ -790,4 +793,44 @@ model PendingOrderAlert {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RefundType {
+  CREDIT_NOTE
+  STORE_CREDIT
+}
+
+model ReturnRequest {
+  id         Int                 @id @default(autoincrement())
+  orderId    Int
+  order      Order               @relation(fields: [orderId], references: [id])
+  userId     Int
+  user       User                @relation(fields: [userId], references: [id])
+  reason     String              @db.Text
+  status     ReturnStatus        @default(PENDING)
+  refundType RefundType
+  items      ReturnRequestItem[]
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([orderId])
+  @@index([userId])
+}
+
+model ReturnRequestItem {
+  id              Int            @id @default(autoincrement())
+  returnRequestId Int
+  returnRequest   ReturnRequest  @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  orderItemId     Int
+  orderItem       OrderItem      @relation(fields: [orderItemId], references: [id])
+  qty             Int
+
+  @@index([returnRequestId])
+  @@index([orderItemId])
 }
