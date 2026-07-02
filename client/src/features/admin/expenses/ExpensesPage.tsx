@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useExpenses } from './hooks/useExpenses';
+import { useState, useEffect } from 'react';
+import { useExpenses } from '../hooks/useExpenses';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { ExpenseSummaryCards } from './components/ExpenseSummaryCards';
 import { ExpensesTable } from './components/ExpensesTable';
 import { ExpenseForm } from './components/ExpenseForm';
 import { Plus } from 'lucide-react';
 import axiosInstance from '@/shared/api/axiosInstance';
-import type { OperatingExpense } from './types/expenses';
+import type { OperatingExpense } from '../types/expenses';
 
 interface Branch {
   id: number;
