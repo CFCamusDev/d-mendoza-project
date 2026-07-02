@@ -112,4 +112,30 @@ export class PosClientController {
       next(error);
     }
   }
+
+  async getLoyaltyBalance(req: Request, res: Response) {
+    try {
+      const clientId = parseInt(String(req.params.id), 10);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ success: false, error: 'ID inválido' });
+      }
+
+      // Check if client has user account attached
+      const client = await (new PrismaClientRepository()).findById(clientId);
+      if (!client || !client.userId) {
+        return res.status(200).json({ success: true, data: { balance: 0 } });
+      }
+
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+
+      const account = await prisma.loyaltyAccount.findUnique({
+        where: { userId: client.userId }
+      });
+
+      return res.status(200).json({ success: true, data: { balance: account?.balance || 0 } });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  }
 }

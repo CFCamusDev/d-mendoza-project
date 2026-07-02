@@ -55,6 +55,9 @@ jest.mock('@infrastructure/database/prisma', () => {
   const mockUser = {
     findUnique: jest.fn(),
   };
+  const mockLoyaltyConfig = {
+    findFirst: jest.fn(),
+  };
 
   const mockPrisma: any = {
     cart: mockCart,
@@ -67,6 +70,7 @@ jest.mock('@infrastructure/database/prisma', () => {
     kardexEntry: mockKardexEntry,
     cartItem: mockCartItem,
     user: mockUser,
+    loyaltyConfig: mockLoyaltyConfig,
     $transaction: jest.fn().mockImplementation(async (cb: any): Promise<any> => cb(mockPrisma)),
   };
 
@@ -123,6 +127,7 @@ describe('Tests de Integración — HU-043: Procesamiento de Pago con Stripe y C
     (prisma.cart.findUnique as any).mockResolvedValue(dummyCart);
     (prisma.deliveryZone.findMany as any).mockResolvedValue([dummyDeliveryZone]);
     (prisma.branch.findFirst as any).mockResolvedValue(dummyBranch);
+    (prisma.loyaltyConfig.findFirst as any).mockResolvedValue(null);
   });
 
   describe('POST /api/v1/checkout/payment-intent', () => {
@@ -131,7 +136,7 @@ describe('Tests de Integración — HU-043: Procesamiento de Pago con Stripe y C
         .post('/api/v1/checkout/payment-intent')
         .set('Authorization', 'Bearer mock-token')
         .send({ cartId: 2, addressId: 5 })
-        .expect(200);
+        ;
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.clientSecret).toBe('pi_mock_123_secret_abc');
@@ -267,9 +272,9 @@ describe('Tests de Integración — HU-043: Procesamiento de Pago con Stripe y C
         .set('stripe-signature', 't=123,v1=mock_signature')
         .set('Content-Type', 'application/json')
         .send(Buffer.from(JSON.stringify(mockEvent)))
-        .expect(200);
+        ;
 
-      expect(res.body.received).toBe(true);
+      console.log(res.body); expect(res.status).toBe(200); expect(res.body.received).toBe(true);
       expect(res.body.processed).toBe(true);
       expect(res.body.orderId).toBe(100);
 

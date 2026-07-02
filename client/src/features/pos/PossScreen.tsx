@@ -6,6 +6,7 @@ import { usePosCart } from './hooks/usePosCart';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import type { PosProduct } from './types/pos.types';
 import { DiscountPanel, PaymentPanel } from '@/features/pos';
+import { LoyaltyPanel } from './components/LoyaltyPanel';
 import type { DiscountResult } from '@/features/pos';
 import type { PaymentItem } from './components/PaymentPanel';
 import { Receipt, type ReceiptData } from './components/Receipt';
@@ -42,6 +43,7 @@ export const PossScreen: React.FC = () => {
 
   // Discount State (HU-034)
   const [discountResult, setDiscountResult] = useState<DiscountResult | null>(null);
+  const [loyaltyDiscountAmount, setLoyaltyDiscountAmount] = useState<number>(0);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
 
   // Cross Branch Stock States (HU-023)
@@ -56,6 +58,7 @@ export const PossScreen: React.FC = () => {
   // Reset discount and cross-branch state if cart changes
   useEffect(() => {
     setDiscountResult(null);
+    setLoyaltyDiscountAmount(0);
   }, [cartItems]);
 
   useEffect(() => {
@@ -66,7 +69,7 @@ export const PossScreen: React.FC = () => {
     }
   }, [cartItems]);
 
-  const finalTotal = Math.max(0, totals.total - (discountResult?.discountAmount || 0));
+  const finalTotal = Math.max(0, totals.total - (discountResult?.discountAmount || 0) - loyaltyDiscountAmount);
 
   const cartForDiscount = cartItems.map(item => ({
     variantId: item.variantId,
@@ -159,7 +162,7 @@ export const PossScreen: React.FC = () => {
       const res = await axiosInstance.post('/v1/pos/sales', {
         branchId: activeRegister?.branchId || branchId || 1, // Fallback to branch 1 if undefined
         subtotal: totals.subtotal,
-        discountTotal: discountResult?.discountAmount || 0,
+        discountTotal: (discountResult?.discountAmount || 0) + loyaltyDiscountAmount,
         total: finalTotal,
         items: itemsForBackend,
         isCrossBranch,
@@ -195,6 +198,7 @@ export const PossScreen: React.FC = () => {
 
         clearCart();
         setDiscountResult(null);
+        setLoyaltyDiscountAmount(0);
       }
     } catch (error: any) {
       console.error(error);
@@ -350,6 +354,13 @@ export const PossScreen: React.FC = () => {
                 onSelectClient={setLinkedClient} 
               />
             </div>
+
+            {/* Loyalty Points Panel */}
+            <LoyaltyPanel 
+              clientId={linkedClient?.id || null} 
+              onDiscountApplied={(amount) => setLoyaltyDiscountAmount(amount)}
+              cartTotal={totals.total - (discountResult?.discountAmount || 0)}
+            />
           </div>
 
           {/* Results Area */}
@@ -570,6 +581,17 @@ export const PossScreen: React.FC = () => {
                     </span>
                     <span className="text-right text-[#c0392b] font-bold">
                       - S/. {discountResult.discountAmount.toFixed(2)}
+                    </span>
+                  </>
+                )}
+
+                {loyaltyDiscountAmount > 0 && (
+                  <>
+                    <span className="text-yellow-600 font-semibold">
+                      Descuento por Puntos:
+                    </span>
+                    <span className="text-right text-yellow-600 font-bold">
+                      - S/. {loyaltyDiscountAmount.toFixed(2)}
                     </span>
                   </>
                 )}

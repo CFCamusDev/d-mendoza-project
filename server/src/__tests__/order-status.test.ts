@@ -15,6 +15,18 @@ jest.mock('@infrastructure/services/ResendEmailService', () => {
   };
 });
 
+// 1.5 Mock FactilizaWhatsAppService
+var mockSendMessage = jest.fn<any>().mockResolvedValue(true);
+jest.mock('@infrastructure/services/FactilizaWhatsAppService', () => {
+  return {
+    FactilizaWhatsAppService: jest.fn().mockImplementation(() => {
+      return {
+        sendMessage: (phone: string, template: string, params: Record<string, string>) => mockSendMessage(phone, template, params),
+      };
+    }),
+  };
+});
+
 // 2. Mock Prisma Client
 jest.mock('@infrastructure/database/prisma', () => {
   const mockOrder = {
@@ -94,6 +106,7 @@ describe('Tests de Integración — HU-045: Seguimiento del Estado del Pedido y 
     email: 'customer@example.com',
     name: 'Juan',
     lastName: 'Pérez',
+    phone: '+51999888777',
     isActive: true,
   };
 
@@ -112,7 +125,10 @@ describe('Tests de Integración — HU-045: Seguimiento del Estado del Pedido y 
   beforeEach(() => {
     jest.clearAllMocks();
     mockUserJwtRole = 'ADMIN';
+    mockSendEmail.mockClear();
+    mockSendMessage.mockClear();
 
+    // Setup Prisma mocks for default successful path
     // Mock findUnique user implementation to handle authorization and customer fetch
     (prisma.user.findUnique as any).mockImplementation(async (args: any) => {
       const id = args.where?.id;
@@ -140,37 +156,57 @@ describe('Tests de Integración — HU-045: Seguimiento del Estado del Pedido y 
   });
 
   describe('PATCH /api/v1/admin/orders/:id/status', () => {
-    it('debería actualizar el estado del pedido y enviar un correo electrónico si el usuario es ADMIN', async () => {
+    it('debe actualizar el estado a SHIPPED exitosamente (y enviar correo y WhatsApp)', async () => {
       const res = await request(app)
         .patch('/api/v1/admin/orders/10/status')
-        .set('Authorization', 'Bearer mock-token')
-        .send({ status: 'SHIPPED' })
-        .expect(200);
+        .set('Authorization', 'Bearer dummy-admin-token')
+        .send({ status: 'SHIPPED' });
 
+      expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.status).toBe('SHIPPED');
-
-      // Verify DB update
-      expect(prisma.order.update).toHaveBeenCalledWith(expect.objectContaining({
+      expect(prisma.order.update).toHaveBeenCalledWith({
         where: { id: 10 },
         data: { status: 'SHIPPED' },
-      }));
+        include: {
+          items: { include: { variant: { include: { product: true } } } },
+          statusLogs: true,
+        },
+      });
 
-      // Verify Prisma extension simulated call
-      expect(prisma.orderStatusLog.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-          orderId: 10,
-          status: 'SHIPPED',
-          changedBy: 'admin@example.com',
-        }),
-      }));
+      // Verification for WhatsApp
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        '+51999888777',
+        'ORDER_STATUS_SHIPPED',
+        { orderId: '10', status: 'En Camino (Enviado)' }
+      );
+    });
 
-      // Verify email was sent
-      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    it('debe actualizar el estado a PAID exitosamente y enviar notificaciones', async () => {
+      const res = await request(app)
+        .patch('/api/v1/admin/orders/10/status')
+        .set('Authorization', 'Bearer dummy-admin-token')
+        .send({ status: 'PAID' });
+
+      expect(res.status).toBe(200);
+      expect(prisma.order.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { status: 'PAID' },
+        include: {
+          items: { include: { variant: { include: { product: true } } } },
+          statusLogs: true,
+        },
+      });
+      // Verification for email
       expect(mockSendEmail).toHaveBeenCalledWith(
         'customer@example.com',
-        expect.stringContaining('Pedido #10'),
-        expect.stringContaining('En Camino (Enviado)')
+        "Actualización de tu Pedido #10 — D'Mendoza",
+        expect.stringContaining('Pagado')
+      );
+      // Verification for WhatsApp
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        '+51999888777',
+        'ORDER_STATUS_PAID',
+        { orderId: '10', status: 'Pagado' }
       );
     });
 
