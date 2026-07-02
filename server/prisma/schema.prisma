@@ -817,6 +817,7 @@ model ReturnRequest {
   status     ReturnStatus        @default(PENDING)
   refundType RefundType
   items      ReturnRequestItem[]
+  creditNote CreditNote?
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
 
@@ -834,4 +835,25 @@ model ReturnRequestItem {
 
   @@index([returnRequestId])
   @@index([orderItemId])
+}
+
+enum CreditNoteType {
+  CREDIT_NOTE
+  STORE_CREDIT
+}
+
+model CreditNote {
+  id              Int            @id @default(autoincrement())
+  code            String         @unique
+  returnRequestId Int            @unique
+  returnRequest   ReturnRequest  @relation(fields: [returnRequestId], references: [id])
+  type            CreditNoteType
+  amount          Decimal        @db.Decimal(10, 2)
+  isUsed          Boolean        @default(false)
+  usedAt          DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([returnRequestId])
+  @@index([code])
 }
