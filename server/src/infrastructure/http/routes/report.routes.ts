@@ -45,5 +45,12 @@ router.get(
   financialDashboardController.getDashboard.bind(financialDashboardController)
 );
 
+// T-249: Reporte de Productos con Baja Rotación (HU-074)
+router.get(
+  '/admin/reports/low-rotation',
+  requirePermission('products:read'), // Assuming 'products:read' or 'sales:read', let's use 'products:read'
+  reportController.getLowRotationProducts.bind(reportController)
+);
+
 export default router;
 

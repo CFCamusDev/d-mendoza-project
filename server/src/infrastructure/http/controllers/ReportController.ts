@@ -7,6 +7,9 @@ import { PrismaBranchStockRepository } from '@infrastructure/database/repositori
 import { ExcelReportService } from '@infrastructure/services/ExcelReportService';
 import { PDFKitReportService } from '@infrastructure/services/PDFKitReportService';
 import { ExportReportUseCase } from '@application/use-cases/admin/ExportReportUseCase';
+import { GetLowRotationProductsUseCase } from '@application/use-cases/GetLowRotationProductsUseCase';
+import { PrismaReportRepository } from '@infrastructure/database/repositories/PrismaReportRepository';
+import { LowRotationQuerySchema } from '@application/dtos/ReportDTOs';
 
 const orderRepository = new PrismaOrderRepository();
 const posOrderRepository = new PrismaPosOrderRepository();
@@ -14,6 +17,7 @@ const clientRepository = new PrismaClientRepository();
 const branchStockRepository = new PrismaBranchStockRepository();
 const excelReportService = new ExcelReportService();
 const pdfReportService = new PDFKitReportService();
+const reportRepository = new PrismaReportRepository();
 
 const exportReportUseCase = new ExportReportUseCase(
   orderRepository,
@@ -23,6 +27,8 @@ const exportReportUseCase = new ExportReportUseCase(
   excelReportService,
   pdfReportService
 );
+
+const getLowRotationProductsUseCase = new GetLowRotationProductsUseCase(reportRepository);
 
 const ExportReportQuerySchema = z.object({
   type: z.enum(['sales', 'inventory', 'clients'], {
@@ -36,6 +42,20 @@ const ExportReportQuerySchema = z.object({
 });
 
 export class ReportController {
+  async getLowRotationProducts(req: Request, res: Response, next: NextFunction) {
+    try {
+      const validation = LowRotationQuerySchema.safeParse(req.query);
+      if (!validation.success) {
+        return res.status(400).json({ success: false, error: validation.error.issues });
+      }
+      
+      const products = await getLowRotationProductsUseCase.execute(validation.data.days);
+      return res.status(200).json({ success: true, data: products });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async exportReport(req: Request, res: Response, next: NextFunction) {
     try {
       const validation = ExportReportQuerySchema.safeParse(req.query);
