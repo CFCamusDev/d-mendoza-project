@@ -3,6 +3,7 @@ import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { DashboardFilters } from './components/DashboardFilters';
 import { KpiCards } from './components/KpiCards';
 import { FinancialLineChart } from './components/FinancialLineChart';
+import { BranchRevenueTable } from './components/BranchRevenueTable';
 import { Landmark } from 'lucide-react';
 import type { FinancialDashboardSummary } from '../../types/financial-dashboard';
 
@@ -80,6 +81,9 @@ export const FinancialDashboardPage: React.FC = () => {
 
       {/* Financial Chart */}
       <FinancialLineChart summary={mockSummary} />
+
+      {/* Branch Table */}
+      <BranchRevenueTable summary={mockSummary} />
     </div>
   );
 };
