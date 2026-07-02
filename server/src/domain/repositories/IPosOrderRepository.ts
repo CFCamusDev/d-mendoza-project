@@ -5,4 +5,11 @@ export interface IPosOrderRepository {
     totalSales: number;
   }>>;
   findPosOrdersForExport(params: { from?: Date; to?: Date }): Promise<any[]>;
+  getFinancialSales(from?: Date, to?: Date): Promise<Array<{
+    amount: number;
+    createdAt: Date;
+    branchId: number;
+    branchName: string;
+  }>>;
 }
+

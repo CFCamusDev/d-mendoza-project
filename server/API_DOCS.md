@@ -61,6 +61,8 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [GET /api/v1/reports/export](#get-apiv1reportsexport)
 - [Reporte de Rentabilidad — HU-069](#reporte-de-rentabilidad--hu-069)
   - [GET /api/v1/admin/reports/profitability](#get-apiv1adminreportsprofitability)
+- [Dashboard Financiero Consolidado Multi-canal — HU-070](#dashboard-financiero-consolidado-multi-canal--hu-070)
+  - [GET /api/v1/admin/reports/financial-dashboard](#get-apiv1adminreportsfinancial-dashboard)
 - [Conciliación de Transacciones — HU-073](#conciliación-de-transacciones--hu-073)
   - [POST /api/v1/admin/reconcile/stripe](#post-apiv1adminreconcilestripe)
 - [Logística y Despachos — HU-058](#logística-y-despachos--hu-058)
@@ -4176,6 +4178,106 @@ Se emite cuando falta algún parámetro obligatorio o el formato es incorrecto.
     {
       "field": "groupBy",
       "message": "El parámetro groupBy debe ser 'brand' o 'category'"
+    }
+  ]
+}
+```
+
+##### Acceso Prohibido (HTTP 403 Forbidden)
+
+Se emite cuando el usuario autenticado no cuenta con el permiso `sales:read`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el permiso 'sales:read'"
+}
+```
+
+---
+
+## Dashboard Financiero Consolidado Multi-canal — HU-070
+
+### GET /api/v1/admin/reports/financial-dashboard
+
+Permite obtener una consolidación de ingresos del Punto de Venta (POS) y del E-commerce, detallando comparativas con el período anterior del mismo tamaño y el desglose de ingresos por sucursal física e ingresos online.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/admin/reports/financial-dashboard` | JWT `Bearer Token` | `sales:read` |
+
+#### 2. Parámetros Query (Query Parameters)
+
+| Parámetro | Tipo | Requerido | Descripción | Valores Permitidos |
+| :--- | :--- | :--- | :--- | :--- |
+| `from` | String | No | Fecha de inicio del rango (formato YYYY-MM-DD). Por defecto son los últimos 30 días. | ej. `2026-06-01` |
+| `to` | String | No | Fecha de fin del rango (formato YYYY-MM-DD). Por defecto es hoy. | ej. `2026-06-30` |
+
+#### 3. Respuestas del Servidor
+
+##### Reporte Exitoso (HTTP 200 OK)
+
+Devuelve el resumen consolidado financiero:
+
+```json
+{
+  "success": true,
+  "data": {
+    "currentPeriod": {
+      "totalRevenue": 2000,
+      "posRevenue": 1500,
+      "ecommerceRevenue": 500,
+      "revenueByBranch": [
+        {
+          "branchId": 1,
+          "branchName": "Sede Principal",
+          "total": 1500
+        },
+        {
+          "branchId": null,
+          "branchName": "Venta Online",
+          "total": 500
+        }
+      ]
+    },
+    "previousPeriod": {
+      "totalRevenue": 1600,
+      "posRevenue": 1200,
+      "ecommerceRevenue": 400,
+      "revenueByBranch": [
+        {
+          "branchId": 1,
+          "branchName": "Sede Principal",
+          "total": 1200
+        },
+        {
+          "branchId": null,
+          "branchName": "Venta Online",
+          "total": 400
+        }
+      ]
+    },
+    "comparison": {
+      "revenueDifference": 400,
+      "revenuePercentageChange": 25
+    }
+  }
+}
+```
+
+##### Solicitud Incorrecta (HTTP 400 Bad Request)
+
+Se emite cuando el formato de alguna fecha es incorrecto.
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "field": "from",
+      "message": "La fecha \"from\" debe tener formato YYYY-MM-DD"
     }
   ]
 }

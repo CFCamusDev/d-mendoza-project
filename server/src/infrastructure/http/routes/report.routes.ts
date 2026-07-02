@@ -3,6 +3,7 @@ import { InventoryReportController } from '@infrastructure/http/controllers/Inve
 import { ReportController } from '@infrastructure/http/controllers/ReportController';
 import { DispatchReportController } from '@infrastructure/http/controllers/DispatchReportController';
 import { GetProfitabilityReportController } from '@infrastructure/http/controllers/GetProfitabilityReportController';
+import { GetFinancialDashboardController } from '@infrastructure/http/controllers/GetFinancialDashboardController';
 import { requirePermission } from '@infrastructure/http/middlewares/auth.middleware';
 
 const router = Router();
@@ -10,6 +11,7 @@ const ctrl = new InventoryReportController();
 const reportController = new ReportController();
 const dispatchReportController = new DispatchReportController();
 const profitabilityController = new GetProfitabilityReportController();
+const financialDashboardController = new GetFinancialDashboardController();
 
 router.get('/reports/inventory-rotation', requirePermission('products:read'), ctrl.inventoryRotation.bind(ctrl));
 
@@ -36,4 +38,12 @@ router.get(
   profitabilityController.getReport.bind(profitabilityController)
 );
 
+// T-242: Dashboard Financiero Consolidado Multi-canal (HU-070)
+router.get(
+  '/admin/reports/financial-dashboard',
+  requirePermission('sales:read'),
+  financialDashboardController.getDashboard.bind(financialDashboardController)
+);
+
 export default router;
+
