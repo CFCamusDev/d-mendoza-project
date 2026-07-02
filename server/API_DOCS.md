@@ -59,6 +59,8 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [DELETE /api/v1/admin/blog/:id](#delete-apiv1adminblogid)
 - [Exportación de Reportes — HU-053](#exportación-de-reportes--hu-053)
   - [GET /api/v1/reports/export](#get-apiv1reportsexport)
+- [Reporte de Rentabilidad — HU-069](#reporte-de-rentabilidad--hu-069)
+  - [GET /api/v1/admin/reports/profitability](#get-apiv1adminreportsprofitability)
 - [Conciliación de Transacciones — HU-073](#conciliación-de-transacciones--hu-073)
   - [POST /api/v1/admin/reconcile/stripe](#post-apiv1adminreconcilestripe)
 - [Logística y Despachos — HU-058](#logística-y-despachos--hu-058)
@@ -4109,6 +4111,88 @@ Se emite cuando el usuario autenticado no cuenta con el permiso `sales:read`.
   "error": "Acceso denegado: Se requiere el permiso 'sales:read'"
 }
 ```
+
+---
+
+## Reporte de Rentabilidad — HU-069
+
+### GET /api/v1/admin/reports/profitability
+
+Permite obtener la utilidad bruta y el margen de rentabilidad agrupado por marca o categoría para un rango de fechas.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Permiso Requerido |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/admin/reports/profitability` | JWT `Bearer Token` | `sales:read` |
+
+#### 2. Parámetros Query (Query Parameters)
+
+| Parámetro | Tipo | Requerido | Descripción | Valores Permitidos |
+| :--- | :--- | :--- | :--- | :--- |
+| `groupBy` | String | Sí | Indica si se agrupa por marca o categoría | `brand`, `category` |
+| `from` | String | No | Fecha de inicio del rango (formato YYYY-MM-DD) | ej. `2026-06-01` |
+| `to` | String | No | Fecha de fin del rango (formato YYYY-MM-DD) | ej. `2026-06-30` |
+
+#### 3. Respuestas del Servidor
+
+##### Reporte Exitoso (HTTP 200 OK)
+
+Devuelve la rentabilidad calculada y agrupada:
+
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "name": "Nike",
+        "totalQuantity": 15,
+        "totalRevenue": 1500,
+        "totalCost": 900,
+        "grossProfit": 600,
+        "profitMarginPercentage": 40
+      }
+    ],
+    "totals": {
+      "totalQuantity": 15,
+      "totalRevenue": 1500,
+      "totalCost": 900,
+      "grossProfit": 600,
+      "profitMarginPercentage": 40
+    }
+  }
+}
+```
+
+##### Solicitud Incorrecta (HTTP 400 Bad Request)
+
+Se emite cuando falta algún parámetro obligatorio o el formato es incorrecto.
+
+```json
+{
+  "success": false,
+  "error": [
+    {
+      "field": "groupBy",
+      "message": "El parámetro groupBy debe ser 'brand' o 'category'"
+    }
+  ]
+}
+```
+
+##### Acceso Prohibido (HTTP 403 Forbidden)
+
+Se emite cuando el usuario autenticado no cuenta con el permiso `sales:read`.
+
+```json
+{
+  "success": false,
+  "error": "Acceso denegado: Se requiere el permiso 'sales:read'"
+}
+```
+
+---
 
 ## Conciliación de Transacciones — HU-073
 
