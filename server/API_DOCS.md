@@ -82,6 +82,8 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/credits](#post-apiv1credits)
   - [POST /api/v1/credits/:id/payments](#post-apiv1creditsidpayments)
   - [GET /api/v1/credits](#get-apiv1credits)
+- [Reporte de Productos con Baja Rotación — HU-074](#reporte-de-productos-con-baja-rotación--hu-074)
+  - [GET /api/v1/admin/reports/low-rotation](#get-apiv1adminreportslow-rotation)
 
 
 ---
@@ -5146,4 +5148,47 @@ Consulta el saldo pendiente consolidado y el detalle de créditos de un cliente 
   ]
 }
 ```
+
+## Reporte de Productos con Baja Rotación — HU-074
+
+### GET /api/v1/admin/reports/low-rotation
+
+Consulta productos sin movimientos de salida en el Kardex durante el periodo configurado y calcula la cantidad de días sin movimiento.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido | Permiso Requerido |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/admin/reports/low-rotation` | Requerida | Administrador | `products:read` |
+
+#### 2. Parámetros de Consulta (Query Params)
+
+| Parámetro | Tipo | Requerido | Default | Descripción |
+| :--- | :--- | :--- | :--- | :--- |
+| `days` | `number` | Opcional | 90 | Cantidad de días hacia atrás a evaluar para la baja rotación. |
+
+#### 3. Respuestas (Responses)
+
+##### Éxito (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "variantId": "12",
+      "sku": "CAM-001-M-BLA",
+      "productName": "Camisa Casual",
+      "attributes": {
+        "Talla": "M",
+        "Color": "Blanco"
+      },
+      "daysWithoutMovement": 105,
+      "lastMovementDate": "2025-10-15T00:00:00.000Z",
+      "currentStock": 25
+    }
+  ]
+}
+```
+
 
