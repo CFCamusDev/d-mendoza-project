@@ -62,3 +62,17 @@ export interface DeliveryMan {
   name: string;
   email: string;
 }
+
+export interface DeliveryZone {
+  id: number;
+  districts: string[];
+  deliveryCost: number;
+  estimatedDays: number;
+  name?: string;
+}
+
+export interface DeliveriesByZoneGroup {
+  zone: DeliveryZone;
+  count: number;
+  deliveries: Delivery[];
+}

@@ -57,6 +57,7 @@ import BlogPostPage from '../features/ecommerce/BlogPostPage';
 import { AdminOrdersPage } from '../features/admin/components/AdminOrdersPage';
 import PickingPage from '../features/admin/PickingPage';
 import DeliveriesPage from '../features/admin/DeliveriesPage';
+import DeliveriesByZonePage from '../features/admin/DeliveriesByZonePage';
 
 export const AppRouter = () => {
   return (
@@ -278,6 +279,7 @@ export const AppRouter = () => {
         {/* HU-058 Logistics & Picking */}
         <Route path="/admin/logistics/picking" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><PickingPage /></ProtectedRoute>} />
         <Route path="/admin/logistics/deliveries" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><DeliveriesPage /></ProtectedRoute>} />
+        <Route path="/admin/logistics/deliveries-by-zone" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><DeliveriesByZonePage /></ProtectedRoute>} />
 
 
 

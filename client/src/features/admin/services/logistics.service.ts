@@ -1,5 +1,5 @@
 import axiosInstance from '@/shared/api/axiosInstance';
-import type { Delivery, FailedAttempt, PickingResponse, AssignDeliveryManResponse, OrderToPick, DeliveryMan } from '../types/logistics.types';
+import type { Delivery, FailedAttempt, PickingResponse, AssignDeliveryManResponse, OrderToPick, DeliveryMan, DeliveriesByZoneGroup } from '../types/logistics.types';
 
 export const logisticsService = {
   /**
@@ -26,6 +26,14 @@ export const logisticsService = {
     const { data } = await axiosInstance.get<{ success: boolean; data: Delivery[] }>('/v1/logistics/deliveries', {
       params: { status }
     });
+    return data.data;
+  },
+
+  /**
+   * Obtiene la lista de entregas pendientes agrupadas por zona
+   */
+  getPendingDeliveriesByZone: async (): Promise<DeliveriesByZoneGroup[]> => {
+    const { data } = await axiosInstance.get<{ success: boolean; data: DeliveriesByZoneGroup[] }>('/v1/logistics/deliveries/by-zone');
     return data.data;
   },
   /**
