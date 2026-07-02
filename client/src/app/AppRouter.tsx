@@ -59,6 +59,7 @@ import { AdminOrdersPage } from '../features/admin/components/AdminOrdersPage';
 import PickingPage from '../features/admin/PickingPage';
 import DeliveriesPage from '../features/admin/DeliveriesPage';
 import DeliveriesByZonePage from '../features/admin/DeliveriesByZonePage';
+import DispatchReportPage from '../features/admin/DispatchReportPage';
 
 export const AppRouter = () => {
   return (
@@ -283,7 +284,8 @@ export const AppRouter = () => {
         <Route path="/admin/logistics/deliveries" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><DeliveriesPage /></ProtectedRoute>} />
         <Route path="/admin/logistics/deliveries-by-zone" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><DeliveriesByZonePage /></ProtectedRoute>} />
 
-
+        {/* HU-067 */}
+        <Route path="/admin/reports/dispatch-efficiency" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><DispatchReportPage /></ProtectedRoute>} />
 
         {/* User Profile */}
         <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['ADMIN', 'SELLER', 'SUPPLY']}><ProfilePage /></ProtectedRoute>} />
