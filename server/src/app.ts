@@ -38,6 +38,7 @@ import blogRoutes from '@infrastructure/http/routes/blog.routes';
 import adminDashboardRoutes from '@infrastructure/http/routes/admin-dashboard.routes';
 import adminReconciliationRoutes from '@infrastructure/http/routes/admin-reconciliation.routes';
 import genderRoutes from '@infrastructure/http/routes/gender.routes';
+import adminExpenseRoutes from '@infrastructure/http/routes/admin-expense.routes';
 
 
 import ecommerceCartRoutes from '@infrastructure/http/routes/ecommerce-cart.routes';
@@ -110,6 +111,7 @@ app.use('/api/v1', blogRoutes);
 app.use('/api/v1', adminDashboardRoutes);
 app.use('/api/v1', adminReconciliationRoutes);
 app.use('/api/v1', genderRoutes);
+app.use('/api/v1', adminExpenseRoutes);
 
 app.use('/api/v1', deliveryZoneRoutes);
 app.use('/api/v1/checkout', checkoutRoutes);
