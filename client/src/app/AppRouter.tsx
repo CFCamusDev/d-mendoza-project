@@ -67,6 +67,7 @@ import ProfitabilityReportPage from '../features/admin/reports/profitability/Pro
 import { FinancialDashboardPage } from '../features/admin/reports/financial-dashboard/FinancialDashboardPage';
 import ExpensesPage from '../features/admin/expenses/ExpensesPage';
 import DiscountAuditPage from '../features/admin/DiscountAuditPage';
+import SellerRankingPage from '../features/admin/SellerRankingPage';
 export const AppRouter = () => {
   return (
     <Routes>
@@ -306,6 +307,9 @@ export const AppRouter = () => {
 
         {/* HU-075 */}
         <Route path="/admin/reports/discounts" element={<ProtectedRoute allowedRoles={['ADMIN']}><DiscountAuditPage /></ProtectedRoute>} />
+
+        {/* HU-076 */}
+        <Route path="/admin/reports/seller-ranking" element={<ProtectedRoute allowedRoles={['ADMIN']}><SellerRankingPage /></ProtectedRoute>} />
 
         {/* HU-058 Logistics & Picking */}
         <Route path="/admin/logistics/picking" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><PickingPage /></ProtectedRoute>} />
