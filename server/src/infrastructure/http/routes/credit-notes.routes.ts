@@ -31,9 +31,9 @@ router.get('/admin/credit-notes', requireAuth, checkAdmin, async (req, res) => {
   }
 });
 
-router.post('/admin/credit-notes/:id/resend', requireAuth, checkAdmin, async (req, res) => {
+router.post('/admin/credit-notes/:id/resend', requireAuth, checkAdmin, async (req: any, res: any) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.id as string, 10);
     // In a real app we'd regenerate the PDF or load it from storage, and resend the email.
     // We'll simulate a successful resend for now since we're just testing the flow.
     res.json({ message: 'Email resent successfully' });

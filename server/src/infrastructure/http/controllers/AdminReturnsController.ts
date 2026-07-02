@@ -4,9 +4,9 @@ import { GenerateCreditNoteUseCase } from '@application/use-cases/admin/Generate
 export class AdminReturnsController {
   constructor(private readonly generateCreditNoteUseCase: GenerateCreditNoteUseCase) {}
 
-  generateCreditNote = async (req: Request, res: Response) => {
+  public generateCreditNote = async (req: Request, res: Response): Promise<void> => {
     try {
-      const returnRequestId = parseInt(req.params.id, 10);
+      const returnRequestId = parseInt(req.params.id as string, 10);
       if (isNaN(returnRequestId)) {
         return res.status(400).json({ error: 'ID de solicitud de devolución inválido' });
       }

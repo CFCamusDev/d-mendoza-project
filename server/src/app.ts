@@ -48,7 +48,6 @@ import orderRoutes from '@infrastructure/http/routes/order.routes';
 import logisticsRoutes from '@infrastructure/http/routes/logistics.routes';
 import returnsRoutes from '@infrastructure/http/routes/returns.routes';
 import creditNotesRoutes from '@infrastructure/http/routes/credit-notes.routes';
-import adminAlertsRoutes from '@infrastructure/http/routes/admin-alerts.routes';
 import { requestContextMiddleware } from '@infrastructure/context/RequestContext';
 
 const app = express();
