@@ -113,8 +113,12 @@ app.use('/api/v1', genderRoutes);
 app.use('/api/v1', deliveryZoneRoutes);
 app.use('/api/v1/checkout', checkoutRoutes);
 app.use('/api/v1/coupons', couponRoutes);
+import adminAlertsRoutes from '@infrastructure/http/routes/admin-alerts.routes';
+
+// ...
 app.use('/api/v1', orderRoutes);
 app.use('/api/v1', logisticsRoutes);
+app.use('/api/v1', adminAlertsRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });
 });

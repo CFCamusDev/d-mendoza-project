@@ -703,6 +703,7 @@ model Order {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   delivery        Delivery?
+  pendingOrderAlert PendingOrderAlert?
 
   @@index([userId])
 }
@@ -780,4 +781,13 @@ model PickingItem {
 
   @@index([deliveryId])
   @@index([variantId])
+}
+
+model PendingOrderAlert {
+  id        Int      @id @default(autoincrement())
+  orderId   Int      @unique
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

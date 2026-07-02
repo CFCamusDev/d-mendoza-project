@@ -5,6 +5,7 @@ import { useStockAlerts } from '@/features/admin/hooks/useStockAlerts';
 import { useBrand } from '@/shared/context/BrandContext';
 import { QuickRegisterModal } from '@/features/pos/components/QuickRegisterModal';
 import axiosInstance from '@/shared/api/axiosInstance';
+import { alertsService } from '@/shared/api/alertsService';
 import { 
   Menu, 
   User, 
@@ -39,7 +40,7 @@ import {
 
 interface AccordionMenuProps {
   menuKey: string;
-  title: string;
+  title: React.ReactNode;
   isExpanded: boolean;
   isCollapsed: boolean;
   onToggle: (key: string) => void;
@@ -110,6 +111,9 @@ export const AdminShell: React.FC = () => {
   // Cross Branch count state
   const [pendingCrossBranchCount, setPendingCrossBranchCount] = useState(0);
 
+  // Pending Logistics Alerts count
+  const [pendingLogisticsAlertCount, setPendingLogisticsAlertCount] = useState(0);
+
   // Auto-expand based on route
   useEffect(() => {
     const path = location.pathname;
@@ -164,6 +168,26 @@ export const AdminShell: React.FC = () => {
     const interval = setInterval(fetchPendingCrossBranch, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const fetchPendingLogistics = async () => {
+      try {
+        if (user?.role === 'ADMIN' || user?.role === 'SUPPLY') {
+          const response = await alertsService.getPendingOrdersAlerts();
+          if (response.success) {
+            setPendingLogisticsAlertCount(response.count);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching pending logistics alerts:', err);
+      }
+    };
+    fetchPendingLogistics();
+    
+    // Poll every 5 minutes (300000 ms)
+    const interval = setInterval(fetchPendingLogistics, 300000);
+    return () => clearInterval(interval);
+  }, [user?.role]);
 
   const handleLogout = () => {
     logout();
@@ -598,7 +622,16 @@ export const AdminShell: React.FC = () => {
           {(user?.role === 'ADMIN' || user?.role === 'SUPPLY') && (
           <AccordionMenu 
             menuKey="logistica" 
-            title="Logística" 
+            title={
+              <div className="flex items-center gap-2">
+                Logística
+                {pendingLogisticsAlertCount > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
+                    {pendingLogisticsAlertCount}
+                  </span>
+                )}
+              </div>
+            }
             isExpanded={expandedMenus.logistica} 
             isCollapsed={isCollapsed} 
             onToggle={toggleMenu}
