@@ -34,7 +34,8 @@ import {
   ArrowLeftRight,
   FileText,
   LayoutDashboard,
-  Truck
+  Truck,
+  BarChart2
 } from 'lucide-react';
 
 
@@ -131,7 +132,7 @@ export const AdminShell: React.FC = () => {
       activeKey = 'finanzas';
     } else if (path.startsWith('/admin/branches') || path.startsWith('/admin/employees') || path.startsWith('/admin/branding')) {
       activeKey = 'empresa';
-    } else if (path.startsWith('/admin/logistics')) {
+    } else if (path.startsWith('/admin/logistics') || path.startsWith('/admin/reports/dispatch-efficiency')) {
       activeKey = 'logistica';
     }
     
@@ -655,6 +656,16 @@ export const AdminShell: React.FC = () => {
             >
               <Truck className="w-4 h-4 shrink-0" />
               {!isCollapsed && <span>Control de Despachos</span>}
+            </Link>
+            <Link
+              to="/admin/reports/dispatch-efficiency"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/reports/dispatch-efficiency') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Eficiencia de Despacho"
+            >
+              <BarChart2 className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Eficiencia de Despacho</span>}
             </Link>
           </AccordionMenu>
           )}
