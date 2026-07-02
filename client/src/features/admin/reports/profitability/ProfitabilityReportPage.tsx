@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { ProfitabilityFilters } from './components/ProfitabilityFilters';
+import { ProfitabilityTable } from './components/ProfitabilityTable';
 import type { GroupByOption, ProfitabilityReportResponse } from '../../types/profitability';
-import { BarChart3, Download } from 'lucide-react';
+import { BarChart3, Download, Loader2 } from 'lucide-react';
 
 export const ProfitabilityReportPage: React.FC = () => {
   useDocumentTitle('Reporte de Rentabilidad - D\'Mendoza');
@@ -12,14 +13,27 @@ export const ProfitabilityReportPage: React.FC = () => {
   const [toDate, setToDate] = useState<string>('');
   const [groupBy, setGroupBy] = useState<GroupByOption>('brand');
   
-  // Estado local mock (Fase 1)
+  // Estado local mock (Fase 1/2)
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState<ProfitabilityReportResponse['data'] | null>(null);
 
   const handleApplyFilters = () => {
     setLoading(true);
-    // Simulación de carga para Fase 1
+    // Simulación de carga para Fase 2
     setTimeout(() => {
+      setReportData({
+        items: [
+          { name: 'NIKE', totalQuantity: 15, totalRevenue: 1500, totalCost: 1000, grossProfit: 500, profitMarginPercentage: 33.33 },
+          { name: 'ADIDAS', totalQuantity: 10, totalRevenue: 800, totalCost: 900, grossProfit: -100, profitMarginPercentage: -12.5 },
+        ],
+        totals: {
+          totalQuantity: 25,
+          totalRevenue: 2300,
+          totalCost: 1900,
+          grossProfit: 400,
+          profitMarginPercentage: 17.39
+        }
+      });
       setLoading(false);
     }, 1000);
   };
@@ -69,14 +83,25 @@ export const ProfitabilityReportPage: React.FC = () => {
         loading={loading}
       />
 
-      {/* Contenedor de la Tabla (Fase 2) */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-center min-h-[300px]">
+      {/* Contenedor de la Tabla */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[300px]">
         {loading ? (
-          <p className="text-gray-500 text-sm font-semibold">Cargando reporte...</p>
+          <div className="flex-1 flex flex-col items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 text-brand-accent animate-spin mb-4" />
+            <p className="text-gray-500 text-sm font-semibold">Calculando rentabilidad...</p>
+          </div>
+        ) : !reportData ? (
+          <div className="flex-1 flex flex-col items-center justify-center py-12">
+            <p className="text-gray-400 text-sm italic">
+              Seleccione sus filtros y presione "Aplicar Filtros" para consultar la rentabilidad.
+            </p>
+          </div>
         ) : (
-          <p className="text-gray-400 text-sm italic">
-            Seleccione sus filtros y presione "Aplicar Filtros" para consultar la rentabilidad.
-          </p>
+          <ProfitabilityTable 
+            items={reportData.items} 
+            totals={reportData.totals} 
+            groupByTitle={groupBy === 'brand' ? 'Marca' : 'Categoría'} 
+          />
         )}
       </div>
     </div>
