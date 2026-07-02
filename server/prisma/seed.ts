@@ -25,6 +25,8 @@ async function main() {
     { name: 'inventory:write', description: 'Capacidad para crear y modificar proveedores, ingresar mercadería, transferencias y auditorías.' },
     { name: 'pos:discounts', description: 'Capacidad para aplicar descuentos en el Punto de Venta (POS).' },
     { name: 'sales:read', description: 'Capacidad para visualizar y consultar comprobantes de venta, KPIs y reportes.' },
+    { name: 'expenses:read', description: 'Capacidad para visualizar y consultar gastos operativos.' },
+    { name: 'expenses:write', description: 'Capacidad para registrar, modificar y eliminar gastos operativos.' },
   ];
 
   console.log('🌱 Seeding permissions...');
@@ -51,7 +53,8 @@ async function main() {
         'roles:manage', 'users:read', 'users:write',
         'products:read', 'products:write',
         'inventory:read', 'inventory:write',
-        'pos:discounts', 'sales:read'
+        'pos:discounts', 'sales:read',
+        'expenses:read', 'expenses:write'
       ],
     },
     {

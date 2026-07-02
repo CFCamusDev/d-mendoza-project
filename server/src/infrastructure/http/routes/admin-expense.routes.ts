@@ -7,25 +7,25 @@ const controller = new OperatingExpenseController();
 
 router.post(
   '/admin/expenses',
-  requirePermission('sales:write'),
+  requirePermission('expenses:write'),
   controller.create.bind(controller)
 );
 
 router.get(
   '/admin/expenses',
-  requirePermission('sales:read'),
+  requirePermission('expenses:read'),
   controller.getAll.bind(controller)
 );
 
 router.put(
   '/admin/expenses/:id',
-  requirePermission('sales:write'),
+  requirePermission('expenses:write'),
   controller.update.bind(controller)
 );
 
 router.delete(
   '/admin/expenses/:id',
-  requirePermission('sales:write'),
+  requirePermission('expenses:write'),
   controller.delete.bind(controller)
 );
 
