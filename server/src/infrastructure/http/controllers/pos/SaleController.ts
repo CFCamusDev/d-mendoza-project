@@ -190,6 +190,33 @@ export class SaleController {
           }
         }
 
+        // E) Calcular y otorgar puntos de fidelidad (HU-078)
+        if (userId) {
+          const loyaltyConfig = await tx.loyaltyConfig.findFirst({
+            where: { isActive: true },
+          });
+
+          if (loyaltyConfig && loyaltyConfig.solesPerPoint) {
+            const solesPerPoint = Number(loyaltyConfig.solesPerPoint);
+            if (solesPerPoint > 0) {
+              const pointsEarned = Math.floor(total / solesPerPoint);
+
+              if (pointsEarned > 0) {
+                await tx.loyaltyAccount.upsert({
+                  where: { userId },
+                  create: {
+                    userId,
+                    balance: pointsEarned,
+                  },
+                  update: {
+                    balance: { increment: pointsEarned },
+                  },
+                });
+              }
+            }
+          }
+        }
+
         return order;
       });
 
