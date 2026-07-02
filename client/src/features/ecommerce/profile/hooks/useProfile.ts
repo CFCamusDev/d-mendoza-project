@@ -10,6 +10,7 @@ export interface ProfileDetails {
   phone: string | null;
   avatarUrl: string | null;
   authProvider: string;
+  preferencesJson?: Record<string, any> | null;
   createdAt: string;
   updatedAt: string;
 }

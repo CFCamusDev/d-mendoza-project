@@ -26,6 +26,7 @@ model User {
   mustChangePassword Boolean   @default(false)
   verificationPin String?
   pinExpiresAt    DateTime?
+  preferencesJson Json?      // HU-080
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   auditLogs       AuditLog[]
@@ -42,6 +43,7 @@ model User {
   deliveries      Delivery[] @relation("DeliveryMan")
   returnRequests  ReturnRequest[]
   operatingExpenses OperatingExpense[]
+  loyaltyAccount  LoyaltyAccount?
 }
 
 model Client {
@@ -590,13 +592,14 @@ model StockTransfer {
 // ─── HU-041: Carrito de Compras Persistente ───────────────────────────────────
 
 model Cart {
-  id        Int        @id @default(autoincrement())
-  userId    Int?
-  user      User?      @relation(fields: [userId], references: [id])
-  sessionId String?    @unique // Para carritos anónimos
-  items     CartItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id                 Int        @id @default(autoincrement())
+  userId             Int?
+  user               User?      @relation(fields: [userId], references: [id])
+  sessionId          String?    @unique // Para carritos anónimos
+  abandonedEmailSent Boolean    @default(false)
+  items              CartItem[]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
   @@index([userId])
   @@index([sessionId])
@@ -901,3 +904,21 @@ model CreditPayment {
 
   @@index([creditId])
 }
+
+model LoyaltyConfig {
+  id            Int      @id @default(autoincrement())
+  solesPerPoint Decimal  @db.Decimal(10, 2) @default(100.00) // 1 point for every 100 soles
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model LoyaltyAccount {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  balance   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

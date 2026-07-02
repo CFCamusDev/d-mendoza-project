@@ -1,6 +1,7 @@
 import { IOrderRepository } from '@domain/repositories/IOrderRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { IEmailService } from '@domain/services/IEmailService';
+import { IWhatsAppService } from '@domain/services/IWhatsAppService';
 import { Order, OrderStatus } from '@domain/entities/Order';
 
 const STATUS_TRANSLATIONS: Record<OrderStatus, string> = {
@@ -15,7 +16,8 @@ export class UpdateOrderStatusUseCase {
   constructor(
     private readonly orderRepository: IOrderRepository,
     private readonly userRepository: IUserRepository,
-    private readonly emailService: IEmailService
+    private readonly emailService: IEmailService,
+    private readonly whatsappService: IWhatsAppService
   ) {}
 
   async execute(orderId: number, status: OrderStatus): Promise<Order> {
@@ -77,6 +79,22 @@ export class UpdateOrderStatusUseCase {
       } catch (emailError) {
         // We log email failures but don't crash the operation to maintain robust API response
         console.error(`Failed to send order status email notification for order #${order.id}:`, emailError);
+      }
+
+      // 4. Send WhatsApp Notification if applicable and phone exists
+      if ((status === 'PAID' || status === 'SHIPPED') && user.phone) {
+        try {
+          await this.whatsappService.sendMessage(
+            user.phone,
+            `ORDER_STATUS_${status}`,
+            {
+              orderId: String(order.id),
+              status: statusNameEs,
+            }
+          );
+        } catch (whatsappError) {
+          console.error(`Failed to send order status WhatsApp notification for order #${order.id}:`, whatsappError);
+        }
       }
     }
 

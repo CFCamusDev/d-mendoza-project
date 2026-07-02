@@ -6,8 +6,10 @@ import { useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { Sparkles, Shield, User as UserIcon, Loader2 } from 'lucide-react';
 
 import { useProfile, type ProfileDetails } from './hooks/useProfile';
+import { useLoyalty } from './hooks/useLoyalty';
 import { profileSchema, type ProfileFormData } from './schemas/profile.schema';
 import { AvatarUpload } from './components/AvatarUpload';
+import { PreferencesSection } from './components/PreferencesSection';
 
 interface ProfileOutletContext {
   profile: ProfileDetails | null;
@@ -20,6 +22,7 @@ interface ProfileOutletContext {
 export const ProfilePage = () => {
   const outletCtx = useOutletContext<ProfileOutletContext>();
   const hookCtx = useProfile();
+  const loyaltyHook = useLoyalty();
 
   const profile = outletCtx ? outletCtx.profile : hookCtx.profile;
   const isLoading = outletCtx ? outletCtx.isLoading : hookCtx.isLoading;
@@ -51,6 +54,9 @@ export const ProfilePage = () => {
     fetchProfile().catch((err) => {
       toast.error(err.message || 'Error al obtener los datos del perfil');
     });
+    if (!isAdmin) {
+      loyaltyHook.fetchBalance();
+    }
   }, [fetchProfile]);
 
   // Reset form values once profile is loaded
@@ -215,6 +221,41 @@ export const ProfilePage = () => {
               </div>
             </div>
           </div>
+
+          {/* Visual Organizer Section 3: Loyalty Points (Only for E-commerce) */}
+          {!isAdmin && (
+            <div className="pt-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider mb-1 text-brand-accent flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-yellow-500" />
+                Mis Puntos D'Mendoza
+              </h3>
+              <p className="text-xs text-[#6B6B6B] mb-4">
+                Puntos acumulados por tus compras. Úsalos como descuento en tu próximo pedido.
+              </p>
+              <div className="h-[1px] mb-6 bg-brand-primary/40"></div>
+
+              <div className="bg-gradient-to-r from-yellow-50 to-amber-100 border border-yellow-200 p-6 rounded-2xl flex items-center justify-between shadow-sm">
+                <div>
+                  <p className="text-xs font-bold text-yellow-800 uppercase tracking-widest mb-1">
+                    Saldo Actual
+                  </p>
+                  <h4 className="text-3xl font-extrabold text-brand-accent">
+                    {loyaltyHook.isLoading ? (
+                      <span className="text-xl animate-pulse">Cargando...</span>
+                    ) : (
+                      `${loyaltyHook.account?.balance || 0} pts`
+                    )}
+                  </h4>
+                </div>
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
+                  <Sparkles className="w-6 h-6 text-yellow-500" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Preferences Section */}
+          {!isAdmin && <PreferencesSection profile={profile} />}
 
           {/* Action buttons */}
           <div className={`h-[1px] pt-4 ${isAdmin ? 'bg-[#D9D9D2]/40' : 'bg-brand-primary/40'}`}></div>

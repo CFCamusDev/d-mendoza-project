@@ -3,10 +3,12 @@ import { z } from 'zod';
 import { PrismaUserRepository } from '@infrastructure/database/repositories/PrismaUserRepository';
 import { CloudinaryStorageService } from '@infrastructure/services/CloudinaryStorageService';
 import { UpdateProfileUseCase } from '@application/use-cases/profile/UpdateProfileUseCase';
+import { UpdateUserPreferencesUseCase } from '@application/use-cases/profile/UpdateUserPreferencesUseCase';
 
 const userRepository = new PrismaUserRepository();
 const storageService = new CloudinaryStorageService();
 const updateProfileUseCase = new UpdateProfileUseCase(userRepository, storageService);
+const updatePreferencesUseCase = new UpdateUserPreferencesUseCase();
 
 // Validation Schema with strict E.164 phone format validation (HU-005)
 const UpdateProfileSchema = z.object({
@@ -61,6 +63,7 @@ export class ProfileController {
           phone: user.phone ?? null,
           avatarUrl: user.avatarUrl ?? null,
           authProvider: user.authProvider,
+          preferencesJson: user.preferencesJson ?? null,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         },
@@ -124,4 +127,38 @@ export class ProfileController {
       next(error);
     }
   }
+
+  /**
+   * HU-080: PATCH /api/v1/profile/preferences
+   * Updates client purchase preferences (sizes, favorite colors, etc.)
+   */
+  async updatePreferences(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.auth?.userId;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Acceso no autorizado: Contexto de seguridad faltante',
+        });
+      }
+
+      const { preferencesJson } = req.body;
+      if (!preferencesJson || typeof preferencesJson !== 'object') {
+        return res.status(400).json({
+          success: false,
+          error: 'El campo preferencesJson es requerido y debe ser un objeto',
+        });
+      }
+
+      await updatePreferencesUseCase.execute(userId, preferencesJson);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Preferencias actualizadas correctamente',
+      });
+    } catch (error: any) {
+      next(error);
+    }
+  }
 }
+

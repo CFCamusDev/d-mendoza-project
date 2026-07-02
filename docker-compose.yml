@@ -2,6 +2,8 @@ services:
   database:
     image: mariadb:10.11
     container_name: database_service
+    ports:
+      - "3306:3306"
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
