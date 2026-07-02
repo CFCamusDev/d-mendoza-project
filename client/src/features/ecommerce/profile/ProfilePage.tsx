@@ -9,6 +9,7 @@ import { useProfile, type ProfileDetails } from './hooks/useProfile';
 import { useLoyalty } from './hooks/useLoyalty';
 import { profileSchema, type ProfileFormData } from './schemas/profile.schema';
 import { AvatarUpload } from './components/AvatarUpload';
+import { PreferencesSection } from './components/PreferencesSection';
 
 interface ProfileOutletContext {
   profile: ProfileDetails | null;
@@ -252,6 +253,9 @@ export const ProfilePage = () => {
               </div>
             </div>
           )}
+
+          {/* Preferences Section */}
+          {!isAdmin && <PreferencesSection profile={profile} />}
 
           {/* Action buttons */}
           <div className={`h-[1px] pt-4 ${isAdmin ? 'bg-[#D9D9D2]/40' : 'bg-brand-primary/40'}`}></div>

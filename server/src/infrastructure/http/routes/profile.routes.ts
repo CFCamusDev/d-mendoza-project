@@ -43,4 +43,14 @@ router.patch(
   profileController.update.bind(profileController)
 );
 
+/**
+ * HU-080: PATCH /profile/preferences
+ * Updates customer purchase preferences.
+ */
+router.patch(
+  '/profile/preferences',
+  requireAuth,
+  profileController.updatePreferences.bind(profileController)
+);
+
 export default router;

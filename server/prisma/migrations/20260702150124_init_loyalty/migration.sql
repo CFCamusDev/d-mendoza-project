@@ -6,14 +6,14 @@
 
 */
 -- DropForeignKey
-ALTER TABLE `CreditNote` DROP FOREIGN KEY `CreditNote_returnRequestId_fkey`;
+-- ALTER TABLE `CreditNote` DROP FOREIGN KEY `CreditNote_returnRequestId_fkey`;
 
 -- DropIndex
-DROP INDEX `CreditNote_code_idx` ON `CreditNote`;
+-- DROP INDEX `CreditNote_code_idx` ON `CreditNote`;
 
 -- AlterTable
-ALTER TABLE `CreditNote` DROP COLUMN `isUsed`,
-    MODIFY `amount` DOUBLE NOT NULL;
+-- ALTER TABLE `CreditNote` DROP COLUMN `isUsed`,
+--    MODIFY `amount` DOUBLE NOT NULL;
 
 -- CreateTable
 CREATE TABLE `OperatingExpense` (
