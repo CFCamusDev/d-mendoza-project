@@ -19,7 +19,7 @@ export const useFinancialDashboard = () => {
         if (Array.isArray(backendError)) {
           backendError.forEach((err: any) => toast.error(err.message || 'Error de validación'));
         } else {
-          toast.error(backendError.message || typeof backendError === 'string' ? backendError : 'Error al obtener el reporte');
+          toast.error(typeof backendError === 'string' ? backendError : (backendError.message || 'Error al obtener el reporte'));
         }
       } else {
         toast.error('Error al conectar con el servidor.');
