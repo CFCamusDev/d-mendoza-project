@@ -322,6 +322,7 @@ export class PrismaOrderRepository implements IOrderRepository {
     brandName: string;
     categoryName: string;
     orderCreatedAt: Date;
+    unitCost: number;
   }>> {
     const where: any = {
       order: {
