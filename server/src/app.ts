@@ -46,6 +46,7 @@ import ecommerceCartRoutes from '@infrastructure/http/routes/ecommerce-cart.rout
 import deliveryZoneRoutes from '@infrastructure/http/routes/delivery-zone.routes';
 import checkoutRoutes from '@infrastructure/http/routes/checkout.routes';
 import couponRoutes from '@infrastructure/http/routes/coupon.routes';
+import adminCouponsRoutes from '@infrastructure/http/routes/admin-coupons.routes';
 import loyaltyRoutes from '@infrastructure/http/routes/loyalty.routes';
 import adminAlertsRoutes from '@infrastructure/http/routes/admin-alerts.routes';
 import orderRoutes from '@infrastructure/http/routes/order.routes';
@@ -120,6 +121,7 @@ app.use('/api/v1', creditRoutes);
 app.use('/api/v1', deliveryZoneRoutes);
 app.use('/api/v1/checkout', checkoutRoutes);
 app.use('/api/v1/coupons', couponRoutes);
+app.use('/api/v1/admin/coupons', adminCouponsRoutes);
 
 // ...
 app.use('/api/v1', orderRoutes);

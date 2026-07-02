@@ -12,56 +12,56 @@ datasource db {
 }
 
 model User {
-  id              Int        @id @default(autoincrement())
-  email           String     @unique
-  name            String?
-  password        String
-  googleId        String?    @unique
-  avatarUrl       String?
-  lastName        String?
-  phone           String?
-  authProvider    String     @default("local") // "local" | "google"
-  lastLogin       DateTime?
-  isActive        Boolean    @default(false)
-  mustChangePassword Boolean   @default(false)
-  verificationPin String?
-  pinExpiresAt    DateTime?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  auditLogs       AuditLog[]
-  roles           Role[] // RBAC many-to-many relationship (HU-004)
-  employee        Employee?
-  client          Client?
-  cashTurns       CashTurn[] // HU-032
-  wishlists       Wishlist[] // HU-010
-  carts           Cart[]     // HU-041
-  addresses       Address[]
-  blogPosts       BlogPost[]
-  coupons         Coupon[]
-  orders          Order[]
-  deliveries      Delivery[] @relation("DeliveryMan")
-  returnRequests  ReturnRequest[]
-  operatingExpenses OperatingExpense[]
-  loyaltyAccount  LoyaltyAccount?
+  id                 Int                @id @default(autoincrement())
+  email              String             @unique
+  name               String?
+  password           String
+  googleId           String?            @unique
+  avatarUrl          String?
+  lastName           String?
+  phone              String?
+  authProvider       String             @default("local") // "local" | "google"
+  lastLogin          DateTime?
+  isActive           Boolean            @default(false)
+  mustChangePassword Boolean            @default(false)
+  verificationPin    String?
+  pinExpiresAt       DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  auditLogs          AuditLog[]
+  roles              Role[] // RBAC many-to-many relationship (HU-004)
+  employee           Employee?
+  client             Client?
+  cashTurns          CashTurn[] // HU-032
+  wishlists          Wishlist[] // HU-010
+  carts              Cart[] // HU-041
+  addresses          Address[]
+  blogPosts          BlogPost[]
+  coupons            Coupon[]
+  orders             Order[]
+  deliveries         Delivery[]         @relation("DeliveryMan")
+  returnRequests     ReturnRequest[]
+  operatingExpenses  OperatingExpense[]
+  loyaltyAccount     LoyaltyAccount?
 }
 
 model Client {
-  id           Int      @id @default(autoincrement())
-  email        String?  @unique
-  name         String   // Nombres o Razón Social
-  lastName     String?  // Apellidos
+  id           Int            @id @default(autoincrement())
+  email        String?        @unique
+  name         String // Nombres o Razón Social
+  lastName     String? // Apellidos
   phone        String?
-  documentType String?  // DNI o RUC
-  documentId   String?  @unique // DNI/RUC número
+  documentType String? // DNI o RUC
+  documentId   String?        @unique // DNI/RUC número
   address      String?
   department   String?
   province     String?
   district     String?
   ubigeo       String?
-  userId       Int?     @unique
-  user         User?    @relation(fields: [userId], references: [id])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  userId       Int?           @unique
+  user         User?          @relation(fields: [userId], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
   credits      ClientCredit[]
 }
 
@@ -79,26 +79,26 @@ model Employee {
 }
 
 model Branch {
-  id              Int              @id @default(autoincrement())
-  name            String           @unique
-  address         String?
-  phone           String?
-  isActive        Boolean          @default(true)
-  isMain          Boolean          @default(false)
-  employees       Employee[]
-  branchStock     BranchStock[]
-  kardexEntries   KardexEntry[]
-  stockEntries    StockEntry[]     // HU-051
-  warehouse       Warehouse?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  stockAlerts     StockAlert[]
-  inventoryAudits InventoryAudit[] // HU-029
-  posOrders       PosOrder[]       // HU-034
-  cashRegisters   CashRegister[]   // HU-032
-  transfersSent     StockTransfer[]  @relation("TransfersSent")
-  transfersReceived StockTransfer[]  @relation("TransfersReceived")
-  sourcePosOrders   PosOrder[]       @relation("SourceBranchOrders")
+  id                Int                @id @default(autoincrement())
+  name              String             @unique
+  address           String?
+  phone             String?
+  isActive          Boolean            @default(true)
+  isMain            Boolean            @default(false)
+  employees         Employee[]
+  branchStock       BranchStock[]
+  kardexEntries     KardexEntry[]
+  stockEntries      StockEntry[] // HU-051
+  warehouse         Warehouse?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  stockAlerts       StockAlert[]
+  inventoryAudits   InventoryAudit[] // HU-029
+  posOrders         PosOrder[] // HU-034
+  cashRegisters     CashRegister[] // HU-032
+  transfersSent     StockTransfer[]    @relation("TransfersSent")
+  transfersReceived StockTransfer[]    @relation("TransfersReceived")
+  sourcePosOrders   PosOrder[]         @relation("SourceBranchOrders")
   operatingExpenses OperatingExpense[]
 }
 
@@ -174,17 +174,18 @@ model Banner {
 // ─── HU-011 ───────────────────────────────────────────────────────────────────
 
 model Category {
-  id        Int        @id @default(autoincrement())
-  name      String
-  parentId  Int?
-  parent    Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
-  children  Category[] @relation("CategoryChildren")
+  id           Int        @id @default(autoincrement())
+  name         String
+  parentId     Int?
+  parent       Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children     Category[] @relation("CategoryChildren")
   isActive     Boolean    @default(true)
   imageUrl     String?    @db.Text
   sizeGuideUrl String?
   products     Product[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  coupons      Coupon[]
 }
 
 model Brand {
@@ -242,6 +243,7 @@ model Product {
   variants    ProductVariant[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+  coupons     Coupon[]
 }
 
 model Gender {
@@ -280,13 +282,13 @@ model ProductVariant {
   kardexEntries   KardexEntry[]
   stockEntryItems StockEntryItem[] // HU-051
   stockAlerts     StockAlert[]
-  auditItems      AuditItem[]      // HU-029
-  posOrderItems   PosOrderItem[]   // HU-034
-  wishlists       Wishlist[]       // HU-010
+  auditItems      AuditItem[] // HU-029
+  posOrderItems   PosOrderItem[] // HU-034
+  wishlists       Wishlist[] // HU-010
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   stockTransfers  StockTransfer[]
-  cartItems       CartItem[]       // HU-041
+  cartItems       CartItem[] // HU-041
   orderItems      OrderItem[]
   pickingItems    PickingItem[]
 
@@ -436,21 +438,21 @@ enum PosOrderStatus {
 
 /// Cabecera de una venta en el Punto de Venta (POS).
 model PosOrder {
-  id            Int            @id @default(autoincrement())
-  status        PosOrderStatus @default(OPEN)
-  subtotal      Decimal        @default(0) @db.Decimal(10, 2)
-  discountTotal Decimal        @default(0) @db.Decimal(10, 2) // Suma de todos los descuentos aplicados
-  total         Decimal        @default(0) @db.Decimal(10, 2)
-  userId        Int? // Cajero que abrió la venta
-  branchId      Int
-  branch        Branch         @relation(fields: [branchId], references: [id])
-  isCrossBranch Boolean        @default(false)
+  id             Int            @id @default(autoincrement())
+  status         PosOrderStatus @default(OPEN)
+  subtotal       Decimal        @default(0) @db.Decimal(10, 2)
+  discountTotal  Decimal        @default(0) @db.Decimal(10, 2) // Suma de todos los descuentos aplicados
+  total          Decimal        @default(0) @db.Decimal(10, 2)
+  userId         Int? // Cajero que abrió la venta
+  branchId       Int
+  branch         Branch         @relation(fields: [branchId], references: [id])
+  isCrossBranch  Boolean        @default(false)
   sourceBranchId Int?
-  sourceBranch  Branch?        @relation("SourceBranchOrders", fields: [sourceBranchId], references: [id])
-  items         PosOrderItem[]
-  payments      Payment[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  sourceBranch   Branch?        @relation("SourceBranchOrders", fields: [sourceBranchId], references: [id])
+  items          PosOrderItem[]
+  payments       Payment[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   @@index([branchId])
   @@index([userId])
@@ -476,12 +478,12 @@ model PosOrderItem {
 
 /// Pagos asociados a una venta POS.
 model Payment {
-  id         Int          @id @default(autoincrement())
+  id         Int           @id @default(autoincrement())
   posOrderId Int
-  posOrder   PosOrder     @relation(fields: [posOrderId], references: [id], onDelete: Cascade)
+  posOrder   PosOrder      @relation(fields: [posOrderId], references: [id], onDelete: Cascade)
   method     PaymentMethod
-  amount     Decimal      @db.Decimal(10, 2)
-  createdAt  DateTime     @default(now())
+  amount     Decimal       @db.Decimal(10, 2)
+  createdAt  DateTime      @default(now())
 
   @@index([posOrderId])
 }
@@ -513,7 +515,7 @@ model CashTurn {
   userId      Int
   user        User           @relation(fields: [userId], references: [id])
   openAmount  Float
-  closeAmount Float?         // HU-037: Monto físico declarado al cerrar
+  closeAmount Float? // HU-037: Monto físico declarado al cerrar
   status      TurnStatus     @default(OPEN)
   openedAt    DateTime       @default(now())
   closedAt    DateTime?
@@ -620,7 +622,7 @@ model Address {
   id          Int      @id @default(autoincrement())
   userId      Int
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  alias       String   // Ej: "Casa", "Trabajo"
+  alias       String // Ej: "Casa", "Trabajo"
   fullAddress String   @db.Text
   district    String
   reference   String?  @db.Text
@@ -657,7 +659,7 @@ model BlogPost {
 
 model DeliveryZone {
   id            Int      @id @default(autoincrement())
-  districts     Json     // Almacenado como JSON en MySQL para guardar arreglo de strings
+  districts     Json // Almacenado como JSON en MySQL para guardar arreglo de strings
   deliveryCost  Decimal  @db.Decimal(10, 2)
   estimatedDays Int
   createdAt     DateTime @default(now())
@@ -670,18 +672,23 @@ enum CouponType {
 }
 
 model Coupon {
-  id          Int       @id @default(autoincrement())
-  code        String    @unique
-  type        CouponType
-  value       Decimal   @db.Decimal(10, 2)
-  expiresAt   DateTime?
-  maxUses     Int?
-  usedCount   Int       @default(0)
-  userId      Int?
-  user        User?     @relation(fields: [userId], references: [id])
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                 Int        @id @default(autoincrement())
+  code               String     @unique
+  type               CouponType
+  value              Decimal    @db.Decimal(10, 2)
+  minPurchaseAmount  Decimal?   @db.Decimal(10, 2)
+  specificProductId  Int?
+  specificProduct    Product?   @relation(fields: [specificProductId], references: [id])
+  specificCategoryId Int?
+  specificCategory   Category?  @relation(fields: [specificCategoryId], references: [id])
+  expiresAt          DateTime?
+  maxUses            Int?
+  usedCount          Int        @default(0)
+  userId             Int?
+  user               User?      @relation(fields: [userId], references: [id])
+  isActive           Boolean    @default(true)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 }
 
 enum OrderStatus {
@@ -695,19 +702,19 @@ enum OrderStatus {
 }
 
 model Order {
-  id                Int         @id @default(autoincrement())
+  id                Int                @id @default(autoincrement())
   userId            Int
-  user              User        @relation(fields: [userId], references: [id])
-  status            OrderStatus @default(PENDING)
-  total             Decimal     @db.Decimal(10, 2)
-  shippingCost      Decimal     @db.Decimal(10, 2)
+  user              User               @relation(fields: [userId], references: [id])
+  status            OrderStatus        @default(PENDING)
+  total             Decimal            @db.Decimal(10, 2)
+  shippingCost      Decimal            @db.Decimal(10, 2)
   addressSnapshot   Json
-  paymentIntentId   String      @unique
+  paymentIntentId   String             @unique
   deliveryPin       String?
   items             OrderItem[]
   statusLogs        OrderStatusLog[]
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
   delivery          Delivery?
   pendingOrderAlert PendingOrderAlert?
   returnRequests    ReturnRequest[]
@@ -716,13 +723,13 @@ model Order {
 }
 
 model OrderItem {
-  id        Int            @id @default(autoincrement())
-  orderId   Int
-  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  variantId Int
-  variant   ProductVariant @relation(fields: [variantId], references: [id])
-  qty       Int
-  unitPrice Decimal        @db.Decimal(10, 2)
+  id          Int                 @id @default(autoincrement())
+  orderId     Int
+  order       Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId   Int
+  variant     ProductVariant      @relation(fields: [variantId], references: [id])
+  qty         Int
+  unitPrice   Decimal             @db.Decimal(10, 2)
   returnItems ReturnRequestItem[]
 
   @@index([orderId])
@@ -751,18 +758,18 @@ enum DeliveryStatus {
 }
 
 model Delivery {
-  id               Int                    @id @default(autoincrement())
-  orderId          Int                    @unique
-  order            Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id               Int                     @id @default(autoincrement())
+  orderId          Int                     @unique
+  order            Order                   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   deliveryManId    Int?
-  deliveryMan      User?                  @relation("DeliveryMan", fields: [deliveryManId], references: [id])
-  status           DeliveryStatus         @default(PENDING)
+  deliveryMan      User?                   @relation("DeliveryMan", fields: [deliveryManId], references: [id])
+  status           DeliveryStatus          @default(PENDING)
   deliveryPhotoUrl String?
   deliveredAt      DateTime?
   pickingItems     PickingItem[]
   failedAttempts   FailedDeliveryAttempt[]
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
 
   @@index([deliveryManId])
 }
@@ -830,11 +837,11 @@ model ReturnRequest {
 }
 
 model ReturnRequestItem {
-  id              Int            @id @default(autoincrement())
+  id              Int           @id @default(autoincrement())
   returnRequestId Int
-  returnRequest   ReturnRequest  @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
   orderItemId     Int
-  orderItem       OrderItem      @relation(fields: [orderItemId], references: [id])
+  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
   qty             Int
 
   @@index([returnRequestId])
@@ -887,25 +894,25 @@ model ClientCredit {
   updatedAt    DateTime        @updatedAt
   payments     CreditPayment[]
 
-  client       Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
 }
 
 model CreditPayment {
-  id        String       @id @default(uuid())
-  creditId  String
-  amount    Decimal      @db.Decimal(10, 2)
-  paidAt    DateTime     @default(now())
-  
-  credit    ClientCredit @relation(fields: [creditId], references: [id], onDelete: Cascade)
+  id       String   @id @default(uuid())
+  creditId String
+  amount   Decimal  @db.Decimal(10, 2)
+  paidAt   DateTime @default(now())
+
+  credit ClientCredit @relation(fields: [creditId], references: [id], onDelete: Cascade)
 
   @@index([creditId])
 }
 
 model LoyaltyConfig {
   id            Int      @id @default(autoincrement())
-  solesPerPoint Decimal  @db.Decimal(10, 2) @default(100.00) // 1 point for every 100 soles
+  solesPerPoint Decimal  @default(100.00) @db.Decimal(10, 2) // 1 point for every 100 soles
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -919,4 +926,3 @@ model LoyaltyAccount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
