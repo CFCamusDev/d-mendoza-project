@@ -1,9 +1,13 @@
 import prisma from '@infrastructure/database/prisma';
 import { IPaymentService } from '@domain/services/IPaymentService';
+import { IEmailService } from '@domain/services/IEmailService';
 import { ProcessWebhookInputDTO } from '@application/dtos/CheckoutDTOs';
 
 export class ProcessStripeWebhookUseCase {
-  constructor(private readonly paymentService: IPaymentService) {}
+  constructor(
+    private readonly paymentService: IPaymentService,
+    private readonly emailService?: IEmailService,
+  ) {}
 
   async execute(input: ProcessWebhookInputDTO): Promise<{ processed: boolean; orderId?: number }> {
     const { payload, signature } = input;
@@ -131,7 +135,9 @@ export class ProcessStripeWebhookUseCase {
         throw new Error('No se encontró ninguna sucursal activa para despachar el stock');
       }
 
-      // E) Crear la Orden
+      // E) Crear la Orden con PIN de seguridad de 6 dígitos
+      const deliveryPin = String(Math.floor(100000 + Math.random() * 900000));
+
       const order = await tx.order.create({
         data: {
           userId,
@@ -140,6 +146,7 @@ export class ProcessStripeWebhookUseCase {
           shippingCost,
           addressSnapshot,
           paymentIntentId,
+          deliveryPin,
         },
       });
 
@@ -223,9 +230,57 @@ export class ProcessStripeWebhookUseCase {
         where: { cartId: cart.id },
       });
 
-      return order.id;
+      return { orderId: order.id, deliveryPin, userId };
     });
 
-    return { processed: true, orderId };
+    // H) Enviar email de confirmación de pago con el PIN de seguridad
+    if (this.emailService) {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: orderId.userId },
+          select: { email: true, name: true },
+        });
+
+        if (user?.email) {
+          const userName = user.name || 'Cliente';
+          const html = `
+<!DOCTYPE html>
+<html lang="es">
+  <head><meta charset="UTF-8" /></head>
+  <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 24px; margin: 0;">
+    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; padding: 32px; border: 1px solid #e0e0e0;">
+      <h2 style="color: #3f3f3f; margin-top: 0;">¡Gracias por tu compra, ${userName}!</h2>
+      <p style="color: #555; font-size: 15px; line-height: 1.6;">
+        Tu pago para el pedido <strong>#${orderId.orderId}</strong> ha sido confirmado exitosamente.
+      </p>
+      <p style="color: #555; font-size: 15px; line-height: 1.6;">
+        Al momento de recibir tu pedido, el repartidor te solicitará el siguiente
+        <strong>PIN de seguridad de 6 dígitos</strong> para confirmar la entrega:
+      </p>
+      <div style="background-color: #f7f7f5; border-radius: 8px; padding: 24px; margin: 24px 0; text-align: center; border: 2px dashed #3f3f3f;">
+        <span style="color: #6b6b6b; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 8px;">Tu PIN de Entrega</span>
+        <strong style="color: #3f3f3f; font-size: 36px; font-weight: 900; letter-spacing: 8px;">${orderId.deliveryPin}</strong>
+      </div>
+      <p style="color: #888; font-size: 13px; line-height: 1.5;">
+        Guarda este PIN de forma segura. No lo compartas con nadie que no sea el repartidor oficial de D'Mendoza al momento de la entrega.
+      </p>
+      <p style="color: #888; font-size: 12px; border-top: 1px solid #eeeeee; padding-top: 20px; margin-top: 32px; text-align: center;">
+        Este es un correo automático enviado por D'Mendoza S.A.C. Por favor no respondas a este mensaje.
+      </p>
+    </div>
+  </body>
+</html>`;
+          await this.emailService.sendEmail(
+            user.email,
+            `Confirmación de pago — Pedido #${orderId.orderId} | PIN de entrega`,
+            html.trim(),
+          );
+        }
+      } catch (emailErr) {
+        console.error(`Error enviando email de confirmación con PIN para orden #${orderId.orderId}:`, emailErr);
+      }
+    }
+
+    return { processed: true, orderId: orderId.orderId };
   }
 }

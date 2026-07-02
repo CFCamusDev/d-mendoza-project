@@ -3,6 +3,7 @@ import { CalculateCheckoutUseCase } from '../../../application/use-cases/checkou
 import { CreatePaymentIntentUseCase } from '../../../application/use-cases/checkout/CreatePaymentIntentUseCase';
 import { ProcessStripeWebhookUseCase } from '../../../application/use-cases/checkout/ProcessStripeWebhookUseCase';
 import { StripePaymentService } from '../../services/StripePaymentService';
+import { ResendEmailService } from '../../services/ResendEmailService';
 
 export class CheckoutController {
   private stripePaymentService: StripePaymentService;
@@ -14,7 +15,10 @@ export class CheckoutController {
     this.stripePaymentService = new StripePaymentService();
     this.calculateCheckoutUseCase = new CalculateCheckoutUseCase();
     this.createPaymentIntentUseCase = new CreatePaymentIntentUseCase(this.stripePaymentService);
-    this.processStripeWebhookUseCase = new ProcessStripeWebhookUseCase(this.stripePaymentService);
+    this.processStripeWebhookUseCase = new ProcessStripeWebhookUseCase(
+      this.stripePaymentService,
+      new ResendEmailService(),
+    );
   }
 
   async calculate(req: Request, res: Response): Promise<void> {
