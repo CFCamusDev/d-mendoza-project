@@ -37,7 +37,8 @@ import {
   Truck,
   BarChart2,
   Ticket,
-  DollarSign
+  DollarSign,
+  Trophy
 } from 'lucide-react';
 
 
@@ -130,7 +131,7 @@ export const AdminShell: React.FC = () => {
       activeKey = 'inventario';
     } else if (path.startsWith('/admin/clients')) {
       activeKey = 'crm';
-    } else if (path.startsWith('/admin/receipts') || path.startsWith('/admin/reconcile') || path.startsWith('/admin/branches/registers') || path.startsWith('/admin/credit-notes') || path.startsWith('/admin/reports/profitability') || path.startsWith('/admin/reports/financial-dashboard') || path.startsWith('/admin/expenses') || path.startsWith('/admin/credits')) {
+    } else if (path.startsWith('/admin/receipts') || path.startsWith('/admin/reconcile') || path.startsWith('/admin/branches/registers') || path.startsWith('/admin/credit-notes') || path.startsWith('/admin/reports/profitability') || path.startsWith('/admin/reports/financial-dashboard') || path.startsWith('/admin/expenses') || path.startsWith('/admin/credits') || path.startsWith('/admin/reports/seller-ranking')) {
       activeKey = 'finanzas';
     } else if (path.startsWith('/admin/branches') || path.startsWith('/admin/employees') || path.startsWith('/admin/branding')) {
       activeKey = 'empresa';
@@ -637,6 +638,16 @@ export const AdminShell: React.FC = () => {
             >
               <Landmark className="w-4 h-4 shrink-0" />
               {!isCollapsed && <span>Control de Créditos</span>}
+            </Link>
+            <Link
+              to="/admin/reports/seller-ranking"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/reports/seller-ranking') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Ranking de Vendedores"
+            >
+              <Trophy className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Ranking de Vendedores</span>}
             </Link>
           </AccordionMenu>
           )}
