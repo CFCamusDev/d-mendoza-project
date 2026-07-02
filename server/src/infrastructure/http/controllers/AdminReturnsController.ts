@@ -4,7 +4,7 @@ import { GenerateCreditNoteUseCase } from '@application/use-cases/admin/Generate
 export class AdminReturnsController {
   constructor(private readonly generateCreditNoteUseCase: GenerateCreditNoteUseCase) {}
 
-  public generateCreditNote = async (req: Request, res: Response): Promise<void> => {
+  public generateCreditNote = async (req: Request, res: Response): Promise<any> => {
     try {
       const returnRequestId = parseInt(req.params.id as string, 10);
       if (isNaN(returnRequestId)) {

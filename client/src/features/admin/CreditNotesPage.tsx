@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axiosInstance from '../../../shared/api/axiosInstance';
+import axiosInstance from '../../shared/api/axiosInstance';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-MX', {
