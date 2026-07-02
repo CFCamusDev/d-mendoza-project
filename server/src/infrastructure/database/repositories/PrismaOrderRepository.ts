@@ -385,6 +385,37 @@ export class PrismaOrderRepository implements IOrderRepository {
 
     return result;
   }
+
+  async getFinancialSales(from?: Date, to?: Date): Promise<Array<{
+    amount: number;
+    createdAt: Date;
+  }>> {
+    const where: any = {
+      status: {
+        in: ['PAID', 'SHIPPED', 'DELIVERED'],
+      },
+    };
+
+    if (from || to) {
+      where.createdAt = {};
+      if (from) where.createdAt.gte = from;
+      if (to) where.createdAt.lte = to;
+    }
+
+    const records = await prisma.order.findMany({
+      where,
+      select: {
+        total: true,
+        createdAt: true,
+      },
+    });
+
+    return records.map((r) => ({
+      amount: Number(r.total),
+      createdAt: r.createdAt,
+    }));
+  }
 }
+
 
 
