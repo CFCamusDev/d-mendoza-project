@@ -314,5 +314,76 @@ export class PrismaOrderRepository implements IOrderRepository {
     });
     return records.map((r) => this.toDomain(r));
   }
+
+  async getProfitabilityData(from?: Date, to?: Date): Promise<Array<{
+    qty: number;
+    unitPrice: number;
+    variantId: number;
+    brandName: string;
+    categoryName: string;
+    orderCreatedAt: Date;
+  }>> {
+    const where: any = {
+      order: {
+        status: { in: ['PAID', 'SHIPPED', 'DELIVERED'] },
+      },
+    };
+
+    if (from || to) {
+      where.order.createdAt = {};
+      if (from) where.order.createdAt.gte = from;
+      if (to) where.order.createdAt.lte = to;
+    }
+
+    const records = await prisma.orderItem.findMany({
+      where,
+      include: {
+        order: {
+          select: {
+            createdAt: true,
+          },
+        },
+        variant: {
+          include: {
+            product: {
+              include: {
+                brand: true,
+                category: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const result = await Promise.all(
+      records.map(async (r) => {
+        const lastKardex = await prisma.kardexEntry.findFirst({
+          where: {
+            variantId: r.variantId,
+            createdAt: {
+              lte: r.order.createdAt,
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
+
+        return {
+          qty: r.qty,
+          unitPrice: Number(r.unitPrice),
+          variantId: r.variantId,
+          brandName: r.variant?.product?.brand?.name || 'Sin Marca',
+          categoryName: r.variant?.product?.category?.name || 'Sin Categoría',
+          orderCreatedAt: r.order.createdAt,
+          unitCost: lastKardex ? Number(lastKardex.unitCost) : 0,
+        };
+      })
+    );
+
+    return result;
+  }
 }
+
 
