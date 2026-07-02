@@ -1,50 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { DashboardFilters } from './components/DashboardFilters';
 import { KpiCards } from './components/KpiCards';
 import { FinancialLineChart } from './components/FinancialLineChart';
 import { BranchRevenueTable } from './components/BranchRevenueTable';
-import { Landmark } from 'lucide-react';
-import type { FinancialDashboardSummary } from '../../types/financial-dashboard';
+import { useFinancialDashboard } from './hooks/useFinancialDashboard';
+import { Landmark, Loader2 } from 'lucide-react';
 
 export const FinancialDashboardPage: React.FC = () => {
   useDocumentTitle('Dashboard Financiero - D\'Mendoza');
 
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  // Mock data for Fase 1
-  const mockSummary: FinancialDashboardSummary = {
-    currentPeriod: {
-      totalRevenue: 25000.00,
-      posRevenue: 18000.00,
-      ecommerceRevenue: 7000.00,
-      revenueByBranch: [
-        { branchId: 1, branchName: 'Sede Principal', total: 18000.00 },
-        { branchId: null, branchName: 'Venta Online', total: 7000.00 }
-      ]
-    },
-    previousPeriod: {
-      totalRevenue: 20000.00,
-      posRevenue: 15000.00,
-      ecommerceRevenue: 5000.00,
-      revenueByBranch: [
-        { branchId: 1, branchName: 'Sede Principal', total: 15000.00 },
-        { branchId: null, branchName: 'Venta Online', total: 5000.00 }
-      ]
-    },
-    comparison: {
-      revenueDifference: 5000.00,
-      revenuePercentageChange: 25.00
-    }
-  };
+  const { loading, summary, fetchDashboard } = useFinancialDashboard();
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
 
   const handleApplyFilters = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    fetchDashboard(fromDate, toDate);
   };
 
   return (
@@ -76,14 +52,27 @@ export const FinancialDashboardPage: React.FC = () => {
         loading={loading}
       />
 
-      {/* KPI Cards */}
-      <KpiCards summary={mockSummary} />
+      {loading && !summary ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <Loader2 className="w-10 h-10 animate-spin text-brand-accent mb-4" />
+          <p className="text-sm font-bold text-gray-500">Cargando reporte financiero...</p>
+        </div>
+      ) : summary ? (
+        <>
+          {/* KPI Cards */}
+          <KpiCards summary={summary} />
 
-      {/* Financial Chart */}
-      <FinancialLineChart summary={mockSummary} />
+          {/* Financial Chart */}
+          <FinancialLineChart summary={summary} />
 
-      {/* Branch Table */}
-      <BranchRevenueTable summary={mockSummary} />
+          {/* Branch Table */}
+          <BranchRevenueTable summary={summary} />
+        </>
+      ) : (
+        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm text-sm text-gray-400">
+          No hay datos disponibles para el rango seleccionado.
+        </div>
+      )}
     </div>
   );
 };
