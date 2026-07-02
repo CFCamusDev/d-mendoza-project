@@ -16,6 +16,7 @@ import { RegisterFailedAttemptUseCase } from '@application/use-cases/logistics/R
 import { ConfirmDeliveryUseCase } from '@application/use-cases/logistics/ConfirmDeliveryUseCase';
 import { GetPendingDeliveriesByZoneUseCase } from '@application/use-cases/logistics/GetPendingDeliveriesByZoneUseCase';
 import { ReturnDeliveryUseCase } from '@application/use-cases/logistics/ReturnDeliveryUseCase';
+import { ValidateDeliveryPinUseCase } from '@application/use-cases/logistics/ValidateDeliveryPinUseCase';
 import { CloudinaryStorageService } from '@infrastructure/services/CloudinaryStorageService';
 import { ResendEmailService } from '@infrastructure/services/ResendEmailService';
 import { InvalidDeliveryStateTransitionError } from '@domain/errors/InvalidDeliveryStateTransitionError';
@@ -32,6 +33,7 @@ export class LogisticsController {
   private confirmDeliveryUseCase: ConfirmDeliveryUseCase;
   private getPendingDeliveriesByZoneUseCase: GetPendingDeliveriesByZoneUseCase;
   private returnDeliveryUseCase: ReturnDeliveryUseCase;
+  private validateDeliveryPinUseCase: ValidateDeliveryPinUseCase;
   private storageService: CloudinaryStorageService;
 
   constructor() {
@@ -57,6 +59,7 @@ export class LogisticsController {
     this.confirmDeliveryUseCase = new ConfirmDeliveryUseCase();
     this.getPendingDeliveriesByZoneUseCase = new GetPendingDeliveriesByZoneUseCase(deliveryRepo, deliveryZoneRepo);
     this.returnDeliveryUseCase = new ReturnDeliveryUseCase();
+    this.validateDeliveryPinUseCase = new ValidateDeliveryPinUseCase();
     this.storageService = new CloudinaryStorageService();
   }
 
@@ -256,6 +259,36 @@ export class LogisticsController {
         return;
       }
       res.status(400).json({ success: false, error: error.message });
+    }
+  };
+
+  confirmDeliveryPin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const deliveryId = Number(req.params.id);
+      const { pin } = req.body;
+
+      if (isNaN(deliveryId)) {
+        res.status(400).json({ success: false, error: 'ID de delivery inválido' });
+        return;
+      }
+
+      if (!pin || typeof pin !== 'string' || pin.trim().length !== 6) {
+        res.status(400).json({ success: false, error: 'El PIN debe ser un código de 6 dígitos' });
+        return;
+      }
+
+      const result = await this.validateDeliveryPinUseCase.execute({ deliveryId, pin });
+      res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+      if (error.message?.includes('no encontrado')) {
+        res.status(404).json({ success: false, error: error.message });
+        return;
+      }
+      if (error.message?.includes('PIN incorrecto') || error.message?.includes('no tiene un PIN')) {
+        res.status(400).json({ success: false, error: error.message });
+        return;
+      }
+      next(error);
     }
   };
 }

@@ -691,21 +691,22 @@ enum OrderStatus {
 }
 
 model Order {
-  id              Int         @id @default(autoincrement())
-  userId          Int
-  user            User        @relation(fields: [userId], references: [id])
-  status          OrderStatus @default(PENDING)
-  total           Decimal     @db.Decimal(10, 2)
-  shippingCost    Decimal     @db.Decimal(10, 2)
-  addressSnapshot Json
-  paymentIntentId String      @unique
-  items           OrderItem[]
-  statusLogs      OrderStatusLog[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  delivery        Delivery?
+  id                Int         @id @default(autoincrement())
+  userId            Int
+  user              User        @relation(fields: [userId], references: [id])
+  status            OrderStatus @default(PENDING)
+  total             Decimal     @db.Decimal(10, 2)
+  shippingCost      Decimal     @db.Decimal(10, 2)
+  addressSnapshot   Json
+  paymentIntentId   String      @unique
+  deliveryPin       String?
+  items             OrderItem[]
+  statusLogs        OrderStatusLog[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  delivery          Delivery?
   pendingOrderAlert PendingOrderAlert?
-  returnRequests  ReturnRequest[]
+  returnRequests    ReturnRequest[]
 
   @@index([userId])
 }
