@@ -47,6 +47,8 @@ import couponRoutes from '@infrastructure/http/routes/coupon.routes';
 import orderRoutes from '@infrastructure/http/routes/order.routes';
 import logisticsRoutes from '@infrastructure/http/routes/logistics.routes';
 import returnsRoutes from '@infrastructure/http/routes/returns.routes';
+import creditNotesRoutes from '@infrastructure/http/routes/credit-notes.routes';
+import adminAlertsRoutes from '@infrastructure/http/routes/admin-alerts.routes';
 import { requestContextMiddleware } from '@infrastructure/context/RequestContext';
 
 const app = express();
@@ -120,6 +122,7 @@ import adminAlertsRoutes from '@infrastructure/http/routes/admin-alerts.routes';
 app.use('/api/v1', orderRoutes);
 app.use('/api/v1', logisticsRoutes);
 app.use('/api/v1', returnsRoutes);
+app.use('/api/v1', creditNotesRoutes);
 app.use('/api/v1', adminAlertsRoutes);
 app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Backend is running' });

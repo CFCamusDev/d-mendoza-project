@@ -3,8 +3,14 @@ import { ReturnRequestController } from '../controllers/ReturnRequestController'
 import { requireAuth } from '../middlewares/auth.middleware';
 import { validateCreateReturnRequest } from '../middlewares/validators/returnRequestValidator';
 
+import { AdminReturnsController } from '../controllers/AdminReturnsController';
+import { GenerateCreditNoteUseCase } from '@application/use-cases/admin/GenerateCreditNoteUseCase';
+
 const router = Router();
 const controller = new ReturnRequestController();
+
+const generateCreditNoteUseCase = new GenerateCreditNoteUseCase();
+const adminReturnsController = new AdminReturnsController(generateCreditNoteUseCase);
 
 const checkAdmin = (req: any, res: any, next: any) => {
   const roleName = req.auth?.role?.name || req.auth?.role;
@@ -25,5 +31,6 @@ router.post('/returns', requireAuth, validateCreateReturnRequest, controller.cre
 // Admin endpoints
 router.patch('/admin/returns/:id/approve', requireAuth, checkAdmin, controller.approve);
 router.patch('/admin/returns/:id/reject', requireAuth, checkAdmin, controller.reject);
+router.post('/admin/returns/:id/credit-note', requireAuth, checkAdmin, adminReturnsController.generateCreditNote);
 
 export default router;
