@@ -585,6 +585,16 @@ export const AdminShell: React.FC = () => {
               <Ticket className="w-4 h-4 shrink-0" />
               {!isCollapsed && <span>Notas de Crédito</span>}
             </Link>
+            <Link
+              to="/admin/reports/profitability"
+              className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all ${
+                isActiveRoute('/admin/reports/profitability') ? activeClass : inactiveClass
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title="Reporte de Rentabilidad"
+            >
+              <BarChart3 className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span>Rentabilidad</span>}
+            </Link>
           </AccordionMenu>
           )}
 

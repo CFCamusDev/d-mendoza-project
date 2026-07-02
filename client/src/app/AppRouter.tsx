@@ -61,7 +61,7 @@ import PickingPage from '../features/admin/PickingPage';
 import DeliveriesPage from '../features/admin/DeliveriesPage';
 import DeliveriesByZonePage from '../features/admin/DeliveriesByZonePage';
 import DispatchReportPage from '../features/admin/DispatchReportPage';
-
+import ProfitabilityReportPage from '../features/admin/reports/profitability/ProfitabilityReportPage';
 export const AppRouter = () => {
   return (
     <Routes>
@@ -282,6 +282,9 @@ export const AppRouter = () => {
 
         {/* HU-030 */}
         <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><RotationReportPage /></ProtectedRoute>} />
+
+        {/* HU-069 Profitability Report */}
+        <Route path="/admin/reports/profitability" element={<ProtectedRoute allowedRoles={['ADMIN']}><ProfitabilityReportPage /></ProtectedRoute>} />
 
         {/* HU-058 Logistics & Picking */}
         <Route path="/admin/logistics/picking" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><PickingPage /></ProtectedRoute>} />
