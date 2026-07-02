@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { ProfitabilityReportResponse, GroupByOption } from '../../types/profitability';
+import type { ProfitabilityReportResponse, GroupByOption } from '../../../types/profitability';
 import toast from 'react-hot-toast';
 
 export const useExportCsv = () => {
@@ -13,7 +13,7 @@ export const useExportCsv = () => {
       const groupByLabel = groupBy === 'brand' ? 'Marca' : 'Categoría';
       const headers = [groupByLabel, 'Cant. Vendida', 'Ventas Totales', 'Costo Total', 'Utilidad Bruta', 'Margen %'];
       
-      const rows = data.items.map(item => [
+      const rows = data.items.map((item: any) => [
         item.name,
         item.totalQuantity.toString(),
         item.totalRevenue.toFixed(2),
@@ -35,7 +35,7 @@ export const useExportCsv = () => {
 
       const csvContent = [
         headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ...rows.map((row: string[]) => row.map((cell: string) => `"${cell}"`).join(','))
       ].join('\n');
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

@@ -1,5 +1,5 @@
 import axiosInstance from '@/shared/api/axiosInstance';
-import type { GroupByOption, ProfitabilityReportResponse } from '../../types/profitability';
+import type { GroupByOption, ProfitabilityReportResponse } from '../../../types/profitability';
 
 export const reportService = {
   getProfitabilityReport: async (

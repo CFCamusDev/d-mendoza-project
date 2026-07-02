@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { reportService } from '../services/reportService';
-import type { GroupByOption, ProfitabilityReportResponse } from '../../types/profitability';
+import type { GroupByOption, ProfitabilityReportResponse } from '../../../types/profitability';
 import toast from 'react-hot-toast';
 import { isAxiosError } from 'axios';
 
