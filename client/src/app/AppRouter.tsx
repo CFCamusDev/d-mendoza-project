@@ -27,6 +27,7 @@ import { ProtectedRoute } from '../features/admin/components/ProtectedRoute';
 import ProfilePage from '../features/ecommerce/profile/ProfilePage';
 import { ProfileLayout } from '../features/ecommerce/profile/components/ProfileLayout';
 import AddressesPage from '../features/ecommerce/profile/AddressesPage';
+import ReturnRequestPage from '../features/ecommerce/profile/ReturnRequestPage';
 import { AppShell } from '../components/layout/AppShell';
 import { AdminShell } from '../components/layout/AdminShell';
 import { PosShell } from '../components/layout/PosShell';
@@ -101,6 +102,7 @@ export const AppRouter = () => {
           <Route index element={<ProfilePage />} />
           <Route path="addresses" element={<AddressesPage />} />
           <Route path="orders" element={<OrdersPage />} />
+          <Route path="orders/:orderId/return" element={<ReturnRequestPage />} />
         </Route>
       </Route>
 
