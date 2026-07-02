@@ -25,5 +25,6 @@ router.post('/returns', requireAuth, validateCreateReturnRequest, controller.cre
 // Admin endpoints
 router.patch('/admin/returns/:id/approve', requireAuth, checkAdmin, controller.approve);
 router.patch('/admin/returns/:id/reject', requireAuth, checkAdmin, controller.reject);
+router.post('/admin/returns/:id/credit-note', requireAuth, checkAdmin, controller.issueCreditNote);
 
 export default router;

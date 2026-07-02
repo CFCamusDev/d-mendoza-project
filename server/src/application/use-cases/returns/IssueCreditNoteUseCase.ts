@@ -153,7 +153,7 @@ export class IssueCreditNoteUseCase {
         creditNoteCode: creditNote.code,
         amount: creditNote.amount,
         type: creditNote.type,
-        clientName: returnRequest.user.name,
+        clientName: returnRequest.user.name || '',
         clientEmail: returnRequest.user.email,
         items: returnRequest.items.map(item => ({
           name: item.orderItem.variant.product.name,

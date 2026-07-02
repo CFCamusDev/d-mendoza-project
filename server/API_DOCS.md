@@ -73,6 +73,7 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/returns](#post-apiv1returns)
   - [PATCH /api/v1/admin/returns/:id/approve](#patch-apiv1adminreturnsidapprove)
   - [PATCH /api/v1/admin/returns/:id/reject](#patch-apiv1adminreturnsidreject)
+  - [POST /api/v1/admin/returns/:id/credit-note](#post-apiv1adminreturnsidcredit-note)
 
 ---
 
@@ -4633,4 +4634,41 @@ Permite a un administrador rechazar una solicitud de devolución pendiente.
   }
 }
 ```
+
+---
+
+### POST /api/v1/admin/returns/:id/credit-note
+
+Permite a un administrador emitir una nota de crédito o vale de crédito por una solicitud de devolución. El proceso realiza automáticamente la reversión del stock e ingresa la entrada en el Kardex. Finalmente, despacha el correo al cliente con el PDF adjunto de la nota de crédito.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/admin/returns/:id/credit-note` | Requerida (Bearer Token) | `ADMIN` |
+
+#### 2. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "returnRequestId": 10,
+    "amount": 31.00,
+    "type": "CREDIT_NOTE",
+    "code": "NC-1719899157291-4567",
+    "usedAt": null,
+    "createdAt": "2026-07-02T05:45:00.000Z",
+    "updatedAt": "2026-07-02T05:45:00.000Z"
+  }
+}
 ```
+
+##### Errores Comunes
+
+- **HTTP 400 Bad Request**: Si la devolución no existe, ya cuenta con una nota de crédito emitida, o el monto calculado es menor o igual a cero.
+- **HTTP 403 Forbidden**: Si el usuario no tiene el rol de administrador.
+
