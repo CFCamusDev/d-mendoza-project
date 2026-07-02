@@ -2,12 +2,14 @@ import { Router } from 'express';
 import { InventoryReportController } from '@infrastructure/http/controllers/InventoryReportController';
 import { ReportController } from '@infrastructure/http/controllers/ReportController';
 import { DispatchReportController } from '@infrastructure/http/controllers/DispatchReportController';
+import { GetProfitabilityReportController } from '@infrastructure/http/controllers/GetProfitabilityReportController';
 import { requirePermission } from '@infrastructure/http/middlewares/auth.middleware';
 
 const router = Router();
 const ctrl = new InventoryReportController();
 const reportController = new ReportController();
 const dispatchReportController = new DispatchReportController();
+const profitabilityController = new GetProfitabilityReportController();
 
 router.get('/reports/inventory-rotation', requirePermission('products:read'), ctrl.inventoryRotation.bind(ctrl));
 
@@ -25,6 +27,13 @@ router.get(
   '/reports/dispatch-efficiency',
   requirePermission('sales:read'),
   dispatchReportController.getEfficiency,
+);
+
+// T-240: Reporte de utilidad bruta y rentabilidad por marca y categoría (HU-069)
+router.get(
+  '/admin/reports/profitability',
+  requirePermission('sales:read'),
+  profitabilityController.getReport.bind(profitabilityController)
 );
 
 export default router;
