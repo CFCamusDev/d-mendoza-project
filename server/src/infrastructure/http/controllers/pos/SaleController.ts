@@ -238,7 +238,9 @@ export class SaleController {
 
       return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
-      console.error('[SaleController] Error anulando venta:', error);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('[SaleController] Error anulando venta:', error);
+      }
 
       if (error.message?.includes('no existe')) {
         return res.status(404).json({ success: false, error: error.message });
