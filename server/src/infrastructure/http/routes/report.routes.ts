@@ -6,6 +6,7 @@ import { GetProfitabilityReportController } from '@infrastructure/http/controlle
 import { GetFinancialDashboardController } from '@infrastructure/http/controllers/GetFinancialDashboardController';
 import { DiscountAuditController } from '@infrastructure/http/controllers/DiscountAuditController';
 import { SellerRankingController } from '@infrastructure/http/controllers/SellerRankingController';
+import { InventoryValuationController } from '@infrastructure/http/controllers/InventoryValuationController';
 import { requirePermission } from '@infrastructure/http/middlewares/auth.middleware';
 
 const router = Router();
@@ -16,6 +17,7 @@ const profitabilityController = new GetProfitabilityReportController();
 const financialDashboardController = new GetFinancialDashboardController();
 const discountAuditController = new DiscountAuditController();
 const sellerRankingController = new SellerRankingController();
+const inventoryValuationController = new InventoryValuationController();
 
 router.get('/reports/inventory-rotation', requirePermission('products:read'), ctrl.inventoryRotation.bind(ctrl));
 
@@ -68,6 +70,13 @@ router.get(
   '/admin/reports/seller-ranking',
   requirePermission('sales:read'),
   sellerRankingController.getRanking,
+);
+
+// T-252: Valorización del inventario en tiempo real (HU-077)
+router.get(
+  '/admin/reports/inventory-valuation',
+  requirePermission('products:read'),
+  inventoryValuationController.getValuation,
 );
 
 export default router;
