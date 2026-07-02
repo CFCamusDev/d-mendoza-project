@@ -29,6 +29,7 @@ export interface Order {
   user?: { id: number; name: string; email: string };
   items?: OrderItem[];
   statusLogs?: OrderStatusLog[];
+  returnRequests?: Array<{ id: number; status: string; reason: string }>;
   createdAt: Date;
   updatedAt: Date;
 }
