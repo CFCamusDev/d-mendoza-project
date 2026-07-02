@@ -41,6 +41,11 @@ export class ListUserOrdersUseCase {
           changedAt: log.changedAt,
           changedBy: log.changedBy,
         })),
+        returnRequests: order.returnRequests?.map((req) => ({
+          id: req.id,
+          status: req.status,
+          reason: req.reason,
+        })),
       })),
       total: totalCount,
       page,

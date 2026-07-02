@@ -3,6 +3,7 @@ import type { Order } from '../types';
 import { OrderTimeline } from './OrderTimeline';
 import { orderService } from '../services/order.service';
 import { toast } from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 import {
   FileText,
   Download,
@@ -10,7 +11,8 @@ import {
   ChevronDown,
   ChevronUp,
   MapPin,
-  Calendar
+  Calendar,
+  RotateCcw
 } from 'lucide-react';
 
 interface OrderCardProps {
@@ -69,19 +71,57 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order }) => {
           )}
         </div>
 
-        {/* Action Button: PDF receipt */}
-        <button
-          onClick={handleDownloadPdf}
-          disabled={isDownloading}
-          className="flex items-center justify-center gap-1.5 px-4 py-2 border border-gray-200 hover:border-black rounded-xl text-xs font-bold text-gray-700 hover:text-black bg-white transition-all shadow-sm disabled:opacity-50"
-        >
-          {isDownloading ? (
-            <Loader2 className="w-4 h-4 animate-spin text-brand-accent" />
-          ) : (
-            <Download className="w-4 h-4" />
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Return Request Button or Status Badge */}
+          {order.status === 'DELIVERED' && (
+            <>
+              {!order.returnRequests || order.returnRequests.length === 0 ? (
+                <Link
+                  to={`/profile/orders/${order.id}/return`}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2 border border-brand-primary/30 hover:border-brand-accent rounded-xl text-xs font-bold text-[#3F3F3F] hover:text-brand-accent bg-white transition-all shadow-sm"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Solicitar Devolución</span>
+                </Link>
+              ) : (
+                (() => {
+                  const req = order.returnRequests[0];
+                  let badgeClass = 'bg-yellow-50 text-yellow-700 border-yellow-200';
+                  let label = 'Devolución Pendiente';
+
+                  if (req.status === 'APPROVED') {
+                    badgeClass = 'bg-green-50 text-green-700 border-green-200';
+                    label = 'Devolución Aprobada';
+                  } else if (req.status === 'REJECTED') {
+                    badgeClass = 'bg-red-50 text-red-700 border-red-200';
+                    label = 'Devolución Rechazada';
+                  }
+
+                  return (
+                    <span className={`inline-flex items-center gap-1 px-3 py-1.5 border rounded-xl text-[10px] font-extrabold tracking-wide uppercase shadow-sm ${badgeClass}`}>
+                      <RotateCcw className="w-3 h-3" />
+                      {label}
+                    </span>
+                  );
+                })()
+              )}
+            </>
           )}
-          <span>Comprobante PDF</span>
-        </button>
+
+          {/* Action Button: PDF receipt */}
+          <button
+            onClick={handleDownloadPdf}
+            disabled={isDownloading}
+            className="flex items-center justify-center gap-1.5 px-4 py-2 border border-gray-200 hover:border-black rounded-xl text-xs font-bold text-gray-700 hover:text-black bg-white transition-all shadow-sm disabled:opacity-50"
+          >
+            {isDownloading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-brand-accent" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            <span>Comprobante PDF</span>
+          </button>
+        </div>
       </div>
 
       <div className="p-6 space-y-6">

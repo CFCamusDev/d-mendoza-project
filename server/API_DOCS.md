@@ -69,6 +69,10 @@ Esta documentación proporciona las especificaciones técnicas detalladas para c
   - [POST /api/v1/logistics/deliveries/:id/assign](#post-apiv1logisticsdeliveriesidassign)
   - [GET /api/v1/logistics/deliveries/:id/label](#get-apiv1logisticsdeliveriesidlabel)
   - [PATCH /api/v1/logistics/deliveries/:id/status](#patch-apiv1logisticsdeliveriesidstatus)
+- [Devoluciones y Logística Inversa — HU-065](#devoluciones-y-logística-inversa--hu-065)
+  - [POST /api/v1/returns](#post-apiv1returns)
+  - [PATCH /api/v1/admin/returns/:id/approve](#patch-apiv1adminreturnsidapprove)
+  - [PATCH /api/v1/admin/returns/:id/reject](#patch-apiv1adminreturnsidreject)
 
 ---
 
@@ -4462,4 +4466,171 @@ No requiere parámetros.
     }
   ]
 }
+```
+
+---
+
+### PATCH /api/v1/logistics/deliveries/:id/status
+
+Actualiza el estado de un envío (Delivery) siguiendo el ciclo de vida estricto y envía notificaciones por correo al cliente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `PATCH` | `/api/v1/logistics/deliveries/:id/status` | Requerida (Bearer Token) | `ADMIN` o `SUPPLY` |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "status": "IN_TRANSIT"
+}
+```
+
+**Transiciones Válidas:**
+- `PENDING` -> `ASSIGNED` o `CANCELLED`
+- `ASSIGNED` -> `IN_TRANSIT` o `CANCELLED`
+- `IN_TRANSIT` -> `DELIVERED` o `FAILED`
+- `FAILED` -> `RETURNED`
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "orderId": 101,
+    "deliveryManId": 99,
+    "status": "IN_TRANSIT",
+    "updatedAt": "2026-07-01T12:00:00.000Z"
+  }
+}
+```
+
+##### Conflicto / Transición Inválida (HTTP 409 Conflict)
+
+```json
+{
+  "success": false,
+  "error": "No se permite la transición de estado del envío de PENDING a IN_TRANSIT."
+}
+```
+
+---
+
+## Devoluciones y Logística Inversa — HU-065
+
+Este módulo permite a los clientes solicitar devoluciones de sus pedidos entregados y a los administradores procesarlas.
+
+### POST /api/v1/returns
+
+Permite a un cliente solicitar la devolución de uno o más ítems de un pedido que se encuentra en estado `DELIVERED`.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/returns` | Requerida (Bearer Token) | `CLIENT` o cualquier autenticado |
+
+#### 2. Cuerpo de la Petición (Request Body)
+
+```json
+{
+  "orderId": 10,
+  "reason": "La talla es demasiado pequeña",
+  "refundType": "CREDIT_NOTE",
+  "items": [
+    {
+      "orderItemId": 1,
+      "qty": 1
+    }
+  ]
+}
+```
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 201 Created)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "orderId": 10,
+    "userId": 2,
+    "reason": "La talla es demasiado pequeña",
+    "status": "PENDING",
+    "refundType": "CREDIT_NOTE",
+    "createdAt": "2026-07-02T02:00:00.000Z",
+    "updatedAt": "2026-07-02T02:00:00.000Z",
+    "items": [
+      {
+        "id": 1,
+        "returnRequestId": 1,
+        "orderItemId": 1,
+        "qty": 1
+      }
+    ]
+  }
+}
+```
+
+---
+
+### PATCH /api/v1/admin/returns/:id/approve
+
+Permite a un administrador aprobar una solicitud de devolución pendiente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `PATCH` | `/api/v1/admin/returns/:id/approve` | Requerida (Bearer Token) | `ADMIN` |
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "status": "APPROVED",
+    "updatedAt": "2026-07-02T02:05:00.000Z"
+  }
+}
+```
+
+---
+
+### PATCH /api/v1/admin/returns/:id/reject
+
+Permite a un administrador rechazar una solicitud de devolución pendiente.
+
+#### 1. Especificación del Endpoint
+
+| Método | Ruta | Autenticación | Rol Requerido |
+| :--- | :--- | :--- | :--- |
+| `PATCH` | `/api/v1/admin/returns/:id/reject` | Requerida (Bearer Token) | `ADMIN` |
+
+#### 3. Respuestas del Servidor
+
+##### Respuesta Exitosa (HTTP 200 OK)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "status": "REJECTED",
+    "updatedAt": "2026-07-02T02:05:00.000Z"
+  }
+}
+```
 ```

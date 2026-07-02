@@ -22,6 +22,11 @@ export class PrismaOrderRepository implements IOrderRepository {
         changedAt: log.changedAt,
         changedBy: log.changedBy,
       })),
+      returnRequests: record.returnRequests?.map((req: any) => ({
+        id: req.id,
+        status: req.status,
+        reason: req.reason,
+      })),
     };
   }
 
@@ -51,6 +56,7 @@ export class PrismaOrderRepository implements IOrderRepository {
           },
         },
         statusLogs: true,
+        returnRequests: true,
       },
     });
     return record ? this.toDomain(record) : null;
@@ -152,6 +158,7 @@ export class PrismaOrderRepository implements IOrderRepository {
             },
           },
           statusLogs: true,
+          returnRequests: true,
         },
         orderBy: {
           createdAt: 'desc',

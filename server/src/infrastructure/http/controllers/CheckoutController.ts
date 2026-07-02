@@ -91,7 +91,9 @@ export class CheckoutController {
 
       res.status(200).json({ received: true, processed: result.processed, orderId: result.orderId });
     } catch (error: any) {
-      console.error('Error en Stripe webhook handler:', error.message);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error en Stripe webhook handler:', error.message);
+      }
       res.status(400).json({ success: false, error: error.message });
     }
   }
