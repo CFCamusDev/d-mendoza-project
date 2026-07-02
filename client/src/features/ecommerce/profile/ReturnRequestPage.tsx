@@ -3,8 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { orderService } from '../services/order.service';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
-import type { Order } from '../types';
+import type { Order, RefundType } from '../types';
 import { ReturnItemSelector } from './components/ReturnItemSelector';
+import { ReturnReasonForm } from './components/ReturnReasonForm';
 
 export const ReturnRequestPage: React.FC = () => {
   useDocumentTitle('Solicitud de Devolución - D\'Mendoza');
@@ -16,6 +17,13 @@ export const ReturnRequestPage: React.FC = () => {
 
   // Selection state: orderItemId -> quantity to return
   const [selectedItems, setSelectedItems] = useState<Record<number, number>>({});
+
+  // Form state
+  const [reason, setReason] = useState('');
+  const [refundType, setRefundType] = useState<RefundType>('CREDIT_NOTE');
+
+  // Submit states (Fase 3 placeholder for actual API call)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -72,6 +80,22 @@ export const ReturnRequestPage: React.FC = () => {
       };
     });
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isValid) return;
+
+    setIsSubmitting(true);
+    // Simulation for Fase 2 validation testing
+    setTimeout(() => {
+      setIsSubmitting(false);
+      alert('Solicitud enviada (Simulación Fase 2)');
+    }, 1000);
+  };
+
+  const isValid =
+    Object.keys(selectedItems).length > 0 &&
+    reason.trim().length >= 10;
 
   if (isLoading) {
     return (
@@ -140,11 +164,16 @@ export const ReturnRequestPage: React.FC = () => {
           onChangeQty={handleChangeQty}
         />
 
-        {/* Placeholder form for next phase */}
-        <div className="p-4 bg-brand-primary/5 rounded-2xl border border-dashed border-brand-primary/30">
-          <p className="text-xs text-brand-text font-semibold text-center italic">
-            El formulario de motivo y tipo de devolución se integrará en la siguiente fase.
-          </p>
+        <div className="border-t border-brand-primary/10 pt-6">
+          <ReturnReasonForm
+            reason={reason}
+            onChangeReason={setReason}
+            refundType={refundType}
+            onChangeRefundType={setRefundType}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            isValid={isValid}
+          />
         </div>
       </div>
     </div>
