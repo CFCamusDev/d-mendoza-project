@@ -66,6 +66,7 @@ import DispatchReportPage from '../features/admin/DispatchReportPage';
 import ProfitabilityReportPage from '../features/admin/reports/profitability/ProfitabilityReportPage';
 import { FinancialDashboardPage } from '../features/admin/reports/financial-dashboard/FinancialDashboardPage';
 import ExpensesPage from '../features/admin/expenses/ExpensesPage';
+import InventoryValuationPage from '../features/admin/InventoryValuationPage';
 export const AppRouter = () => {
   return (
     <Routes>
@@ -295,6 +296,9 @@ export const AppRouter = () => {
         {/* HU-030 */}
         <Route path="/admin/reports/inventory-rotation" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><RotationReportPage /></ProtectedRoute>} />
         <Route path="/admin/reports/low-rotation" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><LowRotationPage /></ProtectedRoute>} />
+
+        {/* HU-077 */}
+        <Route path="/admin/reports/inventory-valuation" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPLY']}><InventoryValuationPage /></ProtectedRoute>} />
 
         {/* HU-069 Profitability Report */}
         <Route path="/admin/reports/profitability" element={<ProtectedRoute allowedRoles={['ADMIN']}><ProfitabilityReportPage /></ProtectedRoute>} />
