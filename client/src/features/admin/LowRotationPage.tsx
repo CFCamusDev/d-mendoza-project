@@ -5,6 +5,7 @@ import { lowRotationService } from './services/lowRotationService';
 import type { LowRotationItem } from './types/lowRotation.types';
 import { LowRotationFilters } from './components/reports/LowRotationFilters';
 import { LowRotationTable } from './components/reports/LowRotationTable';
+import { exportLowRotationToCSV } from './utils/csvExport';
 
 export const LowRotationPage: React.FC = () => {
   const [items, setItems] = useState<LowRotationItem[]>([]);
@@ -36,7 +37,8 @@ export const LowRotationPage: React.FC = () => {
   }, []);
 
   const handleExportCSV = () => {
-    toast.error('Exportación a CSV estará disponible en la Fase 4');
+    exportLowRotationToCSV(items, currentDays);
+    toast.success('Reporte exportado a CSV exitosamente');
   };
 
   return (
