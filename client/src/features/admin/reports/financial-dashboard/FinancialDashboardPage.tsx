@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { DashboardFilters } from './components/DashboardFilters';
 import { KpiCards } from './components/KpiCards';
+import { FinancialLineChart } from './components/FinancialLineChart';
 import { Landmark } from 'lucide-react';
 import type { FinancialDashboardSummary } from '../../types/financial-dashboard';
 
@@ -76,6 +77,9 @@ export const FinancialDashboardPage: React.FC = () => {
 
       {/* KPI Cards */}
       <KpiCards summary={mockSummary} />
+
+      {/* Financial Chart */}
+      <FinancialLineChart summary={mockSummary} />
     </div>
   );
 };
