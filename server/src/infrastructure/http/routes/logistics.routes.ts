@@ -37,5 +37,6 @@ router.patch('/logistics/deliveries/:id/status', requireAuth, checkSupplyOrAdmin
 router.post('/logistics/deliveries/:id/failed-attempt', requireAuth, checkSupplyOrAdmin, controller.registerFailedAttempt);
 router.patch('/logistics/deliveries/:id/confirm', requireAuth, checkSupplyOrAdmin, upload.single('photo'), controller.confirmDelivery);
 router.patch('/logistics/deliveries/:id/return', requireAuth, checkSupplyOrAdmin, controller.returnDelivery);
+router.post('/logistics/deliveries/:id/confirm-pin', requireAuth, checkSupplyOrAdmin, controller.confirmDeliveryPin);
 
 export default router;
