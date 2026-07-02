@@ -1,5 +1,3 @@
--- AlterTable
-ALTER TABLE `Order` MODIFY `deliveryPin` VARCHAR(191) NULL;
 
 -- CreateTable
 CREATE TABLE `CreditNote` (

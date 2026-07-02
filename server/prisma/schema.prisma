@@ -41,6 +41,7 @@ model User {
   orders          Order[]
   deliveries      Delivery[] @relation("DeliveryMan")
   returnRequests  ReturnRequest[]
+  operatingExpenses OperatingExpense[]
 }
 
 model Client {
@@ -96,6 +97,7 @@ model Branch {
   transfersSent     StockTransfer[]  @relation("TransfersSent")
   transfersReceived StockTransfer[]  @relation("TransfersReceived")
   sourcePosOrders   PosOrder[]       @relation("SourceBranchOrders")
+  operatingExpenses OperatingExpense[]
 }
 
 model Warehouse {
@@ -850,3 +852,26 @@ model CreditNote {
 
   @@index([returnRequestId])
 }
+
+enum ExpenseType {
+  FIXED
+  VARIABLE
+}
+
+model OperatingExpense {
+  id          Int         @id @default(autoincrement())
+  branchId    Int
+  branch      Branch      @relation(fields: [branchId], references: [id])
+  type        ExpenseType
+  description String      @db.Text
+  amount      Decimal     @db.Decimal(10, 2)
+  date        DateTime
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([branchId])
+  @@index([userId])
+}
+
